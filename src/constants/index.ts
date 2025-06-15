@@ -300,76 +300,126 @@ export const TRACTOR_MODELS = [
 
 // ECU 타입 (카테고리)
 export const ECU_CATEGORIES = [
-  '엔진 ECU',
-  '요소수 ECU',
-  '기타'
+  'ECU', // Engine Control Unit - 엔진 제어 장치
+  'ACU', // After-treatment Control Unit - 후처리 제어 장치
+  'DCU'  // Dosing Control Unit - 도징 제어 장치
 ] as const
 
-// ECU 종류 (ECU 제조사/모델만)
-export const ECU_TYPES = [
-  // Bosch 시리즈
-  'Bosch EDC7',
-  'Bosch EDC15',
-  'Bosch EDC16',
-  'Bosch EDC17',
-  'Bosch MED17',
-  'Bosch ME7',
-  'Bosch ME9',
-  'Bosch MSA15',
-  'Bosch MSA17',
-  'Bosch PCR2.1',
+// ECU 제조사 (PDF에서 추출한 실제 제조사)
+export const ECU_MAKERS = [
+  'AUDI',
+  'BMW',
+  'BOSCH',
+  'CATERPILLAR',
+  'CHRYSLER',
+  'CONTINENTAL',
+  'CUMMINS',
+  'DAF',
+  'DELPHI',
+  'DENSO',
+  'DETROIT',
+  'FORD',
+  'HINO',
+  'HITACHI',
+  'HONDA',
+  'HYUNDAI',
+  'ISUZU',
+  'IVECO',
+  'JOHN DEERE',
+  'KIA',
+  'KUBOTA',
+  'MAGNETI MARELLI',
+  'MAN',
+  'MAZDA',
+  'MERCEDES',
+  'MITSUBISHI',
+  'NISSAN',
+  'PANASONIC',
+  'PERKINS',
+  'SCANIA',
+  'SIEMENS',
+  'TOYOTA',
+  'VALEO',
+  'VOLKSWAGEN',
+  'VOLVO',
+  'YANMAR',
+] as const
+
+// ECU 모델 (PDF에서 추출한 실제 ECU 모델번호)
+export const ECU_MODELS = [
+  // Denso 부품번호
+  '112500-0370', '112500-1240', '112500-1241', '211841-3561', '211941-37910',
+  '275036-0360', '275036-1150', '275036-1152', '275036-1470', '275036-2110',
+  '275036-2290', '275036-2440', '275036-3160', '275036-3410', '275036-3560',
+  '275036-3740', '275036-4820', '275036-5130', '275036-5280', '275036-5650',
+  '275036-5810', '275036-5920', '275036-6110', '275036-6941', '275036-7341',
+  '275036-7461', '275036-7780', '275036-8730', '275036-9050', '275036-9160',
+  '275136-1919', '275136-2010', '275700-0122', '275700-1201', '275700-2753',
+  '275700-7122', '275800-8884', '275822-9730', '279700-9142', '39100-48010',
   
-  // Denso 시리즈
-  'Denso',
-  'Denso 112300-xxxx',
-  'Denso 275900-xxxx',
-  'Denso 89661-xxxx',
+  // Bosch MB 시리즈
+  'MB079700', 'MB112300', 'MB275700', 'MB275800', 'MB279700', 'ME306431',
   
-  // Delphi 시리즈
-  'Delphi DCM3.2',
-  'Delphi DCM3.7',
-  'Delphi DCM6.2',
-  'Delphi DCM7.1',
-  'Delphi DDCR',
+  // DCM 시리즈 (Delphi)
+  'DCM1.2', 'DCM2.7', 'DCM3.1', 'DCM3.2', 'DCM3.3', 'DCM3.4', 'DCM3.5', 'DCM3.7', 'DCM6.1', 'DCM6.2', 'DCM7.1',
   
-  // Continental 시리즈
-  'Continental',
-  'Continental SID',
-  'Continental EMS',
-  'Continental PCM',
+  // EDC 시리즈 (Bosch)
+  'EDC15', 'EDC15C13', 'EDC15C2', 'EDC15C3', 'EDC15C4', 'EDC15C5', 'EDC15C6', 'EDC15C7', 'EDC15C9',
+  'EDC15M', 'EDC15P', 'EDC15Pa', 'EDC15V', 'EDC15VM', 'EDC15VP', 'EDC15VP40',
+  'EDC16', 'EDC16C0', 'EDC16C08', 'EDC16C1', 'EDC16C10', 'EDC16C2', 'EDC16C3', 'EDC16C31', 'EDC16C32',
+  'EDC16C34', 'EDC16C35', 'EDC16C36', 'EDC16C37', 'EDC16C39', 'EDC16C4', 'EDC16C41', 'EDC16C7', 'EDC16C8', 'EDC16C9',
+  'EDC16CP31', 'EDC16CP33', 'EDC16CP34', 'EDC16CP35', 'EDC16CP36', 'EDC16CP39', 'EDC16CP42',
+  'EDC16U1', 'EDC16U3', 'EDC16U31', 'EDC16U34', 'EDC16UC40',
+  'EDC17', 'EDC17.9', 'EDC17C04', 'EDC17C06', 'EDC17C08', 'EDC17C10', 'EDC17C11', 'EDC17C18', 'EDC17C19',
+  'EDC17C3', 'EDC17C41', 'EDC17C42', 'EDC17C43', 'EDC17C45', 'EDC17C46', 'EDC17C47', 'EDC17C49', 'EDC17C50',
+  'EDC17C53', 'EDC17C54', 'EDC17C55', 'EDC17C56', 'EDC17C57', 'EDC17C58', 'EDC17C59', 'EDC17C60', 'EDC17C61',
+  'EDC17C63', 'EDC17C64', 'EDC17C66', 'EDC17C69', 'EDC17C70', 'EDC17C72', 'EDC17C73', 'EDC17C74', 'EDC17C76',
+  'EDC17C79', 'EDC17C81', 'EDC17C83', 'EDC17C84', 'EDC17C87', 'EDC17CB25',
+  'EDC17CP01', 'EDC17CP02', 'EDC17CP04', 'EDC17CP06', 'EDC17CP07', 'EDC17CP09', 'EDC17CP10', 'EDC17CP11',
+  'EDC17CP14', 'EDC17CP15', 'EDC17CP16', 'EDC17CP18', 'EDC17CP19', 'EDC17CP20', 'EDC17CP21', 'EDC17CP22',
+  'EDC17CP24', 'EDC17CP27', 'EDC17CP37', 'EDC17CP42', 'EDC17CP44', 'EDC17CP45', 'EDC17CP46', 'EDC17CP47',
+  'EDC17CP49', 'EDC17CP50', 'EDC17CP51', 'EDC17CP52', 'EDC17CP54', 'EDC17CP55', 'EDC17CP57', 'EDC17CP58',
+  'EDC17CP60', 'EDC17CP62', 'EDC17CP65', 'EDC17CP74',
+  'EDC17CV41', 'EDC17CV42', 'EDC17CV44', 'EDC17CV45', 'EDC17CV52', 'EDC17CV54', 'EDC17CV56', 'EDC17CV82',
+  'EDC17U01', 'EDC17U05', 'EDC7C1', 'EDC7C3', 'EDC7C32', 'EDC7C4', 'EDC7CV41', 'EDC7U1', 'EDC7U31', 'EDC7UC31',
   
-  // Siemens VDO 시리즈
-  'Siemens VDO',
-  'Siemens SID',
-  'Siemens PPD',
-  'Siemens MSA',
+  // ME 시리즈 (Bosch)
+  'ME1.5.5', 'ME1.9.3', 'ME17.', 'ME17.0.3', 'ME17.1.1', 'ME17.1.6', 'ME17.2', 'ME17.2.1', 'ME17.2.4',
+  'ME17.2.4.2', 'ME17.2.42', 'ME17.3.0', 'ME17.5', 'ME17.5.20', 'ME17.5.22', 'ME17.5.24', 'ME17.5.26',
+  'ME17.5.6', 'ME17.7', 'ME17.7.20', 'ME17.7.8', 'ME17.8.', 'ME17.8.3.3', 'ME17.8.31', 'ME17.8.32',
+  'ME17.8.33', 'ME17.8.5', 'ME17.8.74', 'ME17.8.8', 'ME17.9.1', 'ME17.9.11', 'ME17.9.11.1', 'ME17.9.20',
+  'ME17.9.21', 'ME17.9.21.1', 'ME17.9.23', 'ME17.9.5', 'ME17.9.51', 'ME17.9.52', 'ME17.9.53', 'ME17.9.55',
+  'ME17.9.56', 'ME17.9.6', 'ME17.9.61', 'ME17.9.64', 'ME17.9.7', 'ME17.9.71', 'ME17.9.74',
+  'ME2.1', 'ME2.7.2', 'ME2.8.1', 'ME5.2', 'ME5.2.1', 'ME7.1', 'ME7.1.1', 'ME7.1.6', 'ME7.2', 'ME7.3',
+  'ME7.3.1', 'ME7.4.4', 'ME7.4.5', 'ME7.4.6', 'ME7.4.7', 'ME7.5', 'ME7.5.', 'ME7.5.1', 'ME7.5.10',
+  'ME7.5.20', 'ME7.5.30', 'ME7.5.5', 'ME7.6.1', 'ME7.6.2', 'ME7.6.3', 'ME7.6.4', 'ME7.7.0', 'ME7.70',
+  'ME7.8', 'ME7.8.1', 'ME7.8.2', 'ME7.8.4', 'ME7.8.8', 'ME7.9', 'ME7.9.10', 'ME7.9.3', 'ME7.9.5',
+  'ME7.9.51', 'ME7.9.52', 'ME7.9.7', 'ME7.9.9', 'ME9.0', 'ME9.1.1', 'ME9.2', 'ME9.2.0', 'ME9.2.2',
+  'ME9.6', 'ME9.6.1', 'ME9.7',
   
-  // Magneti Marelli 시리즈
-  'Magneti Marelli',
-  'Magneti Marelli IAW',
-  'Magneti Marelli MJD',
+  // MED 시리즈 (Bosch)
+  'MED17', 'MED17.0', 'MED17.0.1', 'MED17.0.7', 'MED17.1', 'MED17.1.1', 'MED17.1.10', 'MED17.1.11',
+  'MED17.1.12', 'MED17.1.21', 'MED17.1.27', 'MED17.1.6', 'MED17.1.61', 'MED17.1.62', 'MED17.2', 'MED17.2.2',
+  'MED17.2.3', 'MED17.3.1', 'MED17.3.3', 'MED17.3.4', 'MED17.3.5', 'MED17.4', 'MED17.4.2', 'MED17.4.4',
+  'MED17.5', 'MED17.5.1', 'MED17.5.2', 'MED17.5.20', 'MED17.5.21', 'MED17.5.25', 'MED17.5.5', 'MED17.6.9',
+  'MED17.7.1', 'MED17.7.2', 'MED17.7.3', 'MED17.7.3.1', 'MED17.7.5', 'MED17.7.7', 'MED17.7.8', 'MED17.8.10',
+  'MED17.8.10.1', 'MED17.8.2', 'MED17.8.21', 'MED17.8.3', 'MED17.8.31', 'MED17.8.32', 'MED17.9.3',
+  'MED17.9.30', 'MED17.9.63', 'MED17.9.66', 'MED17.9.7', 'MED17.9.8', 'MED17.9.9', 'MED7.1.1', 'MED7.5.11',
+  'MED7.6.1', 'MED7.6.2', 'MED9.1', 'MED9.1.1', 'MED9.1.2', 'MED9.1.5', 'MED9.5', 'MED9.5.10', 'MED9.6',
+  'MED9.6.1', 'MED9.6.2',
   
-  // Hitachi 시리즈
-  'Hitachi',
-  'Hitachi SH7',
-  'Hitachi SH2',
+  // SID 시리즈 (Siemens)
+  'SID201', 'SID202', 'SID203', 'SID204', 'SID206', 'SID208', 'SID209', 'SID211', 'SID301', 'SID303',
+  'SID304', 'SID305', 'SID306', 'SID307', 'SID309', 'SID310', 'SID321', 'SID801', 'SID802', 'SID803',
+  'SID805', 'SID806', 'SID807', 'SID902',
   
-  // Mitsubishi 시리즈
-  'Mitsubishi',
-  'Mitsubishi MH8',
-  'Mitsubishi E6T',
-  
-  // Cummins ECU 시리즈
-  'Cummins CM2150 ECU',
-  'Cummins CM2250 ECU',
-  'Cummins CM2350 ECU',
-  'Cummins INSITE ECU',
-  
-  // Caterpillar ECU 시리즈
-  'Caterpillar ADEM ECU',
-  'Caterpillar C7 ECU',
-  'Caterpillar C9 ECU',
-  'Caterpillar ACERT ECU',
+  // 기타
+  'DDE4.0', 'PCR2.1',
+  'Perkins ECU',
+  'Kubota ECU',
+  'Yanmar ECU',
+  'Deutz ECU',
+  'Isuzu ECU',
   
   // 기타
   '기타'
@@ -580,7 +630,23 @@ export const PROTOCOLS = [
   '기타'
 ] as const
 
-// 튜닝 작업
+// 튜닝 작업 카테고리
+export const TUNING_CATEGORIES = [
+  '튜닝 작업'
+] as const
+
+// 카테고리별 튜닝 작업
+export const TUNING_WORKS_BY_CATEGORY = {
+  '튜닝 작업': [
+    '파워업',
+    'EGR 제거',
+    'AdBlue 제거',
+    'DPF 제거',
+    '속도제한해제'
+  ]
+} as const
+
+// 호환성을 위한 기존 TUNING_WORKS (플랫 배열)
 export const TUNING_WORKS = [
   'DPF 제거',
   'EGR 제거',

@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, ECU_TYPES, ACU_TYPES } from '@/constants'
+import { useState, useRef, useEffect } from 'react'
+import { EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, ECU_MODELS } from '@/constants'
+import { getAllCustomers, CustomerData } from '@/lib/customers'
+import { getAllEquipment, createEquipment, deleteEquipment, EquipmentData } from '@/lib/equipment'
 
 interface Equipment {
   id: number
@@ -18,47 +20,10 @@ interface Equipment {
 }
 
 export default function EquipmentPage() {
-  const [equipments, setEquipments] = useState<Equipment[]>([
-    {
-      id: 1,
-      customerName: '김농부',
-      equipmentType: '트랙터',
-      manufacturer: 'John Deere',
-      model: '6120M',
-      serialNumber: 'JD2024001',
-      usageHours: 1250,
-      ecuType: 'Bosch EDC17',
-      acuType: 'Bosch ACU',
-      registrationDate: '2024-01-15',
-      notes: '정기점검 완료'
-    },
-    {
-      id: 2,
-      customerName: '이농장',
-      equipmentType: '콤바인',
-      manufacturer: 'Case IH',
-      model: 'Axial-Flow 8250',
-      serialNumber: 'CI2024002',
-      usageHours: 850,
-      ecuType: 'Delphi DCM',
-      acuType: 'Delphi ACU',
-      registrationDate: '2024-02-20',
-      notes: 'DPF 청소 필요'
-    },
-    {
-      id: 3,
-      customerName: '박목장',
-      equipmentType: '굴삭기',
-      manufacturer: 'Caterpillar',
-      model: '320D',
-      serialNumber: 'CAT2024003',
-      usageHours: 2100,
-      ecuType: 'Caterpillar ADEM ECU',
-      acuType: 'Caterpillar ACU',
-      registrationDate: '2024-03-10',
-      notes: 'AdBlue 시스템 점검'
-    }
-  ])
+  const [customers, setCustomers] = useState<CustomerData[]>([])
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true)
+  const [equipments, setEquipments] = useState<Equipment[]>([])
+  const [isLoadingEquipments, setIsLoadingEquipments] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('')
@@ -79,6 +44,64 @@ export default function EquipmentPage() {
   })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 고객 및 장비 데이터 로드
+  useEffect(() => {
+    loadCustomers()
+    loadEquipments()
+  }, [])
+
+  const loadCustomers = async () => {
+    setIsLoadingCustomers(true)
+    try {
+      const data = await getAllCustomers()
+      setCustomers(data)
+    } catch (error) {
+      console.error('Failed to load customers:', error)
+    } finally {
+      setIsLoadingCustomers(false)
+    }
+  }
+
+  const loadEquipments = async () => {
+    setIsLoadingEquipments(true)
+    try {
+      const equipmentData = await getAllEquipment()
+      
+      // EquipmentData를 Equipment 형식으로 변환
+      const transformedEquipments: Equipment[] = equipmentData.map(equipment => {
+        // 고객 이름 찾기
+        const customer = customers.find(c => c.id === equipment.customerId)
+        
+        return {
+          id: equipment.id,
+          customerName: customer?.name || '알 수 없음',
+          equipmentType: equipment.equipmentType,
+          manufacturer: equipment.manufacturer,
+          model: equipment.model,
+          serialNumber: equipment.serialNumber || '',
+          usageHours: equipment.horsepower || 0, // horsepower를 usageHours로 임시 매핑
+          ecuType: equipment.engineType || '',
+          acuType: '', // ACU 타입은 별도 필드가 없으므로 빈 문자열
+          registrationDate: new Date(equipment.createdAt).toISOString().split('T')[0],
+          notes: equipment.notes
+        }
+      })
+      
+      setEquipments(transformedEquipments)
+    } catch (error) {
+      console.error('Failed to load equipments:', error)
+    } finally {
+      setIsLoadingEquipments(false)
+    }
+  }
+
+  // 고객 데이터가 로드된 후 장비 데이터 다시 로드 (고객 이름 매핑을 위해)
+  useEffect(() => {
+    if (customers.length > 0) {
+      loadEquipments()
+    }
+  }, [customers])
 
   // 제조사별 모델명 목록 가져오기
   const getAvailableModels = (manufacturer: string) => {
@@ -104,33 +127,57 @@ export default function EquipmentPage() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // 모델명 처리: CUSTOM 선택 시 customModel 사용, 아니면 model 사용
-    const finalModel = formData.model === 'CUSTOM' ? formData.customModel : formData.model
-    
-    const newEquipment: Equipment = {
-      id: Date.now(),
-      ...formData,
-      model: finalModel,
-      registrationDate: new Date().toISOString().split('T')[0]
-    }
+    try {
+      // 고객 ID 찾기
+      const customer = customers.find(c => c.name === formData.customerName)
+      if (!customer) {
+        alert('선택한 고객을 찾을 수 없습니다.')
+        return
+      }
 
-    setEquipments(prev => [newEquipment, ...prev])
-    setFormData({
-      customerName: '',
-      equipmentType: '',
-      manufacturer: '',
-      model: '',
-      customModel: '',
-      serialNumber: '',
-      usageHours: 0,
-      ecuType: '',
-      acuType: '',
-      notes: ''
-    })
-    setIsFormOpen(false)
+      // 모델명 처리: CUSTOM 선택 시 customModel 사용, 아니면 model 사용
+      const finalModel = formData.model === 'CUSTOM' ? formData.customModel : formData.model
+      
+      const equipmentData: Omit<EquipmentData, 'id' | 'createdAt' | 'updatedAt'> = {
+        customerId: customer.id,
+        equipmentType: formData.equipmentType,
+        manufacturer: formData.manufacturer,
+        model: finalModel,
+        serialNumber: formData.serialNumber || undefined,
+        engineType: formData.ecuType || undefined,
+        horsepower: formData.usageHours || undefined,
+        notes: formData.notes || undefined
+      }
+
+      const newEquipment = await createEquipment(equipmentData)
+      
+      if (newEquipment) {
+        // 성공적으로 생성되면 목록 새로고침
+        await loadEquipments()
+        
+        setFormData({
+          customerName: '',
+          equipmentType: '',
+          manufacturer: '',
+          model: '',
+          customModel: '',
+          serialNumber: '',
+          usageHours: 0,
+          ecuType: '',
+          acuType: '',
+          notes: ''
+        })
+        setIsFormOpen(false)
+      } else {
+        alert('장비 등록 중 오류가 발생했습니다.')
+      }
+    } catch (error) {
+      console.error('Failed to create equipment:', error)
+      alert('장비 등록 중 오류가 발생했습니다.')
+    }
   }
 
   const filteredEquipments = equipments.filter(equipment => {
@@ -145,9 +192,20 @@ export default function EquipmentPage() {
     return matchesSearch && matchesType && matchesManufacturer
   })
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('정말로 이 장비를 삭제하시겠습니까?')) {
-      setEquipments(prev => prev.filter(equipment => equipment.id !== id))
+      try {
+        const success = await deleteEquipment(id)
+        if (success) {
+          // 성공적으로 삭제되면 목록 새로고침
+          await loadEquipments()
+        } else {
+          alert('장비 삭제 중 오류가 발생했습니다.')
+        }
+      } catch (error) {
+        console.error('Failed to delete equipment:', error)
+        alert('장비 삭제 중 오류가 발생했습니다.')
+      }
     }
   }
 
@@ -224,7 +282,14 @@ export default function EquipmentPage() {
       </div>
 
       {/* 장비 목록 */}
-      {viewMode === 'table' ? (
+      {isLoadingEquipments ? (
+        <div className="bg-white rounded-lg shadow p-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">장비 데이터를 불러오는 중...</p>
+          </div>
+        </div>
+      ) : viewMode === 'table' ? (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -356,15 +421,21 @@ export default function EquipmentPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       고객명 *
                     </label>
-                    <input
-                      type="text"
+                    <select
                       name="customerName"
                       value={formData.customerName}
                       onChange={handleInputChange}
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="고객명을 입력하세요"
-                    />
+                      disabled={isLoadingCustomers}
+                    >
+                      <option value="">
+                        {isLoadingCustomers ? '고객 목록 로딩 중...' : '고객을 선택하세요'}
+                      </option>
+                      {customers.map(customer => (
+                        <option key={customer.id} value={customer.name}>{customer.name}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
@@ -492,7 +563,7 @@ export default function EquipmentPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">선택하세요</option>
-                      {ECU_TYPES.map(type => (
+                      {ECU_MODELS.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
                     </select>
@@ -510,7 +581,7 @@ export default function EquipmentPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">선택하세요</option>
-                      {ACU_TYPES.map(type => (
+                      {ECU_MODELS.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
                     </select>

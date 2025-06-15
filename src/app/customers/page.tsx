@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Script from 'next/script'
-import { CUSTOMERS_DATA } from '@/constants'
+import { getAllCustomers, createCustomer, createMultipleCustomers, deleteCustomer, CustomerData } from '@/lib/customers'
 
 interface Customer {
   id: number
@@ -15,8 +15,9 @@ interface Customer {
 }
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>(CUSTOMERS_DATA)
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [customerForm, setCustomerForm] = useState({
     name: '',
     phone: '',
@@ -30,6 +31,29 @@ export default function CustomersPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const itemsPerPage = 10
+  
+  // 엑셀 업로드 관련 state
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadResults, setUploadResults] = useState<{success: number, errors: string[]}>({success: 0, errors: []})
+  const [showUploadModal, setShowUploadModal] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 고객 데이터 로드
+  useEffect(() => {
+    loadCustomers()
+  }, [])
+
+  const loadCustomers = async () => {
+    setIsLoading(true)
+    try {
+      const data = await getAllCustomers()
+      setCustomers(data)
+    } catch (error) {
+      console.error('Failed to load customers:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // 전화번호 자동 포맷팅 함수
   const formatPhoneNumber = (value: string) => {
@@ -139,24 +163,35 @@ export default function CustomersPage() {
   }
 
   // 고객 등록 처리
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    const newCustomer: Customer = {
-      id: Date.now(),
-      ...customerForm,
-      registrationDate: new Date().toISOString().split('T')[0]
-    }
+    try {
+      const newCustomer = await createCustomer({
+        name: customerForm.name,
+        phone: customerForm.phone,
+        zipCode: customerForm.zipCode,
+        roadAddress: customerForm.roadAddress,
+        jibunAddress: customerForm.jibunAddress
+      })
 
-    setCustomers(prev => [newCustomer, ...prev])
-    setCustomerForm({
-      name: '',
-      phone: '',
-      zipCode: '',
-      roadAddress: '',
-      jibunAddress: ''
-    })
-    setIsFormOpen(false)
+      if (newCustomer) {
+        setCustomers(prev => [newCustomer, ...prev])
+        setCustomerForm({
+          name: '',
+          phone: '',
+          zipCode: '',
+          roadAddress: '',
+          jibunAddress: ''
+        })
+        setIsFormOpen(false)
+      } else {
+        alert('고객 등록 중 오류가 발생했습니다.')
+      }
+    } catch (error) {
+      console.error('Failed to create customer:', error)
+      alert('고객 등록 중 오류가 발생했습니다.')
+    }
   }
 
   // 검색 필터링된 고객 목록
@@ -180,10 +215,165 @@ export default function CustomersPage() {
   }
 
   // 고객 삭제
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('정말로 이 고객을 삭제하시겠습니까?')) {
-      setCustomers(prev => prev.filter(customer => customer.id !== id))
+      try {
+        const success = await deleteCustomer(id)
+        if (success) {
+          setCustomers(prev => prev.filter(customer => customer.id !== id))
+        } else {
+          alert('고객 삭제 중 오류가 발생했습니다.')
+        }
+      } catch (error) {
+        console.error('Failed to delete customer:', error)
+        alert('고객 삭제 중 오류가 발생했습니다.')
+      }
     }
+  }
+
+  // 엑셀/CSV 파일 처리 함수
+  const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    setUploadResults({success: 0, errors: []})
+
+    try {
+      let data: string[][]
+
+      // 파일 확장자에 따른 처리
+      const fileExtension = file.name.split('.').pop()?.toLowerCase()
+      
+      if (fileExtension === 'csv') {
+        // CSV 파일 처리
+        const text = await file.text()
+        const lines = text.split('\n').filter(line => line.trim())
+        
+        if (lines.length === 0) {
+          throw new Error('파일이 비어있습니다.')
+        }
+
+        data = lines.map(line => 
+          line.split(',').map(col => col.trim().replace(/"/g, ''))
+        )
+      } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+        // 엑셀 파일 처리 (동적 import 사용)
+        try {
+          // xlsx 라이브러리를 동적으로 로드
+          const XLSX = await import('xlsx')
+          const arrayBuffer = await file.arrayBuffer()
+          const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+          const sheetName = workbook.SheetNames[0]
+          const worksheet = workbook.Sheets[sheetName]
+          data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][]
+        } catch (xlsxError) {
+          console.error('XLSX Error:', xlsxError)
+          throw new Error('엑셀 파일을 읽을 수 없습니다. xlsx 라이브러리가 설치되지 않았거나 파일이 손상되었을 수 있습니다.')
+        }
+      } else {
+        throw new Error('지원하지 않는 파일 형식입니다. CSV, XLS, XLSX 파일만 업로드 가능합니다.')
+      }
+
+      if (data.length === 0) {
+        throw new Error('파일이 비어있습니다.')
+      }
+
+      // 첫 번째 줄은 헤더로 간주하고 건너뛰기
+      const dataRows = data.slice(1)
+      const newCustomers: Customer[] = []
+      const errors: string[] = []
+
+      dataRows.forEach((row, index) => {
+        try {
+          if (row.length < 2) {
+            errors.push(`${index + 2}행: 필수 정보가 부족합니다. (이름, 전화번호 필요)`)
+            return
+          }
+
+          const [name, phone, zipCode, roadAddress, jibunAddress] = row.map(cell => 
+            cell ? String(cell).trim() : ''
+          )
+          
+          if (!name || !phone) {
+            errors.push(`${index + 2}행: 이름과 전화번호는 필수입니다.`)
+            return
+          }
+
+          // 전화번호 포맷팅
+          const formattedPhone = formatPhoneNumber(phone)
+
+          const customerData = {
+            name: name,
+            phone: formattedPhone,
+            zipCode: zipCode || '',
+            roadAddress: roadAddress || '',
+            jibunAddress: jibunAddress || ''
+          }
+
+          newCustomers.push(customerData)
+        } catch (error) {
+          errors.push(`${index + 2}행: 데이터 처리 중 오류가 발생했습니다.`)
+        }
+      })
+
+      // Supabase에 일괄 등록
+      if (newCustomers.length > 0) {
+        const result = await createMultipleCustomers(newCustomers)
+        
+        // 성공한 고객들을 목록에 추가
+        if (result.success.length > 0) {
+          setCustomers(prev => [...result.success, ...prev])
+        }
+
+        setUploadResults({
+          success: result.success.length,
+          errors: [...errors, ...result.errors]
+        })
+      } else {
+        setUploadResults({
+          success: 0,
+          errors: errors
+        })
+      }
+
+    } catch (error) {
+      setUploadResults({
+        success: 0,
+        errors: [error instanceof Error ? error.message : '파일 처리 중 오류가 발생했습니다.']
+      })
+    } finally {
+      setIsUploading(false)
+      setShowUploadModal(true)
+      // 파일 입력 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  // 샘플 파일 다운로드
+  const downloadSampleFile = () => {
+    const sampleData = [
+      ['이름', '전화번호', '우편번호', '도로명주소', '지번주소'],
+      ['김농부', '010-1234-5678', '18576', '경기도 화성시 농업로 123', '경기도 화성시 농업동 101-5'],
+      ['이농장', '010-9876-5432', '31116', '충청남도 천안시 동남구 농장길 456', '충청남도 천안시 동남구 농장동 456-2'],
+      ['박트랙터', '010-5555-1234', '54896', '전라북도 전주시 덕진구 기계로 789', '전라북도 전주시 덕진구 기계동 789-10']
+    ]
+
+    const csvContent = sampleData.map(row => 
+      row.map(cell => `"${cell}"`).join(',')
+    ).join('\n')
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', '고객_업로드_샘플.csv')
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
@@ -200,12 +390,36 @@ export default function CustomersPage() {
             <h1 className="text-3xl font-bold text-gray-900">고객 관리</h1>
             <p className="mt-2 text-gray-600">고객 정보를 등록하고 관리합니다.</p>
           </div>
-          <button
-            onClick={() => setIsFormOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + 고객 등록
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={downloadSampleFile}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              📄 샘플 다운로드
+            </button>
+            <div className="relative">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleExcelUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+              >
+                {isUploading ? '📤 업로드 중...' : '📤 엑셀/CSV 업로드'}
+              </button>
+            </div>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              + 고객 등록
+            </button>
+          </div>
         </div>
 
         {/* 검색 및 필터 */}
@@ -241,7 +455,14 @@ export default function CustomersPage() {
         </div>
 
         {/* 고객 목록 */}
-        {viewMode === 'table' ? (
+        {isLoading ? (
+          <div className="bg-white rounded-lg shadow p-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">고객 데이터를 불러오는 중...</p>
+            </div>
+          </div>
+        ) : viewMode === 'table' ? (
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -469,6 +690,103 @@ export default function CustomersPage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 엑셀 업로드 결과 모달 */}
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">업로드 결과</h2>
+                  <button
+                    onClick={() => setShowUploadModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* 성공 결과 */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <h3 className="text-lg font-medium text-green-800">
+                        성공적으로 등록된 고객: {uploadResults.success}명
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* 오류 결과 */}
+                  {uploadResults.errors.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-start">
+                        <svg className="w-5 h-5 text-red-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-medium text-red-800 mb-2">
+                            오류 발생: {uploadResults.errors.length}건
+                          </h3>
+                          <div className="max-h-40 overflow-y-auto">
+                            <ul className="text-sm text-red-700 space-y-1">
+                              {uploadResults.errors.map((error, index) => (
+                                <li key={index} className="flex items-start">
+                                  <span className="mr-2">•</span>
+                                  <span>{error}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 안내 메시지 */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                                             <div className="text-sm text-blue-700">
+                         <p className="font-medium mb-1">업로드 파일 형식 안내:</p>
+                         <ul className="space-y-1">
+                           <li>• CSV, XLS, XLSX 파일 형식을 지원합니다</li>
+                           <li>• 첫 번째 줄은 헤더로 처리됩니다</li>
+                           <li>• 컬럼 순서: 이름, 전화번호, 우편번호, 도로명주소, 지번주소</li>
+                           <li>• 이름과 전화번호는 필수 항목입니다</li>
+                           <li>• 우편번호, 도로명주소, 지번주소는 선택 항목입니다</li>
+                           <li>• 중복된 고객(이름+전화번호)은 자동으로 제외됩니다</li>
+                           <li>• 엑셀 파일의 경우 첫 번째 시트만 처리됩니다</li>
+                         </ul>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-6 border-t">
+                  <button
+                    onClick={downloadSampleFile}
+                    className="px-4 py-2 text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
+                  >
+                    📄 샘플 파일 다운로드
+                  </button>
+                  <button
+                    onClick={() => setShowUploadModal(false)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    확인
+                  </button>
+                </div>
               </div>
             </div>
           </div>
