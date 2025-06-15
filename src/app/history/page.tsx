@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ECU_TYPES, CONNECTION_METHODS, ECU_EQUIPMENT, TUNING_WORK, EQUIPMENT_TYPES, MANUFACTURERS } from '@/constants'
+import { ECU_TYPES, CONNECTION_METHODS, ECU_TOOLS, TUNING_WORKS, EQUIPMENT_TYPES, MANUFACTURERS, TRACTOR_MODELS, MANUFACTURER_MODELS, WORK_HISTORY_DATA, WORK_STATUS } from '@/constants'
 
 export default function HistoryPage() {
   const [filters, setFilters] = useState({
@@ -10,17 +10,70 @@ export default function HistoryPage() {
     customer: '',
     equipmentType: '',
     manufacturer: '',
+    model: '',
     ecuType: '',
     tuningWork: '',
     status: ''
   })
   
-  const [workRecords] = useState([])
+  const [workRecords] = useState(WORK_HISTORY_DATA)
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+
+  // 제조사별 모델명 목록 가져오기
+  const getAvailableModels = (manufacturer: string) => {
+    return MANUFACTURER_MODELS[manufacturer] || []
+  }
+
+  // 필터링된 작업 목록
+  const filteredWorkRecords = workRecords.filter(record => {
+    // 날짜 필터링
+    if (filters.dateFrom && record.workDate < filters.dateFrom) return false
+    if (filters.dateTo && record.workDate > filters.dateTo) return false
+    
+    // 고객명 필터링
+    if (filters.customer && !record.customerName.toLowerCase().includes(filters.customer.toLowerCase())) return false
+    
+    // 장비종류 필터링
+    if (filters.equipmentType && record.equipmentType !== filters.equipmentType) return false
+    
+    // 제조사 필터링
+    if (filters.manufacturer && record.manufacturer !== filters.manufacturer) return false
+    
+    // 모델명 필터링
+    if (filters.model && record.model !== filters.model) return false
+    
+    // ECU 타입 필터링
+    if (filters.ecuType && record.ecuType !== filters.ecuType) return false
+    
+    // 튜닝작업 필터링
+    if (filters.tuningWork && record.tuningWork !== filters.tuningWork) {
+      // "기타"가 선택된 경우 customTuningWork도 확인
+      if (filters.tuningWork === '기타' && record.tuningWork === '기타') {
+        // 통과 (기타끼리 매칭)
+      } else {
+        return false
+      }
+    }
+    
+    // 작업상태 필터링
+    if (filters.status && record.status !== filters.status) return false
+    
+    return true
+  })
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFilters(prev => ({ ...prev, [name]: value }))
+    
+    if (name === 'manufacturer') {
+      // 제조사 변경 시 모델명 초기화
+      setFilters(prev => ({ 
+        ...prev, 
+        [name]: value,
+        model: ''
+      }))
+    } else {
+      setFilters(prev => ({ ...prev, [name]: value }))
+    }
   }
 
   const clearFilters = () => {
@@ -30,6 +83,7 @@ export default function HistoryPage() {
       customer: '',
       equipmentType: '',
       manufacturer: '',
+      model: '',
       ecuType: '',
       tuningWork: '',
       status: ''
@@ -71,26 +125,6 @@ export default function HistoryPage() {
         <h2 className="text-lg font-medium text-gray-900 mb-4">검색 필터</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">시작일</label>
-            <input
-              type="date"
-              name="dateFrom"
-              value={filters.dateFrom}
-              onChange={handleFilterChange}
-              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">종료일</label>
-            <input
-              type="date"
-              name="dateTo"
-              value={filters.dateTo}
-              onChange={handleFilterChange}
-              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">고객명</label>
             <input
               type="text"
@@ -130,6 +164,38 @@ export default function HistoryPage() {
             </select>
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">모델명</label>
+            <select
+              name="model"
+              value={filters.model}
+              onChange={handleFilterChange}
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              disabled={!filters.manufacturer}
+            >
+              <option value="">전체</option>
+              {filters.manufacturer && getAvailableModels(filters.manufacturer).map((model) => (
+                <option key={model} value={model}>{model}</option>
+              ))}
+            </select>
+            {!filters.manufacturer && (
+              <p className="text-xs text-gray-500 mt-1">제조사를 먼저 선택하세요</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">튜닝 작업</label>
+            <select
+              name="tuningWork"
+              value={filters.tuningWork}
+              onChange={handleFilterChange}
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">전체</option>
+              {TUNING_WORKS.map((work) => (
+                <option key={work} value={work}>{work}</option>
+              ))}
+            </select>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">ECU 타입</label>
             <select
               name="ecuType"
@@ -144,20 +210,6 @@ export default function HistoryPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">튜닝 작업</label>
-            <select
-              name="tuningWork"
-              value={filters.tuningWork}
-              onChange={handleFilterChange}
-              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">전체</option>
-              {TUNING_WORK.map((work) => (
-                <option key={work} value={work}>{work}</option>
-              ))}
-            </select>
-          </div>
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">작업 상태</label>
             <select
               name="status"
@@ -166,90 +218,48 @@ export default function HistoryPage() {
               className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">전체</option>
-              <option value="completed">완료</option>
-              <option value="failed">실패</option>
-              <option value="in_progress">진행중</option>
+              {WORK_STATUS.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
             </select>
           </div>
-        </div>
-        <div className="mt-4 flex justify-end space-x-2">
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            초기화
-          </button>
-          <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            검색
-          </button>
-        </div>
-      </div>
-
-      {/* 작업 통계 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">총 작업 수</p>
-              <p className="text-2xl font-semibold text-gray-900">0</p>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">시작일</label>
+            <input
+              type="date"
+              name="dateFrom"
+              value={filters.dateFrom}
+              onChange={handleFilterChange}
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">종료일</label>
+            <input
+              type="date"
+              name="dateTo"
+              value={filters.dateTo}
+              onChange={handleFilterChange}
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
           </div>
         </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">완료 작업</p>
-              <p className="text-2xl font-semibold text-gray-900">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">실패 작업</p>
-              <p className="text-2xl font-semibold text-gray-900">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">총 수익</p>
-              <p className="text-2xl font-semibold text-gray-900">₩0</p>
-            </div>
+        <div className="mt-4 flex justify-between items-center">
+          <p className="text-sm text-gray-500">
+            💡 기간을 입력하지 않으면 모든 기간의 자료를 검색합니다.
+          </p>
+          <div className="flex space-x-2">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              초기화
+            </button>
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              검색
+            </button>
           </div>
         </div>
       </div>
@@ -260,7 +270,7 @@ export default function HistoryPage() {
           <h2 className="text-lg font-medium text-gray-900">작업 목록</h2>
         </div>
         <div className="p-6">
-          {workRecords.length === 0 ? (
+          {filteredWorkRecords.length === 0 ? (
             <div className="text-center py-12">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M34 40h10v-4a6 6 0 00-10.712-3.714M34 40H14m20 0v-4a9.971 9.971 0 00-.712-3.714M14 40H4v-4a6 6 0 0110.712-3.714M14 40v-4a9.971 9.971 0 01.712-3.714m0 0A9.971 9.971 0 0118 32a9.971 9.971 0 013.288.714M14 36.286A9.971 9.971 0 0118 36c1.408 0 2.742.29 3.962.714" />
@@ -309,13 +319,129 @@ export default function HistoryPage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {/* 작업 데이터 렌더링 */}
+                      {filteredWorkRecords.map((record) => (
+                        <tr key={record.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {record.workDate}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{record.customerName}</div>
+                            <div className="text-sm text-gray-500">{record.equipmentType}</div>
+                            <div className="text-xs text-gray-400">{record.manufacturer} {record.model}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{record.ecuType}</div>
+                            <div className="text-sm text-gray-500">
+                              {record.tuningWork === '기타' && record.customTuningWork 
+                                ? record.customTuningWork 
+                                : record.tuningWork}
+                            </div>
+                            <div className="text-xs text-gray-400">{record.connectionMethod}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              record.status === '완료' 
+                                ? 'bg-green-100 text-green-800'
+                                : record.status === '진행중'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : record.status === '예약'
+                                ? 'bg-blue-100 text-blue-800'
+                                : record.status === 'AS'
+                                ? 'bg-orange-100 text-orange-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {record.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {(record.price / 10000).toLocaleString()}만원
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button className="text-blue-600 hover:text-blue-900 mr-3">
+                              상세보기
+                            </button>
+                            <button className="text-gray-600 hover:text-gray-900">
+                              수정
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* 작업 카드 렌더링 */}
+                  {filteredWorkRecords.map((record) => (
+                    <div key={record.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">{record.customerName}</h3>
+                          <p className="text-sm text-gray-500">{record.workDate}</p>
+                        </div>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          record.status === '완료' 
+                            ? 'bg-green-100 text-green-800'
+                            : record.status === '진행중'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : record.status === '예약'
+                            ? 'bg-blue-100 text-blue-800'
+                            : record.status === 'AS'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {record.status}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-500">장비:</span>
+                          <span className="text-sm text-gray-900">{record.equipmentType}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-500">제조사:</span>
+                          <span className="text-sm text-gray-900">{record.manufacturer}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-500">모델:</span>
+                          <span className="text-sm text-gray-900">{record.model}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-500">ECU:</span>
+                          <span className="text-sm text-gray-900">{record.ecuType}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-500">작업:</span>
+                          <span className="text-sm text-gray-900">
+                            {record.tuningWork === '기타' && record.customTuningWork 
+                              ? record.customTuningWork 
+                              : record.tuningWork}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-500">금액:</span>
+                          <span className="text-sm font-medium text-gray-900">{(record.price / 10000).toLocaleString()}만원</span>
+                        </div>
+                      </div>
+                      
+                      {record.notes && (
+                        <div className="mb-4">
+                          <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                            {record.notes}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="flex space-x-2">
+                        <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
+                          상세보기
+                        </button>
+                        <button className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200">
+                          수정
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </>
