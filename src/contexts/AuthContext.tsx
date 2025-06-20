@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      await recordLoginAttempt(email, 'email')
+      // 로그인 시도 기록은 결과에 따라 나중에 처리
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -110,11 +110,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (error) {
-        await logLoginAttempt(email, 'email', false, error.message)
+        recordLoginAttempt(email, false)
+        logLoginAttempt(email, false)
         throw error
       }
 
-      await logLoginAttempt(email, 'email', true)
+      recordLoginAttempt(email, true)
+      logLoginAttempt(email, true)
       console.log('✅ 관리자 로그인 성공:', email)
     } catch (error) {
       console.error('❌ 로그인 실패:', error)

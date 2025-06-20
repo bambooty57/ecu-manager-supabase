@@ -228,7 +228,7 @@ export default function EquipmentPage() {
       // 모델명 처리: CUSTOM 선택 시 customModel 사용, 아니면 model 사용
       const finalModel = editFormData.model === 'CUSTOM' ? editFormData.customModel : editFormData.model
       
-      const updateData: Partial<Omit<EquipmentData, 'id' | 'createdAt' | 'updatedAt'>> = {
+              const updateData: Partial<Omit<EquipmentData, 'id' | 'createdAt' | 'updatedAt'>> = {
         customerId: customer.id,
         equipmentType: editFormData.equipmentType,
         manufacturer: editFormData.manufacturer,

@@ -1,21 +1,21 @@
 // 보안 관련 유틸리티 함수들
 
 // 허용된 이메일 도메인 목록 (필요시 수정)
-const ALLOWED_EMAIL_DOMAINS = [
+const ALLOWED_EMAIL_DOMAINS: string[] = [
   // 예시: 회사 도메인만 허용
   // 'company.com',
   // 'organization.co.kr'
 ]
 
 // 허용된 이메일 주소 목록 (관리자가 직접 관리)
-const ALLOWED_EMAILS = [
+const ALLOWED_EMAILS: string[] = [
   // 예시: 특정 이메일만 허용
   // 'admin@company.com',
   // 'manager@company.com'
 ]
 
 // 시스템 관리자 이메일 (관리자 페이지 접근 권한)
-const ADMIN_EMAILS = [
+const ADMIN_EMAILS: string[] = [
   'bambooty57@gmail.com'
 ]
 

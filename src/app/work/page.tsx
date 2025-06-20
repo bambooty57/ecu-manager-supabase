@@ -322,7 +322,7 @@ export default function WorkPage() {
       workDetails: work.workDetails,
       price: work.price,
       status: work.status,
-      files: work.files
+      files: work.files as any
     })
 
     // 작업 선택 상태 복원
@@ -567,7 +567,7 @@ export default function WorkPage() {
         }
 
         // Supabase에 저장할 작업 기록 데이터 생성
-        const workRecordData: Omit<WorkRecordData, 'id' | 'createdAt' | 'updatedAt'> = {
+                 const workRecordData: Omit<WorkRecordData, 'id' | 'createdAt' | 'updatedAt'> = {
           customerId: parseInt(formData.customerId),
           equipmentId: parseInt(formData.equipmentId),
           workDate: formData.workDate,
@@ -821,7 +821,7 @@ export default function WorkPage() {
               {formData.equipmentId && (
                 <div className="mt-2 p-3 bg-green-50 rounded-md">
                   <p className="text-sm text-green-700">
-                    🚜 {availableEquipment.find(e => e.id.toString() === formData.equipmentId)?.serial}
+                    🚜 {availableEquipment.find(e => e.id.toString() === formData.equipmentId)?.serialNumber}
                   </p>
                 </div>
               )}
@@ -853,7 +853,7 @@ export default function WorkPage() {
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900">Remapping #{index + 1}</h4>
                         <div className="mt-2 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                          <div><span className="font-medium">ECU 타입:</span> {work.ecuCategory}</div>
+                          <div><span className="font-medium">ECU 타입:</span> {work.ecuType}</div>
                           <div><span className="font-medium">장비:</span> {work.ecuToolCategory}</div>
                           <div><span className="font-medium">연결:</span> {work.connectionMethod}</div>
                           <div><span className="font-medium">상태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.status === '완료' ? 'bg-green-100 text-green-800' : work.status === '진행중' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.status}</span></div>
@@ -1184,8 +1184,7 @@ export default function WorkPage() {
                         id="original-folder"
                         className="hidden"
                         multiple
-                        webkitdirectory=""
-                        directory=""
+                        {...({ webkitdirectory: "", directory: "" } as any)}
                         onChange={(e) => {
                           const files = Array.from(e.target.files || [])
                           handleFileChange('originalFiles', files)
@@ -1254,7 +1253,7 @@ export default function WorkPage() {
                         >
                           <span className="text-green-700">
                             {currentRemappingWork.files.stage1File 
-                              ? `📄 ${currentRemappingWork.files.stage1File.name} (${(currentRemappingWork.files.stage1File.size / 1024).toFixed(1)} KB)` 
+                              ? `📄 ${(currentRemappingWork.files.stage1File as File).name} (${((currentRemappingWork.files.stage1File as File).size / 1024).toFixed(1)} KB)` 
                               : '📄 1차 튜닝 파일 선택'}
                           </span>
                         </label>
@@ -1289,7 +1288,7 @@ export default function WorkPage() {
                         >
                           <span className="text-yellow-800">
                             {currentRemappingWork.files.stage2File 
-                              ? `⚡ ${currentRemappingWork.files.stage2File.name} (${(currentRemappingWork.files.stage2File.size / 1024).toFixed(1)} KB)` 
+                              ? `⚡ ${(currentRemappingWork.files.stage2File as File).name} (${((currentRemappingWork.files.stage2File as File).size / 1024).toFixed(1)} KB)` 
                               : '⚡ 2차 튜닝 파일 선택'}
                           </span>
                         </label>
@@ -1324,7 +1323,7 @@ export default function WorkPage() {
                         >
                           <span className="text-red-800">
                             {currentRemappingWork.files.stage3File 
-                              ? `🔥 ${currentRemappingWork.files.stage3File.name} (${(currentRemappingWork.files.stage3File.size / 1024).toFixed(1)} KB)` 
+                              ? `🔥 ${(currentRemappingWork.files.stage3File as File).name} (${((currentRemappingWork.files.stage3File as File).size / 1024).toFixed(1)} KB)` 
                               : '🔥 3차 튜닝 파일 선택'}
                           </span>
                         </label>

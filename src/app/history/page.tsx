@@ -373,8 +373,8 @@ export default function HistoryPage() {
           name: customer.name,
           phone: customer.phone,
           address: customer.roadAddress || customer.jibunAddress || 'N/A',
-          registrationDate: new Date(customer.createdAt).toLocaleDateString('ko-KR'),
-          notes: customer.notes || ''
+          registrationDate: customer.registrationDate,
+          notes: ''
         })
         setShowCustomerModal(true)
       } else {
