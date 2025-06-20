@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { useState } from 'react'
 
 export default function Navigation() {
@@ -36,7 +37,7 @@ export default function Navigation() {
             </div>
             <div className="hidden md:ml-10 md:flex md:space-x-8">
               {navigation.map((item) => (
-                <a
+                <Link
                   key={item.name}
                   href={item.href}
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
@@ -46,7 +47,7 @@ export default function Navigation() {
                   }`}
                 >
                   {item.name}
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -91,7 +92,7 @@ export default function Navigation() {
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
                 className={`block px-3 py-2 rounded-md text-base font-medium ${
@@ -102,7 +103,7 @@ export default function Navigation() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
             <div className="px-3 py-2 border-t border-gray-200">
               <div className="text-sm text-gray-600 mb-2">{user?.email}</div>
