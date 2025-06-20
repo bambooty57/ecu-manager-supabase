@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ACU_TYPES, CONNECTION_METHODS, ECU_TOOLS_FLAT, TUNING_WORKS, EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, WORK_STATUS, ECU_MODELS } from '@/constants'
-import { getAllWorkRecords, updateWorkRecord, WorkRecordData } from '@/lib/work-records'
+import { getAllWorkRecords, updateWorkRecord, deleteWorkRecord, WorkRecordData } from '@/lib/work-records'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getAllEquipment, EquipmentData } from '@/lib/equipment'
 
@@ -38,6 +38,27 @@ export default function HistoryPage() {
   // 데이터 로드
   useEffect(() => {
     loadAllData()
+  }, [])
+
+  // 페이지 포커스 시 데이터 새로고침
+  useEffect(() => {
+    const handleFocus = () => {
+      loadAllData()
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadAllData()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const loadAllData = async () => {
@@ -230,6 +251,57 @@ export default function HistoryPage() {
     } catch (error) {
       console.error('파일 다운로드 오류:', error)
       alert('파일 다운로드 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 카테고리별 일괄 다운로드 핸들러
+  const handleCategoryDownload = async (files: any[], categoryName: string) => {
+    try {
+      if (files.length === 1) {
+        // 파일이 1개면 개별 다운로드
+        handleFileDownload(files[0])
+        return
+      }
+
+      // 여러 파일이면 순차적으로 다운로드
+      const downloadPromises = files.map((file, index) => {
+        return new Promise<void>((resolve) => {
+          setTimeout(() => {
+            handleFileDownload(file)
+            resolve()
+          }, index * 500) // 500ms 간격으로 다운로드
+        })
+      })
+
+      await Promise.all(downloadPromises)
+      alert(`${categoryName} 파일들이 모두 다운로드되었습니다.`)
+    } catch (error) {
+      console.error('일괄 다운로드 오류:', error)
+      alert('파일 다운로드 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 작업 기록 삭제 핸들러
+  const handleDeleteRecord = async (record: any) => {
+    const confirmMessage = `정말로 다음 작업 기록을 삭제하시겠습니까?\n\n고객: ${record.customerName}\n작업일: ${record.workDate}\n작업 내용: ${record.workDescription || record.workType}\n\n⚠️ 이 작업은 되돌릴 수 없습니다.`
+    
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    try {
+      const success = await deleteWorkRecord(record.id)
+      
+      if (success) {
+        // 목록에서 삭제된 항목 제거
+        setWorkRecords(prev => prev.filter(r => r.id !== record.id))
+        alert('작업 기록이 성공적으로 삭제되었습니다.')
+      } else {
+        alert('작업 기록 삭제에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('작업 기록 삭제 오류:', error)
+      alert('작업 기록 삭제 중 오류가 발생했습니다.')
     }
   }
 
@@ -596,12 +668,23 @@ export default function HistoryPage() {
                             {(record.price / 10000).toLocaleString()}만원
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button 
-                              onClick={() => handleViewDetail(record)}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              상세보기
-                            </button>
+                            <div className="flex space-x-2">
+                              <button 
+                                onClick={() => handleViewDetail(record)}
+                                className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200 cursor-pointer"
+                              >
+                                상세보기
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteRecord(record)}
+                                className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded transition-all duration-200 cursor-pointer"
+                                title="삭제"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -674,9 +757,18 @@ export default function HistoryPage() {
                       <div className="flex space-x-2">
                         <button 
                           onClick={() => handleViewDetail(record)}
-                          className="w-full bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
+                          className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 hover:shadow-md transform hover:scale-105 transition-all duration-200 cursor-pointer"
                         >
                           상세보기
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteRecord(record)}
+                          className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 hover:shadow-md transform hover:scale-105 transition-all duration-200 cursor-pointer flex items-center justify-center"
+                          title="삭제"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </div>
                     </div>
@@ -802,7 +894,18 @@ export default function HistoryPage() {
             {/* 파일 다운로드 섹션 */}
             {selectedRecord.files && selectedRecord.files.length > 0 && (
               <div className="mt-6">
-                <h4 className="text-md font-medium text-gray-900 border-b pb-2 mb-3">첨부 파일</h4>
+                <div className="flex justify-between items-center border-b pb-2 mb-3">
+                  <h4 className="text-md font-medium text-gray-900">첨부 파일</h4>
+                  <button
+                    onClick={() => handleCategoryDownload(selectedRecord.files, `${selectedRecord.customerName}_${selectedRecord.workDate}_전체파일`)}
+                    className="bg-purple-600 text-white text-sm px-3 py-1 rounded hover:bg-purple-700 transition-colors flex items-center space-x-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>📦 전체 파일 다운로드</span>
+                  </button>
+                </div>
                 
                 {/* 파일 카테고리별 분류 */}
                 {(() => {
@@ -814,11 +917,16 @@ export default function HistoryPage() {
                   }, {})
 
                   const categoryNames: { [key: string]: string } = {
-                    original: '📄 원본 ECU 파일',
-                    stage1: '📈 Stage 1 파일',
-                    stage2: '🚀 Stage 2 파일', 
-                    stage3: '🔥 Stage 3 파일',
-                    media: '📷 미디어 파일',
+                    original: '📁 원본 ECU 폴더',
+                    stage1: '📈 1차 튜닝 파일',
+                    stage2: '🚀 2차 튜닝 파일', 
+                    stage3: '🔥 3차 튜닝 파일',
+                    media1: '📷 미디어 파일 1',
+                    media2: '📷 미디어 파일 2',
+                    media3: '📷 미디어 파일 3',
+                    media4: '📷 미디어 파일 4',
+                    media5: '📷 미디어 파일 5',
+                    media: '📷 미디어 파일 (구버전)',
                     other: '📁 기타 파일'
                   }
 
@@ -827,24 +935,56 @@ export default function HistoryPage() {
                     stage1: 'bg-green-50 border-green-200',
                     stage2: 'bg-yellow-50 border-yellow-200',
                     stage3: 'bg-red-50 border-red-200',
+                    media1: 'bg-purple-50 border-purple-200',
+                    media2: 'bg-purple-50 border-purple-200',
+                    media3: 'bg-purple-50 border-purple-200',
+                    media4: 'bg-purple-50 border-purple-200',
+                    media5: 'bg-purple-50 border-purple-200',
                     media: 'bg-blue-50 border-blue-200',
-                    other: 'bg-purple-50 border-purple-200'
+                    other: 'bg-indigo-50 border-indigo-200'
                   }
 
                   return Object.entries(filesByCategory).map(([category, files]: [string, any]) => (
                     <div key={category} className={`mb-4 p-4 rounded-lg border ${categoryColors[category] || categoryColors.other}`}>
-                      <h5 className="text-sm font-medium text-gray-800 mb-3">
-                        {categoryNames[category] || categoryNames.other} ({files.length}개)
-                      </h5>
+                      <div className="flex justify-between items-center mb-3">
+                        <h5 className="text-sm font-medium text-gray-800">
+                          {categoryNames[category] || categoryNames.other} ({files.length}개)
+                        </h5>
+                        {files.length > 1 && (
+                          <button
+                            onClick={() => handleCategoryDownload(files, categoryNames[category] || categoryNames.other)}
+                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors"
+                          >
+                            📦 전체 다운로드
+                          </button>
+                        )}
+                      </div>
                       <div className="space-y-2">
                         {files.map((file: any, index: number) => (
                           <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
                             <div className="flex items-center space-x-3">
-                              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
+                              {/* 파일 아이콘 또는 미리보기 */}
+                              {file.type && file.type.startsWith('image/') && file.data ? (
+                                <img
+                                  src={`data:${file.type};base64,${file.data}`}
+                                  alt={file.name}
+                                  className="w-10 h-10 object-cover rounded border"
+                                />
+                              ) : file.type && file.type.startsWith('video/') ? (
+                                <div className="w-10 h-10 bg-red-100 rounded border flex items-center justify-center">
+                                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="w-10 h-10 bg-gray-100 rounded border flex items-center justify-center">
+                                  <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                </div>
+                              )}
                               <div>
-                                <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                                <p className="text-sm font-medium text-gray-900 truncate max-w-xs" title={file.name}>{file.name}</p>
                                 <p className="text-xs text-gray-500">
                                   {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'N/A'}
                                   {file.description && ` • ${file.description}`}
@@ -858,9 +998,12 @@ export default function HistoryPage() {
                             </div>
                             <button
                               onClick={() => handleFileDownload(file)}
-                              className="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded border border-blue-300 hover:bg-blue-50"
+                              className="bg-green-600 text-white text-sm font-medium px-3 py-1 rounded hover:bg-green-700 transition-colors flex items-center space-x-1"
                             >
-                              다운로드
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <span>다운로드</span>
                             </button>
                           </div>
                         ))}
@@ -872,18 +1015,33 @@ export default function HistoryPage() {
             )}
 
             <div className="mt-6 flex justify-between">
-              <button
-                onClick={() => {
-                  setShowDetailModal(false)
-                  handleEdit(selectedRecord)
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                수정
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false)
+                    handleEdit(selectedRecord)
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 hover:shadow-lg transform hover:scale-105 transition-all duration-200 cursor-pointer flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>수정</span>
+                </button>
+                <button
+                  onClick={() => handleDeleteRecord(selectedRecord)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 hover:shadow-lg transform hover:scale-105 transition-all duration-200 cursor-pointer flex items-center space-x-2"
+                  title="삭제"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>삭제</span>
+                </button>
+              </div>
               <button
                 onClick={closeModals}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 hover:shadow-md transform hover:scale-105 transition-all duration-200 cursor-pointer"
               >
                 닫기
               </button>
@@ -1103,9 +1261,12 @@ export default function HistoryPage() {
                           <button
                             type="button"
                             onClick={() => handleFileDownload(file)}
-                            className="text-blue-600 hover:text-blue-800 text-xs"
+                            className="bg-green-600 text-white text-xs px-2 py-1 rounded hover:bg-green-700 transition-colors flex items-center space-x-1"
                           >
-                            다운로드
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>다운로드</span>
                           </button>
                           <button
                             type="button"

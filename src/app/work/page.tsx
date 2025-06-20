@@ -23,7 +23,6 @@ export default function WorkPage() {
   // Remapping 작업 정보 인터페이스
   interface RemappingWork {
     id: number
-    ecuCategory: string
     ecuToolCategory: string
     connectionMethod: string
     ecuMaker?: string
@@ -35,7 +34,7 @@ export default function WorkPage() {
     price: string
     status: string
     files: {
-      originalFile?: File
+      originalFiles?: File[]
       originalFileDescription?: string
       stage1File?: File
       stage1FileDescription?: string
@@ -43,8 +42,16 @@ export default function WorkPage() {
       stage2FileDescription?: string
       stage3File?: File
       stage3FileDescription?: string
-      mediaFiles?: File[]
-      mediaFileDescription?: string
+      mediaFile1?: File
+      mediaFile1Description?: string
+      mediaFile2?: File
+      mediaFile2Description?: string
+      mediaFile3?: File
+      mediaFile3Description?: string
+      mediaFile4?: File
+      mediaFile4Description?: string
+      mediaFile5?: File
+      mediaFile5Description?: string
     }
   }
 
@@ -62,7 +69,6 @@ export default function WorkPage() {
   
   // 현재 편집 중인 Remapping 작업
   const [currentRemappingWork, setCurrentRemappingWork] = useState({
-    ecuCategory: '',
     ecuToolCategory: '',
     connectionMethod: '',
     ecuMaker: '',
@@ -74,7 +80,7 @@ export default function WorkPage() {
     price: '',
     status: '예약',
     files: {
-      originalFile: undefined,
+      originalFiles: [] as File[],
       originalFileDescription: '',
       stage1File: undefined,
       stage1FileDescription: '',
@@ -82,8 +88,16 @@ export default function WorkPage() {
       stage2FileDescription: '',
       stage3File: undefined,
       stage3FileDescription: '',
-      mediaFiles: [] as File[],
-      mediaFileDescription: ''
+      mediaFile1: undefined,
+      mediaFile1Description: '',
+      mediaFile2: undefined,
+      mediaFile2Description: '',
+      mediaFile3: undefined,
+      mediaFile3Description: '',
+      mediaFile4: undefined,
+      mediaFile4Description: '',
+      mediaFile5: undefined,
+      mediaFile5Description: ''
     }
   })
 
@@ -106,6 +120,27 @@ export default function WorkPage() {
   // 고객 데이터 로드
   useEffect(() => {
     loadCustomers()
+  }, [])
+
+  // 페이지 포커스 시 고객 목록 새로고침
+  useEffect(() => {
+    const handleFocus = () => {
+      loadCustomers()
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadCustomers()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const loadCustomers = async () => {
@@ -186,20 +221,31 @@ export default function WorkPage() {
   }
 
   // 파일 입력 핸들러
-  const handleFileChange = (fileType: string, file: File | null, description?: string) => {
+  const handleFileChange = (fileType: string, file: File | File[] | null, description?: string) => {
     setCurrentRemappingWork(prev => ({
       ...prev,
       files: {
         ...prev.files,
-        [fileType]: file,
+        ...(file !== null && { [fileType]: file }),
         ...(description !== undefined && { [`${fileType}Description`]: description })
+      }
+    }))
+  }
+
+  // 파일 설명만 업데이트하는 함수
+  const handleFileDescriptionChange = (descriptionField: string, value: string) => {
+    setCurrentRemappingWork(prev => ({
+      ...prev,
+      files: {
+        ...prev.files,
+        [descriptionField]: value
       }
     }))
   }
 
   // Remapping 작업 추가
   const handleAddRemappingWork = () => {
-    if (!currentRemappingWork.ecuCategory || !currentRemappingWork.ecuToolCategory || 
+    if (!currentRemappingWork.ecuToolCategory || 
         !currentRemappingWork.connectionMethod || currentRemappingWork.selectedWorks.length === 0) {
       alert('ECU 정보와 최소 하나 이상의 작업을 선택해주세요.')
       return
@@ -224,7 +270,6 @@ export default function WorkPage() {
 
     // 현재 Remapping 작업 초기화
     setCurrentRemappingWork({
-      ecuCategory: '',
       ecuToolCategory: '',
       connectionMethod: '',
       ecuMaker: '',
@@ -236,7 +281,7 @@ export default function WorkPage() {
       price: '',
       status: '예약',
       files: {
-        originalFile: undefined,
+        originalFiles: [] as File[],
         originalFileDescription: '',
         stage1File: undefined,
         stage1FileDescription: '',
@@ -244,8 +289,16 @@ export default function WorkPage() {
         stage2FileDescription: '',
         stage3File: undefined,
         stage3FileDescription: '',
-        mediaFiles: [] as File[],
-        mediaFileDescription: ''
+        mediaFile1: undefined,
+        mediaFile1Description: '',
+        mediaFile2: undefined,
+        mediaFile2Description: '',
+        mediaFile3: undefined,
+        mediaFile3Description: '',
+        mediaFile4: undefined,
+        mediaFile4Description: '',
+        mediaFile5: undefined,
+        mediaFile5Description: ''
       }
     })
 
@@ -257,7 +310,6 @@ export default function WorkPage() {
   // Remapping 작업 편집
   const handleEditRemappingWork = (work: RemappingWork) => {
     setCurrentRemappingWork({
-      ecuCategory: work.ecuCategory,
       ecuToolCategory: work.ecuToolCategory,
       connectionMethod: work.connectionMethod,
       ecuMaker: work.ecuMaker || '',
@@ -290,7 +342,6 @@ export default function WorkPage() {
   // Remapping 작업 편집 취소
   const handleCancelRemappingEdit = () => {
     setCurrentRemappingWork({
-      ecuCategory: '',
       ecuToolCategory: '',
       connectionMethod: '',
       ecuMaker: '',
@@ -302,7 +353,7 @@ export default function WorkPage() {
       price: '',
       status: '예약',
       files: {
-        originalFile: undefined,
+        originalFiles: [] as File[],
         originalFileDescription: '',
         stage1File: undefined,
         stage1FileDescription: '',
@@ -310,8 +361,16 @@ export default function WorkPage() {
         stage2FileDescription: '',
         stage3File: undefined,
         stage3FileDescription: '',
-        mediaFiles: [] as File[],
-        mediaFileDescription: ''
+        mediaFile1: undefined,
+        mediaFile1Description: '',
+        mediaFile2: undefined,
+        mediaFile2Description: '',
+        mediaFile3: undefined,
+        mediaFile3Description: '',
+        mediaFile4: undefined,
+        mediaFile4Description: '',
+        mediaFile5: undefined,
+        mediaFile5Description: ''
       }
     })
 
@@ -430,17 +489,19 @@ export default function WorkPage() {
         // 파일 데이터 처리
         const files: any[] = []
         
-        if (remappingWork.files.originalFile) {
-          const data = await convertFileToBase64(remappingWork.files.originalFile)
-          files.push({
-            name: remappingWork.files.originalFile.name,
-            size: remappingWork.files.originalFile.size,
-            type: remappingWork.files.originalFile.type,
-            data: data,
-            description: remappingWork.files.originalFileDescription || '원본 ECU 파일',
-            category: 'original',
-            uploadDate: new Date().toISOString()
-          })
+        if (remappingWork.files.originalFiles && remappingWork.files.originalFiles.length > 0) {
+          for (const originalFile of remappingWork.files.originalFiles) {
+            const data = await convertFileToBase64(originalFile)
+            files.push({
+              name: originalFile.name,
+              size: originalFile.size,
+              type: originalFile.type,
+              data: data,
+              description: remappingWork.files.originalFileDescription || '원본 ECU 폴더',
+              category: 'original',
+              uploadDate: new Date().toISOString()
+            })
+          }
         }
 
         if (remappingWork.files.stage1File) {
@@ -482,16 +543,22 @@ export default function WorkPage() {
           })
         }
 
-        if (remappingWork.files.mediaFiles && remappingWork.files.mediaFiles.length > 0) {
-          for (const mediaFile of remappingWork.files.mediaFiles) {
+        // 미디어 파일들 처리 (5개)
+        for (let i = 1; i <= 5; i++) {
+          const mediaFileKey = `mediaFile${i}` as keyof typeof remappingWork.files
+          const mediaDescKey = `mediaFile${i}Description` as keyof typeof remappingWork.files
+          const mediaFile = remappingWork.files[mediaFileKey] as File | undefined
+          const mediaDesc = remappingWork.files[mediaDescKey] as string | undefined
+          
+          if (mediaFile) {
             const data = await convertFileToBase64(mediaFile)
             files.push({
               name: mediaFile.name,
               size: mediaFile.size,
               type: mediaFile.type,
               data: data,
-              description: remappingWork.files.mediaFileDescription || '미디어 파일',
-              category: 'media',
+              description: mediaDesc || `미디어 파일 ${i}`,
+              category: `media${i}`,
               uploadDate: new Date().toISOString()
             })
           }
@@ -563,7 +630,6 @@ export default function WorkPage() {
     
     setRemappingWorks([])
     setCurrentRemappingWork({
-      ecuCategory: '',
       ecuToolCategory: '',
       connectionMethod: '',
       ecuMaker: '',
@@ -575,7 +641,7 @@ export default function WorkPage() {
       price: '',
       status: '예약',
       files: {
-        originalFile: undefined,
+        originalFiles: [] as File[],
         originalFileDescription: '',
         stage1File: undefined,
         stage1FileDescription: '',
@@ -583,8 +649,16 @@ export default function WorkPage() {
         stage2FileDescription: '',
         stage3File: undefined,
         stage3FileDescription: '',
-        mediaFiles: [] as File[],
-        mediaFileDescription: ''
+        mediaFile1: undefined,
+        mediaFile1Description: '',
+        mediaFile2: undefined,
+        mediaFile2Description: '',
+        mediaFile3: undefined,
+        mediaFile3Description: '',
+        mediaFile4: undefined,
+        mediaFile4Description: '',
+        mediaFile5: undefined,
+        mediaFile5Description: ''
       }
     })
     
@@ -597,6 +671,20 @@ export default function WorkPage() {
     
     setAvailableEquipment([])
   }
+
+  // 파일 URL 정리 (메모리 누수 방지)
+  useEffect(() => {
+    return () => {
+      // 컴포넌트 언마운트 시 생성된 URL들 정리
+      for (let i = 1; i <= 5; i++) {
+        const fileKey = `mediaFile${i}` as keyof typeof currentRemappingWork.files
+        const file = currentRemappingWork.files[fileKey] as File | undefined
+        if (file) {
+          URL.revokeObjectURL(URL.createObjectURL(file))
+        }
+      }
+    }
+  }, [currentRemappingWork.files])
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -794,11 +882,18 @@ export default function WorkPage() {
                         <div className="mt-3">
                           <span className="font-medium text-gray-700">첨부 파일:</span>
                           <div className="flex flex-wrap gap-2 mt-1">
-                            {work.files.originalFile && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">📁 원본</span>}
+                            {work.files.originalFiles && work.files.originalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">📁 원본({work.files.originalFiles.length})</span>}
                             {work.files.stage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">📈 Stage1</span>}
                             {work.files.stage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">🚀 Stage2</span>}
                             {work.files.stage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">🔥 Stage3</span>}
-                            {work.files.mediaFiles && work.files.mediaFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">📷 미디어({work.files.mediaFiles.length})</span>}
+                            {/* 미디어 파일들 표시 */}
+                            {(() => {
+                              const mediaCount = [1, 2, 3, 4, 5].filter(i => {
+                                const fileKey = `mediaFile${i}` as keyof typeof work.files
+                                return work.files[fileKey]
+                              }).length
+                              return mediaCount > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">📷 미디어({mediaCount})</span>
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -844,25 +939,6 @@ export default function WorkPage() {
             
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ECU 타입 *
-                  </label>
-                  <select
-                    name="ecuCategory"
-                    value={currentRemappingWork.ecuCategory}
-                    onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">ECU 타입을 선택하세요</option>
-                    {ACU_TYPES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     ECU 장비 카테고리 *
@@ -1094,45 +1170,67 @@ export default function WorkPage() {
                   {/* 원본 ECU 파일 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      원본 ECU 파일
+                      원본 ECU 폴더
                     </label>
                     <div className="flex items-center space-x-3 mb-2">
                       <input
                         type="file"
-                        id="original-file"
+                        id="original-folder"
                         className="hidden"
+                        multiple
+                        webkitdirectory=""
+                        directory=""
                         onChange={(e) => {
-                          const file = e.target.files?.[0] || null
-                          handleFileChange('originalFile', file)
+                          const files = Array.from(e.target.files || [])
+                          handleFileChange('originalFiles', files)
                         }}
                       />
                       <label
-                        htmlFor="original-file"
+                        htmlFor="original-folder"
                         className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
                       >
                         <svg className="w-6 h-6 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <span className="text-sm text-gray-600">
-                          {currentRemappingWork.files.originalFile ? currentRemappingWork.files.originalFile.name : '📁 원본 파일 선택'}
+                          {currentRemappingWork.files.originalFiles && currentRemappingWork.files.originalFiles.length > 0 
+                            ? `📁 ${currentRemappingWork.files.originalFiles.length}개 파일 선택됨` 
+                            : '📁 원본 폴더 선택'}
                         </span>
                       </label>
                     </div>
                     <input
                       type="text"
                       value={currentRemappingWork.files.originalFileDescription || ''}
-                      onChange={(e) => handleFileChange('originalFileDescription', null, e.target.value)}
-                      placeholder="파일 설명을 입력하세요 (예: 원본 백업 파일, 읽기 전용 등)"
+                      onChange={(e) => handleFileDescriptionChange('originalFileDescription', e.target.value)}
+                      placeholder="폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
                       className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     />
+                    {/* 선택된 파일 목록 표시 */}
+                    {currentRemappingWork.files.originalFiles && currentRemappingWork.files.originalFiles.length > 0 && (
+                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-700 mb-2">선택된 파일:</div>
+                        <div className="max-h-32 overflow-y-auto">
+                          {currentRemappingWork.files.originalFiles.map((file, index) => (
+                            <div key={index} className="text-xs text-gray-600 py-1 flex items-center">
+                              <span className="mr-2">📄</span>
+                              <span className="truncate">{file.name}</span>
+                              <span className="ml-auto text-gray-400">
+                                ({(file.size / 1024).toFixed(1)} KB)
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Stage 파일들 */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Stage 1 */}
+                    {/* 1차 튜닝 */}
                     <div className="border border-green-200 rounded-lg p-4 bg-green-50">
                       <label className="block text-sm font-medium text-green-800 mb-2">
-                        📈 Stage 1 (경량 튜닝)
+                        📈 1차 튜닝
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
                         <input
@@ -1146,26 +1244,28 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="stage1-file"
-                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-100 transition-colors text-xs"
+                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-100 transition-colors text-xs w-full"
                         >
                           <span className="text-green-700">
-                            {currentRemappingWork.files.stage1File ? '📄 선택됨' : '📄 Stage 1 선택'}
+                            {currentRemappingWork.files.stage1File 
+                              ? `📄 ${currentRemappingWork.files.stage1File.name} (${(currentRemappingWork.files.stage1File.size / 1024).toFixed(1)} KB)` 
+                              : '📄 1차 튜닝 파일 선택'}
                           </span>
                         </label>
                       </div>
                       <input
                         type="text"
                         value={currentRemappingWork.files.stage1FileDescription || ''}
-                        onChange={(e) => handleFileChange('stage1FileDescription', null, e.target.value)}
-                        placeholder="Stage 1 설명"
+                        onChange={(e) => handleFileDescriptionChange('stage1FileDescription', e.target.value)}
+                        placeholder="1차 튜닝 설명을 입력하세요"
                         className="w-full border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-xs"
                       />
                     </div>
 
-                    {/* Stage 2 */}
+                    {/* 2차 튜닝 */}
                     <div className="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
                       <label className="block text-sm font-medium text-yellow-800 mb-2">
-                        🚀 Stage 2 (중간 튜닝)
+                        🚀 2차 튜닝
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
                         <input
@@ -1179,26 +1279,28 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="stage2-file"
-                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-yellow-300 rounded-lg cursor-pointer hover:border-yellow-500 hover:bg-yellow-100 transition-colors text-xs"
+                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-yellow-300 rounded-lg cursor-pointer hover:border-yellow-500 hover:bg-yellow-100 transition-colors text-xs w-full"
                         >
                           <span className="text-yellow-800">
-                            {currentRemappingWork.files.stage2File ? '⚡ 선택됨' : '⚡ Stage 2 선택'}
+                            {currentRemappingWork.files.stage2File 
+                              ? `⚡ ${currentRemappingWork.files.stage2File.name} (${(currentRemappingWork.files.stage2File.size / 1024).toFixed(1)} KB)` 
+                              : '⚡ 2차 튜닝 파일 선택'}
                           </span>
                         </label>
                       </div>
                       <input
                         type="text"
                         value={currentRemappingWork.files.stage2FileDescription || ''}
-                        onChange={(e) => handleFileChange('stage2FileDescription', null, e.target.value)}
-                        placeholder="Stage 2 설명"
+                        onChange={(e) => handleFileDescriptionChange('stage2FileDescription', e.target.value)}
+                        placeholder="2차 튜닝 설명을 입력하세요"
                         className="w-full border-yellow-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-xs"
                       />
                     </div>
 
-                    {/* Stage 3 */}
+                    {/* 3차 튜닝 */}
                     <div className="border border-red-200 rounded-lg p-4 bg-red-50">
                       <label className="block text-sm font-medium text-red-800 mb-2">
-                        🔥 Stage 3 (고성능 튜닝)
+                        🔥 3차 튜닝
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
                         <input
@@ -1212,60 +1314,142 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="stage3-file"
-                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-red-300 rounded-lg cursor-pointer hover:border-red-500 hover:bg-red-100 transition-colors text-xs"
+                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-red-300 rounded-lg cursor-pointer hover:border-red-500 hover:bg-red-100 transition-colors text-xs w-full"
                         >
                           <span className="text-red-800">
-                            {currentRemappingWork.files.stage3File ? '🔥 선택됨' : '🔥 Stage 3 선택'}
+                            {currentRemappingWork.files.stage3File 
+                              ? `🔥 ${currentRemappingWork.files.stage3File.name} (${(currentRemappingWork.files.stage3File.size / 1024).toFixed(1)} KB)` 
+                              : '🔥 3차 튜닝 파일 선택'}
                           </span>
                         </label>
                       </div>
                       <input
                         type="text"
                         value={currentRemappingWork.files.stage3FileDescription || ''}
-                        onChange={(e) => handleFileChange('stage3FileDescription', null, e.target.value)}
-                        placeholder="Stage 3 설명"
+                        onChange={(e) => handleFileDescriptionChange('stage3FileDescription', e.target.value)}
+                        placeholder="3차 튜닝 설명을 입력하세요"
                         className="w-full border-red-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-xs"
                       />
                     </div>
                   </div>
 
-                  {/* 사진/영상 첨부 */}
+                  {/* 사진/영상 첨부 (5개) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      사진/영상 첨부
+                    <label className="block text-sm font-medium text-gray-700 mb-4">
+                      사진/영상 첨부 (최대 5개)
                     </label>
-                    <div className="flex items-center space-x-3 mb-2">
-                      <input
-                        type="file"
-                        id="media-files"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files || [])
-                          handleFileChange('mediaFiles', files as any)
-                        }}
-                      />
-                      <label
-                        htmlFor="media-files"
-                        className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
-                      >
-                        <svg className="w-6 h-6 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span className="text-sm text-gray-600">
-                          {currentRemappingWork.files.mediaFiles && currentRemappingWork.files.mediaFiles.length > 0 
-                            ? `📷 ${currentRemappingWork.files.mediaFiles.length}개 파일 선택됨` 
-                            : '📷 사진/영상 선택'}
-                        </span>
-                      </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                      {[1, 2, 3, 4, 5].map((index) => {
+                        const fileKey = `mediaFile${index}` as keyof typeof currentRemappingWork.files
+                        const descKey = `mediaFile${index}Description` as keyof typeof currentRemappingWork.files
+                        const file = currentRemappingWork.files[fileKey] as File | undefined
+                        const description = currentRemappingWork.files[descKey] as string | undefined
+                        
+                        return (
+                          <div key={index} className="border border-purple-200 rounded-lg p-3 bg-purple-50">
+                            <label className="block text-xs font-medium text-purple-800 mb-2">
+                              📷 미디어 {index}
+                            </label>
+                            
+                            {/* 파일 선택 및 미리보기 */}
+                            <div className="mb-2">
+                              <input
+                                type="file"
+                                id={`media-file-${index}`}
+                                className="hidden"
+                                accept="image/*,video/*"
+                                onChange={(e) => {
+                                  const selectedFile = e.target.files?.[0] || null
+                                  handleFileChange(`mediaFile${index}`, selectedFile)
+                                }}
+                              />
+                              
+                              {/* 미리보기 영역 */}
+                              {file ? (
+                                <div className="relative">
+                                  {file.type.startsWith('image/') ? (
+                                    <div className="relative">
+                                      <img
+                                        src={URL.createObjectURL(file)}
+                                        alt="미리보기"
+                                        className="w-full h-32 object-cover rounded-lg border border-purple-300"
+                                      />
+                                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
+                                        <label
+                                          htmlFor={`media-file-${index}`}
+                                          className="text-white text-xs font-medium cursor-pointer px-2 py-1 bg-purple-600 rounded hover:bg-purple-700"
+                                        >
+                                          파일 변경
+                                        </label>
+                                      </div>
+                                    </div>
+                                  ) : file.type.startsWith('video/') ? (
+                                    <div className="relative">
+                                      <video
+                                        src={URL.createObjectURL(file)}
+                                        className="w-full h-32 object-cover rounded-lg border border-purple-300"
+                                        controls={false}
+                                        muted
+                                      />
+                                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
+                                        <label
+                                          htmlFor={`media-file-${index}`}
+                                          className="text-white text-xs font-medium cursor-pointer px-2 py-1 bg-purple-600 rounded hover:bg-purple-700"
+                                        >
+                                          파일 변경
+                                        </label>
+                                      </div>
+                                      <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-1 py-0.5 rounded">
+                                        🎥 동영상
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="w-full h-32 bg-gray-100 rounded-lg border border-purple-300 flex items-center justify-center">
+                                      <div className="text-center text-gray-500">
+                                        <div className="text-lg">📄</div>
+                                        <div className="text-xs">미리보기 불가</div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* 파일 정보 */}
+                                  <div className="mt-1 text-xs text-purple-600 truncate" title={file.name}>
+                                    📄 {file.name}
+                                  </div>
+                                  <div className="text-xs text-purple-500">
+                                    ({(file.size / 1024).toFixed(1)} KB)
+                                  </div>
+                                </div>
+                              ) : (
+                                <label
+                                  htmlFor={`media-file-${index}`}
+                                  className="flex items-center justify-center px-2 py-2 border-2 border-dashed border-purple-300 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-100 transition-colors text-xs w-full h-32"
+                                >
+                                  <div className="text-center text-purple-700">
+                                    <div className="text-2xl mb-1">📷</div>
+                                    <div>파일 선택</div>
+                                    <div className="text-purple-500">이미지/동영상</div>
+                                  </div>
+                                </label>
+                              )}
+                            </div>
+                            
+                            {/* 설명 입력 */}
+                            <textarea
+                              value={description || ''}
+                              onChange={(e) => handleFileDescriptionChange(`mediaFile${index}Description`, e.target.value)}
+                              placeholder={`미디어 ${index} 설명`}
+                              className="w-full border-purple-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-xs resize-none"
+                              rows={2}
+                              maxLength={100}
+                            />
+                            <div className="text-right text-xs text-purple-400 mt-1">
+                              {(description || '').length}/100
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
-                    <input
-                      type="text"
-                      value={currentRemappingWork.files.mediaFileDescription || ''}
-                      onChange={(e) => handleFileChange('mediaFileDescription', null, e.target.value)}
-                      placeholder="첨부 파일 설명 (예: 작업 전후 사진, 장비 상태 영상 등)"
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    />
                   </div>
                 </div>
               </div>

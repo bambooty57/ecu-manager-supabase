@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, ECU_MODELS } from '@/constants'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
-import { getAllEquipment, createEquipment, deleteEquipment, EquipmentData } from '@/lib/equipment'
+import { getAllEquipment, createEquipment, deleteEquipment, updateEquipment, EquipmentData } from '@/lib/equipment'
 
 interface Equipment {
   id: number
@@ -25,6 +25,9 @@ export default function EquipmentPage() {
   const [equipments, setEquipments] = useState<Equipment[]>([])
   const [isLoadingEquipments, setIsLoadingEquipments] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterManufacturer, setFilterManufacturer] = useState('')
@@ -43,12 +46,47 @@ export default function EquipmentPage() {
     notes: ''
   })
 
+  // 수정용 폼 데이터 (상세보기 모달에서 사용)
+  const [editFormData, setEditFormData] = useState({
+    customerName: '',
+    equipmentType: '',
+    manufacturer: '',
+    model: '',
+    customModel: '',
+    serialNumber: '',
+    usageHours: 0,
+    ecuType: '',
+    acuType: '',
+    notes: ''
+  })
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 고객 및 장비 데이터 로드
   useEffect(() => {
     loadCustomers()
     loadEquipments()
+  }, [])
+
+  // 페이지 포커스 시 고객 목록 새로고침
+  useEffect(() => {
+    const handleFocus = () => {
+      loadCustomers()
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadCustomers()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const loadCustomers = async () => {
@@ -124,6 +162,95 @@ export default function EquipmentPage() {
         ...prev,
         [name]: value
       }))
+    }
+  }
+
+  // 수정 폼 입력 핸들러
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    
+    if (name === 'manufacturer') {
+      // 제조사 변경 시 모델명 초기화
+      setEditFormData(prev => ({ 
+        ...prev, 
+        [name]: value,
+        model: '',
+        customModel: ''
+      }))
+    } else {
+      setEditFormData(prev => ({
+        ...prev,
+        [name]: value
+      }))
+    }
+  }
+
+  // 상세보기 모달 열기
+  const handleViewDetail = (equipment: Equipment) => {
+    setSelectedEquipment(equipment)
+    setEditFormData({
+      customerName: equipment.customerName,
+      equipmentType: equipment.equipmentType,
+      manufacturer: equipment.manufacturer,
+      model: equipment.model,
+      customModel: '',
+      serialNumber: equipment.serialNumber,
+      usageHours: equipment.usageHours,
+      ecuType: equipment.ecuType,
+      acuType: equipment.acuType,
+      notes: equipment.notes || ''
+    })
+    setIsEditMode(false)
+    setIsDetailModalOpen(true)
+  }
+
+  // 수정 모드 토글
+  const toggleEditMode = () => {
+    setIsEditMode(!isEditMode)
+  }
+
+  // 수정 저장
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!selectedEquipment) return
+    
+    try {
+      // 고객 ID 찾기
+      const customer = customers.find(c => c.name === editFormData.customerName)
+      if (!customer) {
+        alert('선택한 고객을 찾을 수 없습니다.')
+        return
+      }
+
+      // 모델명 처리: CUSTOM 선택 시 customModel 사용, 아니면 model 사용
+      const finalModel = editFormData.model === 'CUSTOM' ? editFormData.customModel : editFormData.model
+      
+      const updateData: Partial<Omit<EquipmentData, 'id' | 'createdAt' | 'updatedAt'>> = {
+        customerId: customer.id,
+        equipmentType: editFormData.equipmentType,
+        manufacturer: editFormData.manufacturer,
+        model: finalModel,
+        serialNumber: editFormData.serialNumber || undefined,
+        engineType: editFormData.ecuType || undefined,
+        horsepower: editFormData.usageHours || undefined,
+        notes: editFormData.notes || undefined
+      }
+
+      const updatedEquipment = await updateEquipment(selectedEquipment.id, updateData)
+      
+      if (updatedEquipment) {
+        // 성공적으로 수정되면 목록 새로고침
+        await loadEquipments()
+        setIsEditMode(false)
+        setIsDetailModalOpen(false)
+        setSelectedEquipment(null)
+      } else {
+        alert('장비 수정 중 오류가 발생했습니다.')
+      }
+    } catch (error) {
+      console.error('Failed to update equipment:', error)
+      alert('장비 수정 중 오류가 발생했습니다.')
     }
   }
 
@@ -295,14 +422,14 @@ export default function EquipmentPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">고객명</th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">장비 정보</th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제조사/모델</th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">사용시간</th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ECU 타입</th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACU 타입</th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">등록일</th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">고객명</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">장비 정보</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제조사/모델</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">사용시간</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ECU 타입</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACU 타입</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">등록일</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -315,27 +442,33 @@ export default function EquipmentPage() {
                       <div className="text-sm text-gray-900">{equipment.equipmentType}</div>
                       <div className="text-sm text-gray-500">S/N: {equipment.serialNumber}</div>
                     </td>
-                                                              <td className="px-6 py-4 whitespace-nowrap">
-                       <div className="text-sm text-gray-900">{equipment.manufacturer}</div>
-                       <div className="text-sm text-gray-500">{equipment.model}</div>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <div className="text-sm text-gray-900">{equipment.usageHours.toLocaleString()}시간</div>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                         {equipment.ecuType}
-                       </span>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                         {equipment.acuType}
-                       </span>
-                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{equipment.manufacturer}</div>
+                      <div className="text-sm text-gray-500">{equipment.model}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{equipment.usageHours.toLocaleString()}시간</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                        {equipment.ecuType}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                        {equipment.acuType}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {equipment.registrationDate}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                      <button
+                        onClick={() => handleViewDetail(equipment)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        상세보기
+                      </button>
                       <button
                         onClick={() => handleDelete(equipment.id)}
                         className="text-red-600 hover:text-red-900"
@@ -360,34 +493,42 @@ export default function EquipmentPage() {
             <div key={equipment.id} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">{equipment.customerName}</h3>
-                <button
-                  onClick={() => handleDelete(equipment.id)}
-                  className="text-red-600 hover:text-red-900 text-sm"
-                >
-                  삭제
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleViewDetail(equipment)}
+                    className="text-blue-600 hover:text-blue-900 text-sm"
+                  >
+                    상세보기
+                  </button>
+                  <button
+                    onClick={() => handleDelete(equipment.id)}
+                    className="text-red-600 hover:text-red-900 text-sm"
+                  >
+                    삭제
+                  </button>
+                </div>
               </div>
-                               <div className="space-y-2 text-sm">
-                   <div><span className="font-medium">장비:</span> {equipment.equipmentType}</div>
-                   <div><span className="font-medium">제조사:</span> {equipment.manufacturer}</div>
-                   <div><span className="font-medium">모델:</span> {equipment.model}</div>
-                   <div><span className="font-medium">시리얼번호:</span> {equipment.serialNumber}</div>
-                   <div><span className="font-medium">사용시간:</span> {equipment.usageHours.toLocaleString()}시간</div>
-                   <div><span className="font-medium">ECU:</span> 
-                     <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                       {equipment.ecuType}
-                     </span>
-                   </div>
-                   <div><span className="font-medium">ACU:</span> 
-                     <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                       {equipment.acuType}
-                     </span>
-                   </div>
-                   <div><span className="font-medium">등록일:</span> {equipment.registrationDate}</div>
-                   {equipment.notes && (
-                     <div><span className="font-medium">메모:</span> {equipment.notes}</div>
-                   )}
-                 </div>
+              <div className="space-y-2 text-sm">
+                <div><span className="font-medium">장비:</span> {equipment.equipmentType}</div>
+                <div><span className="font-medium">제조사:</span> {equipment.manufacturer}</div>
+                <div><span className="font-medium">모델:</span> {equipment.model}</div>
+                <div><span className="font-medium">시리얼번호:</span> {equipment.serialNumber}</div>
+                <div><span className="font-medium">사용시간:</span> {equipment.usageHours.toLocaleString()}시간</div>
+                <div><span className="font-medium">ECU:</span> 
+                  <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                    {equipment.ecuType}
+                  </span>
+                </div>
+                <div><span className="font-medium">ACU:</span> 
+                  <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                    {equipment.acuType}
+                  </span>
+                </div>
+                <div><span className="font-medium">등록일:</span> {equipment.registrationDate}</div>
+                {equipment.notes && (
+                  <div><span className="font-medium">메모:</span> {equipment.notes}</div>
+                )}
+              </div>
             </div>
           ))}
           {filteredEquipments.length === 0 && (
@@ -395,6 +536,308 @@ export default function EquipmentPage() {
               등록된 장비가 없습니다.
             </div>
           )}
+        </div>
+      )}
+
+      {/* 상세보기/수정 모달 */}
+      {isDetailModalOpen && selectedEquipment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {isEditMode ? '장비 수정' : '장비 상세 정보'}
+                </h2>
+                <div className="flex items-center space-x-4">
+                  {!isEditMode && (
+                    <button
+                      onClick={toggleEditMode}
+                      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      수정
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsDetailModalOpen(false)
+                      setIsEditMode(false)
+                      setSelectedEquipment(null)
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {isEditMode ? (
+                // 수정 폼
+                <form onSubmit={handleSaveEdit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        고객명 *
+                      </label>
+                      <select
+                        name="customerName"
+                        value={editFormData.customerName}
+                        onChange={handleEditInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isLoadingCustomers}
+                      >
+                        <option value="">
+                          {isLoadingCustomers ? '고객 목록 로딩 중...' : '고객을 선택하세요'}
+                        </option>
+                        {customers.map(customer => (
+                          <option key={customer.id} value={customer.name}>{customer.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        장비 종류 *
+                      </label>
+                      <select
+                        name="equipmentType"
+                        value={editFormData.equipmentType}
+                        onChange={handleEditInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">선택하세요</option>
+                        {EQUIPMENT_TYPES.map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        제조사 *
+                      </label>
+                      <select
+                        name="manufacturer"
+                        value={editFormData.manufacturer}
+                        onChange={handleEditInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">선택하세요</option>
+                        {MANUFACTURERS.map(manufacturer => (
+                          <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        모델명 *
+                      </label>
+                      {editFormData.manufacturer && getAvailableModels(editFormData.manufacturer).length > 0 ? (
+                        <select
+                          name="model"
+                          value={editFormData.model}
+                          onChange={handleEditInputChange}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">모델을 선택하세요</option>
+                          {getAvailableModels(editFormData.manufacturer).map((model) => (
+                            <option key={model} value={model}>{model}</option>
+                          ))}
+                          <option value="CUSTOM">직접 입력</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          name="model"
+                          value={editFormData.model}
+                          onChange={handleEditInputChange}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={editFormData.manufacturer ? "모델명을 직접 입력하세요" : "제조사를 먼저 선택하세요"}
+                          disabled={!editFormData.manufacturer}
+                        />
+                      )}
+                      {editFormData.model === 'CUSTOM' && (
+                        <input
+                          type="text"
+                          name="customModel"
+                          value={editFormData.customModel || ''}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, customModel: e.target.value }))}
+                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="모델명을 직접 입력하세요"
+                        />
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        시리얼번호 *
+                      </label>
+                      <input
+                        type="text"
+                        name="serialNumber"
+                        value={editFormData.serialNumber}
+                        onChange={handleEditInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="시리얼번호를 입력하세요"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        사용시간 (시간) *
+                      </label>
+                      <input
+                        type="number"
+                        name="usageHours"
+                        value={editFormData.usageHours}
+                        onChange={handleEditInputChange}
+                        required
+                        min="0"
+                        step="1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="사용시간을 입력하세요 (예: 1500)"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        ECU 타입
+                      </label>
+                      <select
+                        name="ecuType"
+                        value={editFormData.ecuType}
+                        onChange={handleEditInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">선택하세요</option>
+                        {ECU_MODELS.map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        ACU 타입
+                      </label>
+                      <select
+                        name="acuType"
+                        value={editFormData.acuType}
+                        onChange={handleEditInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">선택하세요</option>
+                        {ECU_MODELS.map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        메모
+                      </label>
+                      <textarea
+                        name="notes"
+                        value={editFormData.notes}
+                        onChange={handleEditInputChange}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="추가 정보나 특이사항을 입력하세요"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-4 pt-6 border-t">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditMode(false)}
+                      className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      저장
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                // 상세보기 화면
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">고객명</label>
+                      <div className="text-lg font-semibold text-gray-900">{selectedEquipment.customerName}</div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">장비 종류</label>
+                      <div className="text-gray-900">{selectedEquipment.equipmentType}</div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">제조사</label>
+                      <div className="text-gray-900">{selectedEquipment.manufacturer}</div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">모델명</label>
+                      <div className="text-gray-900">{selectedEquipment.model}</div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">시리얼번호</label>
+                      <div className="text-gray-900 font-mono">{selectedEquipment.serialNumber}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">사용시간</label>
+                      <div className="text-gray-900">{selectedEquipment.usageHours.toLocaleString()}시간</div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">ECU 타입</label>
+                      <span className="inline-block px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
+                        {selectedEquipment.ecuType}
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">ACU 타입</label>
+                      <span className="inline-block px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
+                        {selectedEquipment.acuType}
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">등록일</label>
+                      <div className="text-gray-900">{selectedEquipment.registrationDate}</div>
+                    </div>
+                    
+                    {selectedEquipment.notes && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
+                        <div className="text-gray-900 bg-gray-50 p-3 rounded-md">{selectedEquipment.notes}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -553,13 +996,12 @@ export default function EquipmentPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ECU 타입 *
+                      ECU 타입
                     </label>
                     <select
                       name="ecuType"
                       value={formData.ecuType}
                       onChange={handleInputChange}
-                      required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">선택하세요</option>
@@ -571,13 +1013,12 @@ export default function EquipmentPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ACU 타입 *
+                      ACU 타입
                     </label>
                     <select
                       name="acuType"
                       value={formData.acuType}
                       onChange={handleInputChange}
-                      required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">선택하세요</option>

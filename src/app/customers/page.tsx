@@ -43,6 +43,27 @@ export default function CustomersPage() {
     loadCustomers()
   }, [])
 
+  // 페이지 포커스 시 고객 목록 새로고침
+  useEffect(() => {
+    const handleFocus = () => {
+      loadCustomers()
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadCustomers()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
   const loadCustomers = async () => {
     setIsLoading(true)
     try {
