@@ -1,104 +1,75 @@
 -- ECU 관리 시스템을 위한 Supabase 테이블 생성 스크립트
+-- 기존 테이블이 있다면 삭제하고 새로 생성
+
+-- 기존 테이블 삭제 (순서 중요: 외래키 참조 테이블부터)
+DROP TABLE IF EXISTS work_records CASCADE;
+DROP TABLE IF EXISTS equipment CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
 
 -- 고객 정보 테이블
-CREATE TABLE IF NOT EXISTS customers (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20),
-    email VARCHAR(100),
+CREATE TABLE customers (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT,
+    email TEXT,
     address TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 장비 정보 테이블
-CREATE TABLE IF NOT EXISTS equipment (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    model VARCHAR(100),
-    serial_number VARCHAR(100),
-    manufacturer VARCHAR(100),
+CREATE TABLE equipment (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    model TEXT,
+    serial_number TEXT,
+    manufacturer TEXT,
     purchase_date DATE,
-    warranty_period INTEGER, -- 보증 기간 (개월)
-    status VARCHAR(20) DEFAULT 'active', -- active, inactive, maintenance
+    warranty_period INTEGER,
+    status TEXT DEFAULT 'active',
     notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 작업 기록 테이블
-CREATE TABLE IF NOT EXISTS work_records (
-    id SERIAL PRIMARY KEY,
-    customer_id INTEGER REFERENCES customers(id),
-    equipment_id INTEGER REFERENCES equipment(id),
-    work_type VARCHAR(50) NOT NULL, -- installation, maintenance, repair, inspection
+CREATE TABLE work_records (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    customer_id UUID REFERENCES customers(id),
+    equipment_id UUID REFERENCES equipment(id),
+    work_type TEXT NOT NULL,
     description TEXT NOT NULL,
     work_date DATE NOT NULL,
-    technician VARCHAR(100),
+    technician TEXT,
     hours_spent DECIMAL(4,2),
     parts_used TEXT,
     cost DECIMAL(10,2),
-    status VARCHAR(20) DEFAULT 'completed', -- pending, in_progress, completed, cancelled
+    status TEXT DEFAULT 'completed',
     notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 인덱스 생성
-CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
-CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
-CREATE INDEX IF NOT EXISTS idx_equipment_name ON equipment(name);
-CREATE INDEX IF NOT EXISTS idx_equipment_serial ON equipment(serial_number);
-CREATE INDEX IF NOT EXISTS idx_work_records_customer ON work_records(customer_id);
-CREATE INDEX IF NOT EXISTS idx_work_records_equipment ON work_records(equipment_id);
-CREATE INDEX IF NOT EXISTS idx_work_records_date ON work_records(work_date);
-
--- RLS (Row Level Security) 정책 설정
+-- RLS 정책 설정
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE work_records ENABLE ROW LEVEL SECURITY;
 
--- 인증된 사용자만 접근 가능하도록 정책 설정
-CREATE POLICY "Enable all operations for authenticated users" ON customers
-    FOR ALL USING (auth.role() = 'authenticated');
+-- 모든 사용자가 접근 가능하도록 정책 설정 (테스트용)
+CREATE POLICY "Allow all access" ON customers FOR ALL USING (true);
+CREATE POLICY "Allow all access" ON equipment FOR ALL USING (true);
+CREATE POLICY "Allow all access" ON work_records FOR ALL USING (true);
 
-CREATE POLICY "Enable all operations for authenticated users" ON equipment
-    FOR ALL USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Enable all operations for authenticated users" ON work_records
-    FOR ALL USING (auth.role() = 'authenticated');
-
--- 업데이트 시간 자동 갱신을 위한 함수
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- 업데이트 트리거 생성
-CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON customers
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_equipment_updated_at BEFORE UPDATE ON equipment
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_work_records_updated_at BEFORE UPDATE ON work_records
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- 샘플 데이터 삽입 (선택사항)
+-- 샘플 데이터 삽입
 INSERT INTO customers (name, phone, email, address) VALUES
 ('김철수', '010-1234-5678', 'kim@example.com', '서울특별시 강남구'),
 ('이영희', '010-9876-5432', 'lee@example.com', '부산광역시 해운대구'),
-('박민수', '010-5555-1234', 'park@example.com', '대구광역시 중구')
-ON CONFLICT DO NOTHING;
+('박민수', '010-5555-1234', 'park@example.com', '대구광역시 중구');
 
 INSERT INTO equipment (name, model, serial_number, manufacturer) VALUES
 ('ECU 분석기 A', 'EA-2000', 'SN001234', '한국전자'),
 ('진단 스캐너 B', 'DS-3000', 'SN005678', '글로벌테크'),
-('오실로스코프 C', 'OS-1500', 'SN009012', '정밀기기')
-ON CONFLICT DO NOTHING;
+('오실로스코프 C', 'OS-1500', 'SN009012', '정밀기기');
 
 -- 완료 메시지
-SELECT 'ECU 관리 시스템 데이터베이스 스키마가 성공적으로 생성되었습니다.' AS message; 
+SELECT 'ECU 관리 시스템 데이터베이스가 성공적으로 생성되었습니다!' AS message; 

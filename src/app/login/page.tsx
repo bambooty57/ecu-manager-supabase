@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { testSupabaseConnection } from '@/lib/supabase'
 
 export default function LoginPage() {
   const { signInWithEmail } = useAuth()
@@ -32,6 +33,16 @@ export default function LoginPage() {
       setMessage(`로그인 실패: ${error.message}`)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleTestConnection = async () => {
+    setMessage('Supabase 연결을 테스트하는 중...')
+    const result = await testSupabaseConnection()
+    if (result) {
+      setMessage('✅ Supabase 연결 성공! 데이터베이스에 정상적으로 접근할 수 있습니다.')
+    } else {
+      setMessage('❌ Supabase 연결 실패. 브라우저 콘솔에서 자세한 오류를 확인하세요.')
     }
   }
 
@@ -104,6 +115,16 @@ export default function LoginPage() {
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? '로그인 중...' : '로그인'}
+              </button>
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={handleTestConnection}
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                🧪 Supabase 연결 테스트
               </button>
             </div>
           </form>
