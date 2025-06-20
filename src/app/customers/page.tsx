@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Script from 'next/script'
-import { getAllCustomers, createCustomer, createMultipleCustomers, deleteCustomer, CustomerData } from '@/lib/customers'
+import { getAllCustomers, createCustomer, createMultipleCustomers, deleteCustomer, updateCustomer, CustomerData } from '@/lib/customers'
+import SimpleNavigation from '@/components/SimpleNavigation'
+import AuthGuard from '@/components/AuthGuard'
 
 interface Customer {
   id: number
@@ -37,6 +39,18 @@ export default function CustomersPage() {
   const [uploadResults, setUploadResults] = useState<{success: number, errors: string[]}>({success: 0, errors: []})
   const [showUploadModal, setShowUploadModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 상세보기 및 수정 모달 관련 state
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    phone: '',
+    zipCode: '',
+    roadAddress: '',
+    jibunAddress: ''
+  })
 
   // 고객 데이터 로드
   useEffect(() => {
@@ -252,6 +266,162 @@ export default function CustomersPage() {
     }
   }
 
+  // 상세보기 모달 열기
+  const handleViewDetail = (customer: Customer) => {
+    setSelectedCustomer(customer)
+    setEditFormData({
+      name: customer.name,
+      phone: customer.phone,
+      zipCode: customer.zipCode,
+      roadAddress: customer.roadAddress,
+      jibunAddress: customer.jibunAddress
+    })
+    setIsDetailModalOpen(true)
+    setIsEditMode(false)
+  }
+
+  // 수정 모드 토글
+  const toggleEditMode = () => {
+    setIsEditMode(!isEditMode)
+  }
+
+  // 수정 폼 입력 핸들러
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    
+    if (name === 'phone') {
+      const formatted = formatPhoneNumber(value)
+      setEditFormData(prev => ({ ...prev, [name]: formatted }))
+    } else {
+      setEditFormData(prev => ({ ...prev, [name]: value }))
+    }
+  }
+
+  // 수정 저장 핸들러
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!selectedCustomer) return
+
+    try {
+      const updatedCustomer = await updateCustomer(selectedCustomer.id, {
+        name: editFormData.name,
+        phone: editFormData.phone,
+        zipCode: editFormData.zipCode,
+        roadAddress: editFormData.roadAddress,
+        jibunAddress: editFormData.jibunAddress
+      })
+
+      if (updatedCustomer) {
+        // 로컬 상태 업데이트
+        setCustomers(prev => prev.map(customer => 
+          customer.id === selectedCustomer.id 
+            ? { ...customer, ...editFormData }
+            : customer
+        ))
+        
+        // 선택된 고객 정보도 업데이트
+        setSelectedCustomer({ ...selectedCustomer, ...editFormData })
+        setIsEditMode(false)
+        alert('고객 정보가 성공적으로 수정되었습니다.')
+      }
+    } catch (error) {
+      console.error('Failed to update customer:', error)
+      alert('고객 정보 수정 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 수정 취소 핸들러
+  const handleCancelEdit = () => {
+    if (!selectedCustomer) return
+    
+    setEditFormData({
+      name: selectedCustomer.name,
+      phone: selectedCustomer.phone,
+      zipCode: selectedCustomer.zipCode,
+      roadAddress: selectedCustomer.roadAddress,
+      jibunAddress: selectedCustomer.jibunAddress
+    })
+    setIsEditMode(false)
+  }
+
+  // 모달 닫기
+  const closeModal = () => {
+    setIsDetailModalOpen(false)
+    setSelectedCustomer(null)
+    setIsEditMode(false)
+  }
+
+  // 카카오맵에서 주소 보기
+  const handleViewOnMap = (address: string) => {
+    if (!address) {
+      alert('주소 정보가 없습니다.')
+      return
+    }
+    
+    // 카카오맵 URL로 이동
+    const mapUrl = `https://map.kakao.com/link/search/${encodeURIComponent(address)}`
+    window.open(mapUrl, '_blank')
+  }
+
+  // 수정용 주소 검색 함수
+  const handleEditAddressSearch = () => {
+    // @ts-ignore
+    if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
+      // @ts-ignore
+      new window.daum.Postcode({
+        oncomplete: function(data: any) {
+          // 도로명 주소 처리
+          let roadAddr = data.roadAddress || '';
+          let roadExtraAddr = '';
+          
+          if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+            roadExtraAddr += data.bname;
+          }
+          if(data.buildingName !== '' && data.apartment === 'Y'){
+            roadExtraAddr += (roadExtraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+          }
+          if(roadExtraAddr !== ''){
+            roadAddr += ' (' + roadExtraAddr + ')';
+          }
+
+          // 지번 주소 처리
+          let jibunAddr = data.jibunAddress || data.autoJibunAddress || '';
+          let jibunExtraAddr = '';
+          
+          if (!jibunAddr && data.sido && data.sigungu) {
+            jibunAddr = data.sido + ' ' + data.sigungu;
+            if (data.bname) {
+              jibunAddr += ' ' + data.bname;
+            }
+            if (data.buildingName) {
+              jibunAddr += ' ' + data.buildingName;
+            }
+          }
+          
+          if(data.bname !== '' && /[동|로|가]$/g.test(data.bname) && !jibunAddr.includes(data.bname)){
+            jibunExtraAddr += data.bname;
+          }
+          if(data.buildingName !== '' && data.apartment === 'Y' && !jibunAddr.includes(data.buildingName)){
+            jibunExtraAddr += (jibunExtraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+          }
+          if(jibunExtraAddr !== ''){
+            jibunAddr += ' (' + jibunExtraAddr + ')';
+          }
+
+          setEditFormData(prev => ({
+            ...prev,
+            zipCode: data.zonecode || '',
+            roadAddress: roadAddr,
+            jibunAddress: jibunAddr
+          }))
+        }
+      }).open();
+    } else {
+      alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+    }
+  }
+
   // 엑셀/CSV 파일 처리 함수
   const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -398,13 +568,16 @@ export default function CustomersPage() {
   }
 
   return (
-    <>
+    <AuthGuard>
       <Script
         src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
         strategy="lazyOnload"
       />
       
-      <div className="space-y-8">
+      <SimpleNavigation />
+      <main className="pt-20 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-8">
         {/* 페이지 헤더 */}
         <div className="card-modern rounded-xl p-6">
           <div className="flex justify-between items-center">
@@ -581,9 +754,21 @@ export default function CustomersPage() {
                         <div className="text-sm text-gray-900 font-mono">{customer.phone}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{customer.roadAddress}</div>
+                        <div 
+                          className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                          onClick={() => handleViewOnMap(customer.roadAddress)}
+                          title="카카오맵에서 보기"
+                        >
+                          {customer.roadAddress}
+                        </div>
                         {customer.jibunAddress && (
-                          <div className="text-xs text-gray-500 mt-1">지번: {customer.jibunAddress}</div>
+                          <div 
+                            className="text-xs text-gray-500 hover:text-gray-700 hover:underline cursor-pointer mt-1"
+                            onClick={() => handleViewOnMap(customer.jibunAddress)}
+                            title="카카오맵에서 보기"
+                          >
+                            지번: {customer.jibunAddress}
+                          </div>
                         )}
                         <div className="text-xs text-gray-500 mt-1">우편번호: {customer.zipCode}</div>
                       </td>
@@ -591,12 +776,23 @@ export default function CustomersPage() {
                         {customer.registrationDate}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleDelete(customer.id)}
-                          className="btn-gradient-danger text-white px-3 py-1 rounded-lg text-xs"
-                        >
-                          삭제
-                        </button>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleViewDetail(customer)}
+                            className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200 cursor-pointer font-medium"
+                          >
+                            상세보기
+                          </button>
+                          <button
+                            onClick={() => handleDelete(customer.id)}
+                            className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded transition-all duration-200 cursor-pointer"
+                            title="삭제"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -622,12 +818,23 @@ export default function CustomersPage() {
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900">{customer.name}</h3>
                   </div>
-                  <button
-                    onClick={() => handleDelete(customer.id)}
-                    className="btn-gradient-danger text-white px-3 py-1 rounded-lg text-xs"
-                  >
-                    삭제
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleViewDetail(customer)}
+                      className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200 cursor-pointer text-sm font-medium"
+                    >
+                      상세보기
+                    </button>
+                    <button
+                      onClick={() => handleDelete(customer.id)}
+                      className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded transition-all duration-200 cursor-pointer"
+                      title="삭제"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center">
@@ -638,9 +845,24 @@ export default function CustomersPage() {
                   <div className="flex items-start">
                     <span className="text-lg mr-2 mt-0.5">📍</span>
                     <div>
-                      <div><span className="font-medium text-gray-600">주소:</span> {customer.roadAddress}</div>
+                      <div>
+                        <span className="font-medium text-gray-600">주소:</span> 
+                        <span 
+                          className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer ml-1"
+                          onClick={() => handleViewOnMap(customer.roadAddress)}
+                          title="카카오맵에서 보기"
+                        >
+                          {customer.roadAddress}
+                        </span>
+                      </div>
                       {customer.jibunAddress && (
-                        <div className="text-xs text-gray-500 mt-1">지번: {customer.jibunAddress}</div>
+                        <div 
+                          className="text-xs text-gray-500 hover:text-gray-700 hover:underline cursor-pointer mt-1"
+                          onClick={() => handleViewOnMap(customer.jibunAddress)}
+                          title="카카오맵에서 보기"
+                        >
+                          지번: {customer.jibunAddress}
+                        </div>
                       )}
                       <div className="text-xs text-gray-500 mt-1">우편번호: {customer.zipCode}</div>
                     </div>
@@ -821,6 +1043,221 @@ export default function CustomersPage() {
           </div>
         )}
 
+        {/* 고객 상세보기 모달 */}
+        {isDetailModalOpen && selectedCustomer && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {isEditMode ? '고객 정보 수정' : '고객 상세 정보'}
+                  </h2>
+                  <div className="flex items-center space-x-2">
+                    {!isEditMode && (
+                      <button
+                        onClick={toggleEditMode}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        수정
+                      </button>
+                    )}
+                    <button
+                      onClick={closeModal}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {isEditMode ? (
+                  /* 수정 모드 */
+                  <form onSubmit={handleSaveEdit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          고객명 *
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={editFormData.name}
+                          onChange={handleEditInputChange}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="고객명을 입력하세요"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          전화번호 *
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={editFormData.phone}
+                          onChange={handleEditInputChange}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="전화번호를 입력하세요"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        주소 *
+                      </label>
+                      <div className="space-y-3">
+                        <div className="flex space-x-2">
+                          <input
+                            type="text"
+                            name="zipCode"
+                            value={editFormData.zipCode}
+                            onChange={handleEditInputChange}
+                            required
+                            readOnly
+                            className="w-32 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="우편번호"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleEditAddressSearch}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                          >
+                            주소 검색
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          name="roadAddress"
+                          value={editFormData.roadAddress}
+                          onChange={handleEditInputChange}
+                          required
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="도로명 주소"
+                        />
+                        <input
+                          type="text"
+                          name="jibunAddress"
+                          value={editFormData.jibunAddress}
+                          onChange={handleEditInputChange}
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="지번 주소"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-4 pt-6 border-t">
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        저장
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  /* 상세보기 모드 */
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center mb-3">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                            {selectedCustomer.name.charAt(0)}
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">{selectedCustomer.name}</h3>
+                            <p className="text-sm text-gray-600">고객명</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <span className="text-2xl mr-3">📞</span>
+                          <div>
+                            <p className="text-lg font-semibold text-gray-900 font-mono">{selectedCustomer.phone}</p>
+                            <p className="text-sm text-gray-600">전화번호</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <span className="text-2xl mr-3">📮</span>
+                          <div>
+                            <p className="text-lg font-semibold text-gray-900">{selectedCustomer.zipCode}</p>
+                            <p className="text-sm text-gray-600">우편번호</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <span className="text-2xl mr-3">📅</span>
+                          <div>
+                            <p className="text-lg font-semibold text-gray-900">{selectedCustomer.registrationDate}</p>
+                            <p className="text-sm text-gray-600">등록일</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <div className="flex items-start">
+                          <span className="text-2xl mr-3">🏠</span>
+                          <div className="flex-1">
+                            <h4 className="text-lg font-semibold text-gray-900 mb-2">도로명 주소</h4>
+                            <p 
+                              className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                              onClick={() => handleViewOnMap(selectedCustomer.roadAddress)}
+                              title="카카오맵에서 보기"
+                            >
+                              {selectedCustomer.roadAddress}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {selectedCustomer.jibunAddress && (
+                        <div className="bg-green-50 p-4 rounded-lg">
+                          <div className="flex items-start">
+                            <span className="text-2xl mr-3">📍</span>
+                            <div className="flex-1">
+                              <h4 className="text-lg font-semibold text-gray-900 mb-2">지번 주소</h4>
+                              <p 
+                                className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                onClick={() => handleViewOnMap(selectedCustomer.jibunAddress)}
+                                title="카카오맵에서 보기"
+                              >
+                                {selectedCustomer.jibunAddress}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 엑셀 업로드 결과 모달 */}
         {showUploadModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -917,7 +1354,9 @@ export default function CustomersPage() {
             </div>
           </div>
         )}
-      </div>
-    </>
+          </div>
+        </div>
+      </main>
+    </AuthGuard>
   )
 } 

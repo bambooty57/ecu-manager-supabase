@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, ECU_MODELS } from '@/constants'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getAllEquipment, createEquipment, deleteEquipment, updateEquipment, EquipmentData } from '@/lib/equipment'
+import SimpleNavigation from '@/components/SimpleNavigation'
+import AuthGuard from '@/components/AuthGuard'
 
 interface Equipment {
   id: number
@@ -337,7 +339,11 @@ export default function EquipmentPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <AuthGuard>
+      <SimpleNavigation />
+      <main className="pt-20 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-6">
       {/* 페이지 헤더 */}
       <div className="flex justify-between items-center">
         <div>
@@ -465,15 +471,18 @@ export default function EquipmentPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button
                         onClick={() => handleViewDetail(equipment)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200 cursor-pointer"
                       >
                         상세보기
                       </button>
                       <button
                         onClick={() => handleDelete(equipment.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded transition-all duration-200 cursor-pointer"
+                        title="삭제"
                       >
-                        삭제
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </td>
                   </tr>
@@ -496,15 +505,18 @@ export default function EquipmentPage() {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleViewDetail(equipment)}
-                    className="text-blue-600 hover:text-blue-900 text-sm"
+                    className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200 cursor-pointer text-sm"
                   >
                     상세보기
                   </button>
                   <button
                     onClick={() => handleDelete(equipment.id)}
-                    className="text-red-600 hover:text-red-900 text-sm"
+                    className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded transition-all duration-200 cursor-pointer"
+                    title="삭제"
                   >
-                    삭제
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -1063,6 +1075,9 @@ export default function EquipmentPage() {
           </div>
         </div>
       )}
-    </div>
+          </div>
+        </div>
+      </main>
+    </AuthGuard>
   )
 } 

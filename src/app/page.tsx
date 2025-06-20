@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { getAllCustomers } from '@/lib/customers'
 import { getAllEquipment } from '@/lib/equipment'
 import { getAllWorkRecords } from '@/lib/work-records'
+import SimpleNavigation from '@/components/SimpleNavigation'
+import AuthGuard from '@/components/AuthGuard'
 
 export default function Home() {
   const [stats, setStats] = useState({
@@ -107,7 +109,12 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-8">
+    <AuthGuard>
+      <div>
+        <SimpleNavigation />
+        <main className="pt-20 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-8 animate-fadeIn">
       {/* 헤더 섹션 */}
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-4 animate-fadeIn">
@@ -248,6 +255,10 @@ export default function Home() {
           </div>
         </div>
       </div>
+          </div>
+        </div>
+      </main>
     </div>
+    </AuthGuard>
   )
 }
