@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Script from 'next/script'
-import { getAllCustomers, createCustomer, createMultipleCustomers, deleteCustomer, updateCustomer, CustomerData } from '@/lib/customers'
+import { getAllCustomers, createCustomer, createMultipleCustomers, deleteCustomer, updateCustomer } from '@/lib/customers'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 
@@ -502,8 +502,8 @@ export default function CustomersPage() {
             jibunAddress: jibunAddress || ''
           }
 
-          newCustomers.push(customerData)
-        } catch (error) {
+          newCustomers.push(customerData as any)
+        } catch {
           errors.push(`${index + 2}행: 데이터 처리 중 오류가 발생했습니다.`)
         }
       })
