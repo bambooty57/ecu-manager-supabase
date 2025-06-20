@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Script from 'next/script'
 import { getAllCustomers, createCustomer, createMultipleCustomers, deleteCustomer, updateCustomer, CustomerData } from '@/lib/customers'
-import SimpleNavigation from '@/components/SimpleNavigation'
+import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 
 interface Customer {
@@ -574,7 +574,7 @@ export default function CustomersPage() {
         strategy="lazyOnload"
       />
       
-      <SimpleNavigation />
+              <Navigation />
       <main className="pt-20 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-8">

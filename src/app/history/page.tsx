@@ -5,7 +5,7 @@ import { ACU_TYPES, CONNECTION_METHODS, ECU_TOOLS_FLAT, TUNING_WORKS, EQUIPMENT_
 import { getAllWorkRecords, updateWorkRecord, deleteWorkRecord, WorkRecordData } from '@/lib/work-records'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getAllEquipment, EquipmentData } from '@/lib/equipment'
-import SimpleNavigation from '@/components/SimpleNavigation'
+import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 
 export default function HistoryPage() {
@@ -398,7 +398,7 @@ export default function HistoryPage() {
 
   return (
     <AuthGuard>
-      <SimpleNavigation />
+              <Navigation />
       <main className="pt-20 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-6">

@@ -1,109 +1,121 @@
 'use client'
 
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter, usePathname } from 'next/navigation'
+import { useState } from 'react'
 
 export default function Navigation() {
-  const [mounted, setMounted] = useState(false)
-  const [currentPath, setCurrentPath] = useState('/')
+  const { user, signOut } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setMounted(true)
-      setCurrentPath(window.location.pathname)
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('로그아웃 오류:', error)
     }
-  }, [])
-
-  // 마운트되지 않았으면 null 반환
-  if (!mounted) {
-    return null
   }
 
-  // 로그인 페이지에서는 네비게이션을 표시하지 않음
-  if (currentPath === '/login' || currentPath === '/auth/callback') {
-    return null
-  }
+  const navigation = [
+    { name: '홈', href: '/', current: pathname === '/' },
+    { name: '고객 관리', href: '/customers', current: pathname === '/customers' },
+    { name: '장비 관리', href: '/equipment', current: pathname === '/equipment' },
+    { name: '작업 등록', href: '/work', current: pathname === '/work' },
+    { name: '작업 이력', href: '/history', current: pathname === '/history' },
+  ]
 
   return (
-    <nav className="nav-modern fixed top-0 left-0 right-0 z-50">
+    <nav className="bg-white shadow-lg fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link href="/customers" className="flex items-center space-x-2 text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
-                  E
-                </div>
-                <span>ECU Manager</span>
-              </Link>
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <h1 className="text-xl font-bold text-gray-900">ECU 관리 시스템</h1>
             </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-1">
-              <Link
-                href="/customers"
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
-                  currentPath === '/customers' 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 hover:shadow-md'
-                }`}
-              >
-                <span className="text-lg">👥</span>
-                <span>고객 관리</span>
-              </Link>
-              <Link
-                href="/equipment"
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
-                  currentPath === '/equipment' 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 hover:shadow-md'
-                }`}
-              >
-                <span className="text-lg">🚜</span>
-                <span>장비 관리</span>
-              </Link>
-              <Link
-                href="/work"
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
-                  currentPath === '/work' 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 hover:shadow-md'
-                }`}
-              >
-                <span className="text-lg">⚙️</span>
-                <span>작업 등록</span>
-              </Link>
-              <Link
-                href="/history"
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
-                  currentPath === '/history' 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 hover:shadow-md'
-                }`}
-              >
-                <span className="text-lg">📋</span>
-                <span>작업 이력</span>
-              </Link>
+            <div className="hidden md:ml-10 md:flex md:space-x-8">
+              {navigation.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    item.current
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  {item.name}
+                </a>
+              ))}
             </div>
           </div>
-          
-          {/* 우측 메뉴 */}
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>시스템 정상</span>
-            </div>
-            
-            <Link
-              href="/login"
-              className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-110"
-              title="로그인"
+
+          <div className="hidden md:flex md:items-center md:space-x-4">
+            <span className="text-sm text-gray-700">
+              {user?.email}
+            </span>
+            <button
+              onClick={handleSignOut}
+              className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              로그아웃
+            </button>
+          </div>
+
+          {/* 모바일 메뉴 버튼 */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+            >
+              <svg
+                className="h-6 w-6"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                {isMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
               </svg>
-            </Link>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* 모바일 메뉴 */}
+      {isMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
+            {navigation.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  item.current
+                    ? 'text-blue-700 bg-blue-50'
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item.name}
+              </a>
+            ))}
+            <div className="px-3 py-2 border-t border-gray-200">
+              <div className="text-sm text-gray-600 mb-2">{user?.email}</div>
+              <button
+                onClick={handleSignOut}
+                className="w-full text-left bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-700"
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   )
 } 

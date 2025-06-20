@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, ECU_MODELS } from '@/constants'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getAllEquipment, createEquipment, deleteEquipment, updateEquipment, EquipmentData } from '@/lib/equipment'
-import SimpleNavigation from '@/components/SimpleNavigation'
+import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 
 interface Equipment {
@@ -340,7 +340,7 @@ export default function EquipmentPage() {
 
   return (
     <AuthGuard>
-      <SimpleNavigation />
+              <Navigation />
       <main className="pt-20 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-6">

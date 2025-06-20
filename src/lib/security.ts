@@ -14,14 +14,120 @@ const ALLOWED_EMAILS = [
   // 'manager@company.com'
 ]
 
+// 시스템 관리자 이메일 (관리자 페이지 접근 권한)
+const ADMIN_EMAILS = [
+  'bambooty57@gmail.com'
+]
+
 /**
- * 이메일이 허용된 목록에 있는지 확인
+ * 관리자 권한 확인
+ */
+export function isAdmin(email: string | null | undefined): boolean {
+  if (!email) return false
+  return ADMIN_EMAILS.includes(email.toLowerCase())
+}
+
+/**
+ * 승인된 사용자인지 확인
+ */
+export function isApprovedUser(email: string): boolean {
+  // 관리자는 항상 승인됨
+  if (isAdmin(email)) {
+    return true
+  }
+
+  // localStorage에서 승인된 사용자 목록 확인
+  if (typeof window !== 'undefined') {
+    const approvedUsers = localStorage.getItem('approvedUsers')
+    if (approvedUsers) {
+      const approvedList = JSON.parse(approvedUsers)
+      return approvedList.includes(email.toLowerCase())
+    }
+  }
+
+  return false
+}
+
+/**
+ * 승인 대기 중인 사용자 목록 가져오기
+ */
+export function getPendingUsers(): string[] {
+  if (typeof window !== 'undefined') {
+    const pendingUsers = localStorage.getItem('pendingUsers')
+    return pendingUsers ? JSON.parse(pendingUsers) : []
+  }
+  return []
+}
+
+/**
+ * 승인 대기 목록에 사용자 추가
+ */
+export function addToPendingUsers(email: string): void {
+  try {
+    if (typeof window !== 'undefined') {
+      // 관리자는 승인 대기 목록에 추가하지 않음
+      if (isAdmin(email)) {
+        return
+      }
+      
+      const pendingUsers = getPendingUsers()
+      const emailLower = email.toLowerCase()
+      
+      // 이미 승인 대기 목록에 있으면 추가하지 않음
+      if (!pendingUsers.includes(emailLower)) {
+        pendingUsers.push(emailLower)
+        localStorage.setItem('pendingUsers', JSON.stringify(pendingUsers))
+      }
+    }
+  } catch (error) {
+    console.error('승인 대기 목록 추가 중 오류:', error)
+    throw error
+  }
+}
+
+/**
+ * 사용자 승인
+ */
+export function approveUser(email: string): void {
+  if (typeof window !== 'undefined') {
+    // 승인된 사용자 목록에 추가
+    const approvedUsers = localStorage.getItem('approvedUsers')
+    const approvedList = approvedUsers ? JSON.parse(approvedUsers) : []
+    if (!approvedList.includes(email.toLowerCase())) {
+      approvedList.push(email.toLowerCase())
+      localStorage.setItem('approvedUsers', JSON.stringify(approvedList))
+    }
+
+    // 승인 대기 목록에서 제거
+    const pendingUsers = getPendingUsers()
+    const updatedPending = pendingUsers.filter(user => user !== email.toLowerCase())
+    localStorage.setItem('pendingUsers', JSON.stringify(updatedPending))
+  }
+}
+
+/**
+ * 사용자 승인 거부
+ */
+export function rejectUser(email: string): void {
+  if (typeof window !== 'undefined') {
+    // 승인 대기 목록에서 제거
+    const pendingUsers = getPendingUsers()
+    const updatedPending = pendingUsers.filter(user => user !== email.toLowerCase())
+    localStorage.setItem('pendingUsers', JSON.stringify(updatedPending))
+  }
+}
+
+/**
+ * 이메일이 허용된 목록에 있는지 확인 (기존 로직 + 승인 시스템)
  */
 export function isEmailAllowed(email: string): boolean {
   // 관리자 이메일은 항상 허용
-  if (email.includes('admin') || 
-      email === 'admin@company.com' || 
-      email === 'bambooty57@gmail.com') {
+  if (isAdmin(email)) {
+    return true
+  }
+
+  // 승인된 사용자 확인
+  if (isApprovedUser(email)) {
     return true
   }
 

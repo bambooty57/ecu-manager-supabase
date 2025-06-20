@@ -6,7 +6,7 @@ import { ACU_TYPES, ECU_MODELS, ECU_MAKERS, CONNECTION_METHODS, ECU_TOOL_CATEGOR
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getEquipmentByCustomerId, EquipmentData } from '@/lib/equipment'
 import { createWorkRecord, WorkRecordData } from '@/lib/work-records'
-import SimpleNavigation from '@/components/SimpleNavigation'
+import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 
 export default function WorkPage() {
@@ -712,7 +712,7 @@ export default function WorkPage() {
 
   return (
     <AuthGuard>
-      <SimpleNavigation />
+              <Navigation />
       <main className="pt-20 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-6">
