@@ -903,21 +903,22 @@ export default function WorkPage() {
 
   return (
     <AuthGuard>
-              <Navigation />
-      <main className="pt-20 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-6">
-      {/* 페이지 헤더 */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">작업 등록</h1>
-        <p className="mt-2 text-gray-600">
-          새로운 ECU 튜닝 작업을 등록하고 관리합니다.
-        </p>
-      </div>
+      <div className="min-h-screen bg-gray-900">
+        <Navigation />
+        <main className="pt-20 pb-8">
+          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="space-y-6">
+        {/* 페이지 헤더 */}
+        <div>
+          <h1 className="text-3xl font-bold text-white">작업 등록</h1>
+          <p className="mt-2 text-gray-300">
+            새로운 ECU 튜닝 작업을 등록하고 관리합니다.
+          </p>
+        </div>
 
-      {/* 작업 등록 폼 */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-6">새 작업 등록</h2>
+        {/* 작업 등록 폼 */}
+        <div className="bg-gray-800 shadow rounded-lg p-6">
+          <h2 className="text-lg font-medium text-white mb-6">새 작업 등록</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 고객 및 장비 정보 */}
@@ -1012,7 +1013,7 @@ export default function WorkPage() {
               {formData.equipmentId && (
                 <div className="mt-2 p-3 bg-green-50 rounded-md">
                   <p className="text-sm text-green-700">
-                    🚜 {availableEquipment.find(e => e.id.toString() === formData.equipmentId)?.serialNumber}
+                    🚜 기대번호: {availableEquipment.find(e => e.id.toString() === formData.equipmentId)?.serialNumber}
                   </p>
                 </div>
               )}

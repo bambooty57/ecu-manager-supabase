@@ -75,59 +75,59 @@ export default function Home() {
 
   return (
     <AuthGuard>
-      <div>
+      <div className="min-h-screen bg-gray-900">
         <Navigation />
-        <main className="pt-20 pb-8 min-h-screen bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <main className="pt-20 pb-8">
+          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
             <div className="space-y-8">
               {/* 헤더 섹션 */}
               <div className="text-center">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                <h1 className="text-4xl font-bold text-white mb-4">
                   ECU 관리 시스템
                 </h1>
-                <p className="text-xl text-gray-600">
+                <p className="text-xl text-gray-300">
                   농기계 및 건설기계 ECU 전문 튜닝 관리 시스템
                 </p>
               </div>
 
               {/* 통계 카드 섹션 */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg p-6 shadow-md text-center">
+                <div className="bg-gray-800 rounded-lg p-6 shadow-md text-center">
                   <div className="text-3xl mb-2">👥</div>
-                  <div className="text-2xl font-bold text-gray-800 mb-1">
+                  <div className="text-2xl font-bold text-white mb-1">
                     {isLoading ? '...' : stats.customers}
                   </div>
-                  <div className="text-sm text-gray-600">등록된 고객</div>
+                  <div className="text-sm text-gray-300">등록된 고객</div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-md text-center">
+                <div className="bg-gray-800 rounded-lg p-6 shadow-md text-center">
                   <div className="text-3xl mb-2">🚜</div>
-                  <div className="text-2xl font-bold text-gray-800 mb-1">
+                  <div className="text-2xl font-bold text-white mb-1">
                     {isLoading ? '...' : stats.equipment}
                   </div>
-                  <div className="text-sm text-gray-600">등록된 장비</div>
+                  <div className="text-sm text-gray-300">등록된 장비</div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-md text-center">
+                <div className="bg-gray-800 rounded-lg p-6 shadow-md text-center">
                   <div className="text-3xl mb-2">⚙️</div>
-                  <div className="text-2xl font-bold text-gray-800 mb-1">
+                  <div className="text-2xl font-bold text-white mb-1">
                     {isLoading ? '...' : stats.workRecords}
                   </div>
-                  <div className="text-sm text-gray-600">총 작업 수</div>
+                  <div className="text-sm text-gray-300">총 작업 수</div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-md text-center">
+                <div className="bg-gray-800 rounded-lg p-6 shadow-md text-center">
                   <div className="text-3xl mb-2">✅</div>
-                  <div className="text-2xl font-bold text-gray-800 mb-1">
+                  <div className="text-2xl font-bold text-white mb-1">
                     {isLoading ? '...' : stats.completedWorks}
                   </div>
-                  <div className="text-sm text-gray-600">완료된 작업</div>
+                  <div className="text-sm text-gray-300">완료된 작업</div>
                 </div>
               </div>
 
               {/* 빠른 작업 섹션 */}
-              <div className="bg-white rounded-lg p-8 shadow-md">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">빠른 작업</h2>
+              <div className="bg-gray-800 rounded-lg p-8 shadow-md">
+                <h2 className="text-2xl font-bold text-white mb-6 text-center">빠른 작업</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {quickActions.map((action) => (
                     <Link

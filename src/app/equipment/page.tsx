@@ -439,7 +439,7 @@ export default function EquipmentPage() {
           <div>
             <input
               type="text"
-              placeholder="고객명, 모델명, 시리얼번호 검색..."
+                              placeholder="고객명, 모델명, 기대번호 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -521,7 +521,7 @@ export default function EquipmentPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{equipment.equipmentType}</div>
-                      <div className="text-sm text-gray-500">S/N: {equipment.serialNumber}</div>
+                      <div className="text-sm text-gray-500">기대번호: {equipment.serialNumber}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{equipment.manufacturer}</div>
@@ -599,7 +599,7 @@ export default function EquipmentPage() {
                 <div><span className="font-medium">장비:</span> {equipment.equipmentType}</div>
                 <div><span className="font-medium">제조사:</span> {equipment.manufacturer}</div>
                 <div><span className="font-medium">모델:</span> {equipment.model}</div>
-                <div><span className="font-medium">시리얼번호:</span> {equipment.serialNumber}</div>
+                                          <div><span className="font-medium">기대번호:</span> {equipment.serialNumber}</div>
                 <div><span className="font-medium">사용시간:</span> {equipment.usageHours.toLocaleString()}시간</div>
                 <div><span className="font-medium">ECU:</span> 
                   <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
@@ -770,7 +770,7 @@ export default function EquipmentPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        ECU S/N
+                        기대번호
                       </label>
                       <input
                         type="text"
@@ -778,7 +778,7 @@ export default function EquipmentPage() {
                         value={editFormData.serialNumber}
                         onChange={handleEditInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="ECU 시리얼번호를 입력하세요 (선택사항)"
+                        placeholder="기대번호를 입력하세요 (선택사항)"
                       />
                     </div>
 
@@ -942,8 +942,8 @@ export default function EquipmentPage() {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">시리얼번호</label>
-                      <div className="text-gray-900 font-mono">{selectedEquipment.serialNumber}</div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">기대번호</label>
+                <div className="text-gray-900 font-mono">{selectedEquipment.serialNumber}</div>
                     </div>
                   </div>
                   
@@ -1112,16 +1112,16 @@ export default function EquipmentPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ECU S/N
-                    </label>
-                    <input
-                      type="text"
-                      name="serialNumber"
-                      value={formData.serialNumber}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="ECU 시리얼번호를 입력하세요 (선택사항)"
-                    />
+                                              기대번호
+                      </label>
+                      <input
+                        type="text"
+                        name="serialNumber"
+                        value={formData.serialNumber}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="기대번호를 입력하세요 (선택사항)"
+                      />
                   </div>
 
                   <div>

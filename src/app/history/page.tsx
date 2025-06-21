@@ -714,6 +714,7 @@ export default function HistoryPage() {
                                   return ecuWorks.length > 0 ? ecuWorks.join(', ') : null
                                 })()}
                               </div>
+                              <div className="text-xs text-gray-400">{record.ecuMaker} {record.ecuType}</div>
                               <div className="text-xs text-gray-400">{record.connectionMethod}</div>
                             </td>
                             {/* ACU/튜닝 칸 */}
@@ -734,6 +735,7 @@ export default function HistoryPage() {
                                   return acuWorks.length > 0 ? acuWorks.join(', ') : null
                                 })()}
                               </div>
+                              <div className="text-xs text-gray-400">{record.acuMaker} {record.acuType}</div>
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap">
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

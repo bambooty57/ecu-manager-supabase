@@ -602,23 +602,23 @@ export default function CustomersPage() {
       />
       
               <Navigation />
-      <main className="pt-20 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="pt-20 pb-8 min-h-screen bg-gray-900">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-8">
         {/* 페이지 헤더 */}
-        <div className="card-modern rounded-xl p-6">
+        <div className="bg-gray-800 rounded-xl p-6">
           <div className="flex justify-between items-center">
             <div className="animate-slideIn">
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+              <h1 className="text-3xl font-bold text-white flex items-center">
                 <span className="text-4xl mr-3">👥</span>
                 고객 관리
               </h1>
-              <p className="mt-2 text-gray-600">고객 정보를 등록하고 관리합니다.</p>
+              <p className="mt-2 text-gray-300">고객 정보를 등록하고 관리합니다.</p>
             </div>
             <div className="flex space-x-3 animate-fadeIn">
               <button
                 onClick={downloadSampleFile}
-                className="btn-gradient-success text-white px-6 py-3 rounded-lg flex items-center space-x-2 font-medium"
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 font-medium transition-colors"
               >
                 <span>📄</span>
                 <span>샘플 다운로드</span>
@@ -634,7 +634,7 @@ export default function CustomersPage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
-                  className="btn-gradient-warning text-white px-6 py-3 rounded-lg flex items-center space-x-2 font-medium disabled:opacity-50"
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 font-medium disabled:opacity-50 transition-colors"
                 >
                   <span>📤</span>
                   <span>{isUploading ? '업로드 중...' : '엑셀/CSV 업로드'}</span>
@@ -642,7 +642,7 @@ export default function CustomersPage() {
               </div>
               <button
                 onClick={() => setIsFormOpen(true)}
-                className="btn-gradient text-white px-6 py-3 rounded-lg flex items-center space-x-2 font-medium"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 font-medium transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -654,7 +654,7 @@ export default function CustomersPage() {
         </div>
 
         {/* 검색 및 필터 */}
-        <div className="card-modern rounded-xl p-6">
+        <div className="bg-gray-800 rounded-xl p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex-1 max-w-md">
               <div className="relative">
@@ -668,7 +668,7 @@ export default function CustomersPage() {
                   placeholder="고객명, 전화번호, 주소로 검색..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="input-modern w-full pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-gray-700 text-white w-full pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
                 />
               </div>
             </div>
@@ -677,8 +677,8 @@ export default function CustomersPage() {
                 onClick={() => setViewMode('table')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                   viewMode === 'table' 
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg' 
-                    : 'bg-white/50 text-gray-700 hover:bg-white/80'
+                    ? 'bg-blue-600 text-white shadow-lg' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
                 <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -690,8 +690,8 @@ export default function CustomersPage() {
                 onClick={() => setViewMode('grid')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                   viewMode === 'grid' 
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg' 
-                    : 'bg-white/50 text-gray-700 hover:bg-white/80'
+                    ? 'bg-blue-600 text-white shadow-lg' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
                 <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -702,14 +702,14 @@ export default function CustomersPage() {
             </div>
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-600 flex items-center">
+            <div className="text-sm text-gray-300 flex items-center">
               <div className="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></div>
-              총 <span className="font-semibold text-blue-600 mx-1">{filteredCustomerList.length}</span>명의 고객이 등록되어 있습니다.
+              총 <span className="font-semibold text-blue-400 mx-1">{filteredCustomerList.length}</span>명의 고객이 등록되어 있습니다.
             </div>
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
+                className="text-sm text-gray-400 hover:text-gray-200 flex items-center"
               >
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -722,43 +722,43 @@ export default function CustomersPage() {
 
         {/* 고객 목록 */}
         {isLoading ? (
-          <div className="card-modern rounded-xl p-12">
+          <div className="bg-gray-800 rounded-xl p-12">
             <div className="text-center">
               <div className="spinner mx-auto"></div>
-              <p className="mt-4 text-gray-600">고객 데이터를 불러오는 중...</p>
+              <p className="mt-4 text-gray-300">고객 데이터를 불러오는 중...</p>
             </div>
           </div>
         ) : viewMode === 'table' ? (
-          <div className="table-modern rounded-xl overflow-hidden">
+          <div className="bg-gray-800 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
+              <table className="min-w-full divide-y divide-gray-700">
+                <thead className="bg-gray-700">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
                       <div className="flex items-center">
                         <span className="mr-2">👤</span>
                         고객명
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
                       <div className="flex items-center">
                         <span className="mr-2">📞</span>
                         전화번호
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
                       <div className="flex items-center">
                         <span className="mr-2">📍</span>
                         주소
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
                       <div className="flex items-center">
                         <span className="mr-2">📅</span>
                         등록일
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
                       <div className="flex items-center">
                         <span className="mr-2">⚙️</span>
                         작업
@@ -766,7 +766,7 @@ export default function CustomersPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="bg-gray-800 divide-y divide-gray-700">
                   {currentCustomers.map((customer, index) => (
                     <tr key={customer.id} className="animate-fadeIn" style={{animationDelay: `${index * 0.05}s`}}>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -774,15 +774,15 @@ export default function CustomersPage() {
                           <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
                             {customer.name.charAt(0)}
                           </div>
-                          <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                          <div className="text-sm font-medium text-white">{customer.name}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 font-mono">{customer.phone}</div>
+                        <div className="text-sm text-white font-mono">{customer.phone}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div 
-                          className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                          className="text-sm text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
                           onClick={() => handleViewOnMap(customer.roadAddress)}
                           title="카카오맵에서 보기"
                         >
@@ -790,29 +790,29 @@ export default function CustomersPage() {
                         </div>
                         {customer.jibunAddress && (
                           <div 
-                            className="text-xs text-gray-500 hover:text-gray-700 hover:underline cursor-pointer mt-1"
+                            className="text-xs text-gray-400 hover:text-gray-300 hover:underline cursor-pointer mt-1"
                             onClick={() => handleViewOnMap(customer.jibunAddress)}
                             title="카카오맵에서 보기"
                           >
                             지번: {customer.jibunAddress}
                           </div>
                         )}
-                        <div className="text-xs text-gray-500 mt-1">우편번호: {customer.zipCode}</div>
+                        <div className="text-xs text-gray-400 mt-1">우편번호: {customer.zipCode}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         {customer.registrationDate}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => handleViewDetail(customer)}
-                            className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200 cursor-pointer font-medium"
+                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-2 py-1 rounded transition-all duration-200 cursor-pointer font-medium"
                           >
                             상세보기
                           </button>
                           <button
                             onClick={() => handleDelete(customer.id)}
-                            className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded transition-all duration-200 cursor-pointer"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-900 p-1 rounded transition-all duration-200 cursor-pointer"
                             title="삭제"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
