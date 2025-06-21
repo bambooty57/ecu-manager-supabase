@@ -146,8 +146,8 @@ export default function EquipmentPage() {
           model: equipment.model,
           serialNumber: equipment.serialNumber || '',
           usageHours: equipment.horsepower || 0, // horsepower를 usageHours로 임시 매핑
-          ecuType: equipment.engineType || '',
-          acuType: '', // ACU 타입은 별도 필드가 없으므로 빈 문자열
+          ecuType: equipment.ecuType || '',
+          acuType: equipment.acuType || '', // ACU 타입 필드 사용
           registrationDate: new Date(equipment.createdAt).toISOString().split('T')[0],
           notes: equipment.notes
         }
@@ -299,8 +299,10 @@ export default function EquipmentPage() {
         manufacturer: editFormData.manufacturer,
         model: finalModel,
         serialNumber: editFormData.serialNumber || undefined,
-        engineType: finalEcuType || undefined,
+        engineType: undefined, // 엔진 타입은 별도 필드
         horsepower: editFormData.usageHours || undefined,
+        ecuType: finalEcuType || undefined,
+        acuType: finalAcuType || undefined,
         notes: editFormData.notes || undefined
       }
 
@@ -345,8 +347,10 @@ export default function EquipmentPage() {
         manufacturer: formData.manufacturer,
         model: finalModel,
         serialNumber: formData.serialNumber || undefined,
-        engineType: finalEcuType || undefined,
+        engineType: undefined, // 엔진 타입은 별도 필드
         horsepower: formData.usageHours || undefined,
+        ecuType: finalEcuType || undefined,
+        acuType: finalAcuType || undefined,
         notes: formData.notes || undefined
       }
 

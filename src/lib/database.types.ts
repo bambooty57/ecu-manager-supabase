@@ -44,6 +44,7 @@ export interface Database {
           serial_number: string | null
           engine_type: string | null
           horsepower: number | null
+          ecu_type: string | null
           acu_type: string | null
           notes: string | null
           created_at: string
@@ -59,6 +60,7 @@ export interface Database {
           serial_number?: string | null
           engine_type?: string | null
           horsepower?: number | null
+          ecu_type?: string | null
           acu_type?: string | null
           notes?: string | null
           created_at?: string
@@ -74,6 +76,7 @@ export interface Database {
           serial_number?: string | null
           engine_type?: string | null
           horsepower?: number | null
+          ecu_type?: string | null
           acu_type?: string | null
           notes?: string | null
           created_at?: string
