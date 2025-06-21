@@ -1155,117 +1155,127 @@ export default function WorkPage() {
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900">Remapping #{index + 1}</h4>
-                        <div className="mt-2 space-y-4">
-                          {/* ECU 정보 */}
-                          {(work.ecu.toolCategory || work.ecu.connectionMethod || work.ecu.maker || work.ecu.type || work.ecu.price || work.ecu.status) ? (
-                            <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
-                              <h5 className="font-medium text-blue-800 mb-2">🔧 ECU 정보</h5>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
-                                {work.ecu.toolCategory && <div><span className="font-medium">카테고리:</span> {work.ecu.toolCategory}</div>}
-                                {work.ecu.connectionMethod && <div><span className="font-medium">연결방법:</span> {work.ecu.connectionMethod}</div>}
-                                {work.ecu.maker && <div><span className="font-medium">제조사:</span> {work.ecu.maker}</div>}
-                                {work.ecu.type && <div><span className="font-medium">모델명:</span> {work.ecu.type}</div>}
-                                {work.ecu.typeCustom && <div><span className="font-medium">추가 정보:</span> {work.ecu.typeCustom}</div>}
-                                {work.ecu.price && <div><span className="font-medium">금액:</span> {(parseFloat(work.ecu.price) / 10000).toFixed(1)}만원</div>}
-                                {work.ecu.status && <div><span className="font-medium">상태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.ecu.status === '완료' ? 'bg-green-100 text-green-800' : work.ecu.status === '진행중' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.ecu.status}</span></div>}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="border border-blue-200 rounded-lg p-3 bg-blue-50 opacity-60">
-                              <h5 className="font-medium text-blue-800 mb-2">🔧 ECU 정보</h5>
-                              <div className="text-sm text-blue-500 italic">ECU 정보가 설정되지 않음</div>
-                            </div>
-                          )}
-                          
-                          {/* ACU 정보 */}
-                          {(work.acu.toolCategory || work.acu.connectionMethod || work.acu.manufacturer || work.acu.model || work.acu.price || work.acu.status) ? (
-                            <div className="border border-green-200 rounded-lg p-3 bg-green-50">
-                              <h5 className="font-medium text-green-800 mb-2">⚙️ ACU 정보</h5>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
-                                {work.acu.toolCategory && <div><span className="font-medium">카테고리:</span> {work.acu.toolCategory}</div>}
-                                {work.acu.connectionMethod && <div><span className="font-medium">연결방법:</span> {work.acu.connectionMethod}</div>}
-                                {work.acu.manufacturer && <div><span className="font-medium">제조사:</span> {work.acu.manufacturer}</div>}
-                                {work.acu.model && <div><span className="font-medium">모델명:</span> {work.acu.model}</div>}
-                                {work.acu.modelCustom && <div><span className="font-medium">추가 정보:</span> {work.acu.modelCustom}</div>}
-                                {work.acu.price && <div><span className="font-medium">금액:</span> {(parseFloat(work.acu.price) / 10000).toFixed(1)}만원</div>}
-                                {work.acu.status && <div><span className="font-medium">상태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.acu.status === '완료' ? 'bg-green-100 text-green-800' : work.acu.status === '진행중' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.acu.status}</span></div>}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="border border-green-200 rounded-lg p-3 bg-green-50 opacity-60">
-                              <h5 className="font-medium text-green-800 mb-2">⚙️ ACU 정보</h5>
-                              <div className="text-sm text-green-500 italic">ACU 정보가 설정되지 않음</div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="mt-3">
-                          <span className="font-medium text-gray-700">선택된 작업:</span>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                            {/* ECU 작업 */}
-                            {(work.ecu.selectedWorks && work.ecu.selectedWorks.length > 0) || work.ecu.workDetails ? (
-                              <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
-                                <div className="flex items-center mb-2">
-                                  <span className="text-sm font-medium text-blue-800">🔧 ECU 작업 선택</span>
-                                  <span className="ml-2 text-xs text-blue-600">({work.ecu.selectedWorks ? work.ecu.selectedWorks.length : 0}개)</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                  {work.ecu.selectedWorks && work.ecu.selectedWorks.map((workName, idx) => (
-                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                      {workName}
-                                    </span>
-                                  ))}
-                                  {(!work.ecu.selectedWorks || work.ecu.selectedWorks.length === 0) && (
-                                    <span className="text-xs text-blue-500 italic">선택된 ECU 작업 없음</span>
-                                  )}
-                                </div>
-                                {work.ecu.workDetails && (
-                                  <div className="mt-2 text-xs text-blue-700">
-                                    <span className="font-medium">상세:</span> {work.ecu.workDetails}
-                                  </div>
+                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* ECU/튜닝 섹션 */}
+                          <div className="space-y-3">
+                            <h5 className="font-medium text-blue-800">🔧 ECU/튜닝</h5>
+                            
+                            {/* 1. 제조사-모델명 (파란색 박스) */}
+                            <div className="bg-blue-100 border border-blue-300 rounded-lg p-3">
+                              <div className="text-sm font-medium text-blue-900">
+                                {work.ecu.maker && work.ecu.type ? (
+                                  `${work.ecu.maker} - ${work.ecu.type}`
+                                ) : work.ecu.maker ? (
+                                  work.ecu.maker
+                                ) : work.ecu.type ? (
+                                  work.ecu.type
+                                ) : (
+                                  <span className="text-blue-500 italic">제조사-모델명 미설정</span>
                                 )}
                               </div>
-                            ) : (
-                              <div className="border border-blue-200 rounded-lg p-3 bg-blue-50 opacity-60">
-                                <div className="flex items-center mb-2">
-                                  <span className="text-sm font-medium text-blue-800">🔧 ECU 작업 선택</span>
-                                  <span className="ml-2 text-xs text-blue-600">(0개)</span>
+                              {work.ecu.typeCustom && (
+                                <div className="text-xs text-blue-700 mt-1">
+                                  추가: {work.ecu.typeCustom}
                                 </div>
-                                <span className="text-xs text-blue-500 italic">ECU 작업이 설정되지 않음</span>
+                              )}
+                            </div>
+                            
+                            {/* 2. 작업내용 */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                              <div className="text-xs font-medium text-blue-800 mb-2">작업내용</div>
+                              <div className="flex flex-wrap gap-1">
+                                {work.ecu.selectedWorks && work.ecu.selectedWorks.length > 0 ? (
+                                  work.ecu.selectedWorks.map((workName, idx) => (
+                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-800">
+                                      {workName}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-blue-500 italic">작업내용 미설정</span>
+                                )}
                               </div>
-                            )}
+                              {work.ecu.workDetails && (
+                                <div className="mt-2 text-xs text-blue-700">
+                                  <span className="font-medium">상세:</span> {work.ecu.workDetails}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* 3. 연결방법 */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                              <div className="text-xs font-medium text-blue-800 mb-1">연결방법</div>
+                              <div className="text-sm text-blue-900">
+                                {work.ecu.connectionMethod || <span className="text-blue-500 italic">연결방법 미설정</span>}
+                              </div>
+                            </div>
+                            
+                            {/* 추가 정보 */}
+                            <div className="text-xs text-gray-600 space-y-1">
+                              {work.ecu.toolCategory && <div><span className="font-medium">카테고리:</span> {work.ecu.toolCategory}</div>}
+                              {work.ecu.price && <div><span className="font-medium">금액:</span> {(parseFloat(work.ecu.price) / 10000).toFixed(1)}만원</div>}
+                              {work.ecu.status && <div><span className="font-medium">상태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.ecu.status === '완료' ? 'bg-green-100 text-green-800' : work.ecu.status === '진행중' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.ecu.status}</span></div>}
+                            </div>
+                          </div>
 
-                            {/* ACU 작업 */}
-                            {(work.acu.selectedWorks && work.acu.selectedWorks.length > 0) || work.acu.workDetails ? (
-                              <div className="border border-green-200 rounded-lg p-3 bg-green-50">
-                                <div className="flex items-center mb-2">
-                                  <span className="text-sm font-medium text-green-800">⚙️ ACU 작업 선택</span>
-                                  <span className="ml-2 text-xs text-green-600">({work.acu.selectedWorks ? work.acu.selectedWorks.length : 0}개)</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                  {work.acu.selectedWorks && work.acu.selectedWorks.map((workName, idx) => (
-                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                      {workName}
-                                    </span>
-                                  ))}
-                                  {(!work.acu.selectedWorks || work.acu.selectedWorks.length === 0) && (
-                                    <span className="text-xs text-green-500 italic">선택된 ACU 작업 없음</span>
-                                  )}
-                                </div>
-                                {work.acu.workDetails && (
-                                  <div className="mt-2 text-xs text-green-700">
-                                    <span className="font-medium">상세:</span> {work.acu.workDetails}
-                                  </div>
+                          {/* ACU/튜닝 섹션 */}
+                          <div className="space-y-3">
+                            <h5 className="font-medium text-green-800">⚙️ ACU/튜닝</h5>
+                            
+                            {/* 1. 제조사-모델명 (초록색 박스) */}
+                            <div className="bg-green-100 border border-green-300 rounded-lg p-3">
+                              <div className="text-sm font-medium text-green-900">
+                                {work.acu.manufacturer && work.acu.model ? (
+                                  `${work.acu.manufacturer} - ${work.acu.model}`
+                                ) : work.acu.manufacturer ? (
+                                  work.acu.manufacturer
+                                ) : work.acu.model ? (
+                                  work.acu.model
+                                ) : (
+                                  <span className="text-green-500 italic">제조사-모델명 미설정</span>
                                 )}
                               </div>
-                            ) : (
-                              <div className="border border-green-200 rounded-lg p-3 bg-green-50 opacity-60">
-                                <div className="flex items-center mb-2">
-                                  <span className="text-sm font-medium text-green-800">⚙️ ACU 작업 선택</span>
-                                  <span className="ml-2 text-xs text-green-600">(0개)</span>
+                              {work.acu.modelCustom && (
+                                <div className="text-xs text-green-700 mt-1">
+                                  추가: {work.acu.modelCustom}
                                 </div>
-                                <span className="text-xs text-green-500 italic">ACU 작업이 설정되지 않음</span>
+                              )}
+                            </div>
+                            
+                            {/* 2. 작업내용 */}
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                              <div className="text-xs font-medium text-green-800 mb-2">작업내용</div>
+                              <div className="flex flex-wrap gap-1">
+                                {work.acu.selectedWorks && work.acu.selectedWorks.length > 0 ? (
+                                  work.acu.selectedWorks.map((workName, idx) => (
+                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-200 text-green-800">
+                                      {workName}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-green-500 italic">작업내용 미설정</span>
+                                )}
                               </div>
-                            )}
+                              {work.acu.workDetails && (
+                                <div className="mt-2 text-xs text-green-700">
+                                  <span className="font-medium">상세:</span> {work.acu.workDetails}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* 3. 연결방법 */}
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                              <div className="text-xs font-medium text-green-800 mb-1">연결방법</div>
+                              <div className="text-sm text-green-900">
+                                {work.acu.connectionMethod || <span className="text-green-500 italic">연결방법 미설정</span>}
+                              </div>
+                            </div>
+                            
+                            {/* 추가 정보 */}
+                            <div className="text-xs text-gray-600 space-y-1">
+                              {work.acu.toolCategory && <div><span className="font-medium">카테고리:</span> {work.acu.toolCategory}</div>}
+                              {work.acu.price && <div><span className="font-medium">금액:</span> {(parseFloat(work.acu.price) / 10000).toFixed(1)}만원</div>}
+                              {work.acu.status && <div><span className="font-medium">상태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.acu.status === '완료' ? 'bg-green-100 text-green-800' : work.acu.status === '진행중' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.acu.status}</span></div>}
+                            </div>
                           </div>
                         </div>
 

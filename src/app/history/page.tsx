@@ -17,6 +17,7 @@ export default function HistoryPage() {
     manufacturer: '',
     model: '',
     ecuType: '',
+    acuType: '',
     tuningWork: '',
     status: ''
   })
@@ -177,6 +178,9 @@ export default function HistoryPage() {
     // ECU 타입 필터링
     if (filters.ecuType && record.ecuType !== filters.ecuType) return false
     
+    // ACU 타입 필터링
+    if (filters.acuType && record.acuType !== filters.acuType) return false
+    
     // 튜닝작업 필터링
     if (filters.tuningWork && record.tuningWork !== filters.tuningWork) {
       // "기타"가 선택된 경우 customTuningWork도 확인
@@ -217,6 +221,7 @@ export default function HistoryPage() {
       manufacturer: '',
       model: '',
       ecuType: '',
+      acuType: '',
       tuningWork: '',
       status: ''
     })
@@ -224,8 +229,10 @@ export default function HistoryPage() {
 
   // 상세보기 핸들러
   const handleViewDetail = (record: any) => {
+    console.log('🔍 상세보기 클릭:', record)
     setSelectedRecord(record)
     setShowDetailModal(true)
+    console.log('📋 모달 상태 업데이트 완료')
   }
 
   // 수정 핸들러
@@ -569,6 +576,20 @@ export default function HistoryPage() {
               </select>
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">ACU 타입</label>
+              <select
+                name="acuType"
+                value={filters.acuType}
+                onChange={handleFilterChange}
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">전체</option>
+                {acuTypes.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">작업 상태</label>
               <select
                 name="status"
@@ -878,8 +899,11 @@ export default function HistoryPage() {
       </div>
 
       {/* 상세보기 모달 */}
-      {showDetailModal && selectedRecord && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      {(() => {
+        console.log('🔍 모달 렌더링 체크:', { showDetailModal, hasSelectedRecord: !!selectedRecord })
+        return showDetailModal && selectedRecord
+      })() && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-[9999]">
           <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-900">작업 상세 정보</h3>
