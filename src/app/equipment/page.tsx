@@ -67,8 +67,8 @@ export default function EquipmentPage() {
   })
 
   // ECU/ACU 타입 목록 상태 (동적으로 추가 가능)
-  const [ecuModels, setEcuModels] = useState([...ECU_MODELS])
-  const [acuTypes, setAcuTypes] = useState([...ACU_TYPES])
+  const [ecuModels, setEcuModels] = useState<string[]>([...ECU_MODELS])
+  const [acuTypes, setAcuTypes] = useState<string[]>([...ACU_TYPES])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
