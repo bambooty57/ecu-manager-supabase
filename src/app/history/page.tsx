@@ -871,13 +871,13 @@ export default function HistoryPage() {
                     <span className="text-sm text-gray-500">사용 도구:</span>
                     <span className="text-sm text-gray-900">{selectedRecord.ecuTool}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">튜닝 작업:</span>
-                    <span className="text-sm text-gray-900">
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-gray-700">튜닝 작업:</span>
+                    <div className="text-sm text-gray-900 whitespace-pre-wrap break-words">
                       {selectedRecord.tuningWork === '기타' && selectedRecord.customTuningWork 
                         ? selectedRecord.customTuningWork 
                         : selectedRecord.tuningWork}
-                    </span>
+                    </div>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">작업 금액:</span>
@@ -989,8 +989,8 @@ export default function HistoryPage() {
                                   </svg>
                                 </div>
                               )}
-                              <div>
-                                <p className="text-sm font-medium text-gray-900 truncate max-w-xs" title={file.name}>{file.name}</p>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 break-all" title={file.name}>{file.name}</p>
                                 <p className="text-xs text-gray-500">
                                   {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'N/A'}
                                   {file.description && ` • ${file.description}`}
