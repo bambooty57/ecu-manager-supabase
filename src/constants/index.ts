@@ -425,7 +425,145 @@ export const ECU_MODELS = [
   '기타'
 ] as const
 
-// ACU 타입 (After-treatment Control Unit - 후처리 제어 장치)
+// ACU 제조사 (After-treatment Control Unit - 후처리 제어 장치)
+export const ACU_MANUFACTURERS = [
+  'Bosch',
+  'Delphi',
+  'Continental',
+  'Denso',
+  'Siemens',
+  'Cummins',
+  'Caterpillar',
+  'Visteon',
+  'Magneti Marelli',
+  'Valeo',
+  'ZF',
+  'Hitachi',
+  '기타'
+] as const
+
+// ACU 제조사별 모델명 매핑
+export const ACU_MODELS_BY_MANUFACTURER: Record<string, string[]> = {
+  'Bosch': [
+    'EDC17C74',
+    'EDC17CP44',
+    'EDC17CP54',
+    'EDC17C49',
+    'EDC16C39',
+    'EDC16C34',
+    'EDC7C1',
+    'EDC7UC31',
+    'MS6.1',
+    'MS6.2',
+    'MS6.3',
+    'AdBlue ACU',
+    'DPF ACU',
+    'SCR ACU'
+  ],
+  'Delphi': [
+    'DCM3.7',
+    'DCM6.2A',
+    'DCM7.1',
+    'DCM7.4',
+    'DDEC VI',
+    'DDEC VII',
+    'DDEC VIII',
+    'AdBlue ACU',
+    'DPF ACU',
+    'SCR ACU'
+  ],
+  'Continental': [
+    'SID803',
+    'SID804',
+    'SID807',
+    'SID208',
+    'SID209',
+    'PCR2.1',
+    'EMS3120',
+    'EMS3125',
+    'EMS3132',
+    'AdBlue ACU',
+    'DPF ACU',
+    'SCR ACU'
+  ],
+  'Denso': [
+    '175800-4840',
+    '175800-4850',
+    '175800-4860',
+    '275700-6460',
+    '275700-6470',
+    '275700-6480',
+    '112500-1240',
+    '112500-1250',
+    'AdBlue ACU',
+    'DPF ACU',
+    'SCR ACU'
+  ],
+  'Siemens': [
+    'SIM271DE',
+    'SIM271KE',
+    'SIM2K-240',
+    'SIM2K-241',
+    'SIM2K-242',
+    'PPD1.1',
+    'PPD1.2',
+    'AdBlue ACU',
+    'DPF ACU',
+    'SCR ACU'
+  ],
+  'Cummins': [
+    'ISX ACU',
+    'QSX ACU',
+    'ISM ACU',
+    'QSM ACU',
+    'ISL ACU',
+    'QSL ACU',
+    'AdBlue ACU',
+    'DPF ACU',
+    'SCR ACU'
+  ],
+  'Caterpillar': [
+    'C7 ACU',
+    'C9 ACU',
+    'C13 ACU',
+    'C15 ACU',
+    'C18 ACU',
+    'AdBlue ACU',
+    'DPF ACU',
+    'SCR ACU'
+  ],
+  'Visteon': [
+    'DCU-102',
+    'DCU-103',
+    'DCU-104',
+    'EEC-VI',
+    'EEC-VII'
+  ],
+  'Magneti Marelli': [
+    'MJD8F3',
+    'MJD8DF',
+    '7SM',
+    '8SM'
+  ],
+  'Valeo': [
+    'V40',
+    'V42',
+    'V46'
+  ],
+  'ZF': [
+    'EcoLife',
+    'EcoMid',
+    'TraXon'
+  ],
+  'Hitachi': [
+    'EGI-Y4',
+    'EGI-Y5',
+    'EGI-Y6'
+  ],
+  '기타': []
+}
+
+// 기존 호환성을 위한 ACU 타입 (deprecated)
 export const ACU_TYPES = [
   // Bosch ACU 시리즈
   'Bosch ACU',

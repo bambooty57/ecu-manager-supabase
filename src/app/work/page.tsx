@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ACU_TYPES, ECU_MODELS, ECU_MAKERS, CONNECTION_METHODS, ECU_TOOL_CATEGORIES, ECU_TOOLS, ECU_TOOLS_FLAT, TUNING_WORKS, TUNING_CATEGORIES, TUNING_WORKS_BY_CATEGORY, WORK_STATUS } from '@/constants'
+import { ACU_TYPES, ACU_MANUFACTURERS, ACU_MODELS_BY_MANUFACTURER, ECU_MODELS, ECU_MAKERS, CONNECTION_METHODS, ECU_TOOL_CATEGORIES, ECU_TOOLS, ECU_TOOLS_FLAT, TUNING_WORKS, TUNING_CATEGORIES, TUNING_WORKS_BY_CATEGORY, WORK_STATUS } from '@/constants'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getEquipmentByCustomerId, EquipmentData } from '@/lib/equipment'
 import { createWorkRecord, WorkRecordData } from '@/lib/work-records'
@@ -30,8 +30,9 @@ export default function WorkPage() {
     ecuMaker?: string
     ecuType: string
     ecuTypeCustom: string
-    acuType: string
-    acuTypeCustom: string
+    acuManufacturer: string
+    acuModel: string
+    acuModelCustom: string
     selectedWorks: string[]
     notes: string
     workDetails: string
@@ -46,6 +47,14 @@ export default function WorkPage() {
       stage2FileDescription?: string
       stage3File?: File
       stage3FileDescription?: string
+      acuOriginalFiles?: File[]
+      acuOriginalFileDescription?: string
+      acuStage1File?: File
+      acuStage1FileDescription?: string
+      acuStage2File?: File
+      acuStage2FileDescription?: string
+      acuStage3File?: File
+      acuStage3FileDescription?: string
       mediaFile1?: File
       mediaFile1Description?: string
       mediaFile2?: File
@@ -78,8 +87,9 @@ export default function WorkPage() {
     ecuMaker: '',
     ecuType: '',
     ecuTypeCustom: '',
-    acuType: '',
-    acuTypeCustom: '',
+    acuManufacturer: '',
+    acuModel: '',
+    acuModelCustom: '',
     selectedWorks: [] as string[],
     notes: '',
     workDetails: '',
@@ -94,6 +104,14 @@ export default function WorkPage() {
       stage2FileDescription: '',
       stage3File: undefined,
       stage3FileDescription: '',
+      acuOriginalFiles: [] as File[],
+      acuOriginalFileDescription: '',
+      acuStage1File: undefined,
+      acuStage1FileDescription: '',
+      acuStage2File: undefined,
+      acuStage2FileDescription: '',
+      acuStage3File: undefined,
+      acuStage3FileDescription: '',
       mediaFile1: undefined,
       mediaFile1Description: '',
       mediaFile2: undefined,
@@ -133,13 +151,22 @@ export default function WorkPage() {
     return [...ECU_MODELS]
   })
 
-  // 동적 ACU 타입 목록 (로컬 스토리지에서 가져오기)
+  // 동적 ACU 타입 목록 (로컬 스토리지에서 가져오기) - 기존 호환성용
   const [acuTypes, setAcuTypes] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('acuTypes')
       return saved ? JSON.parse(saved) : [...ACU_TYPES]
     }
     return [...ACU_TYPES]
+  })
+
+  // 동적 ACU 제조사별 모델 목록 (로컬 스토리지에서 가져오기)
+  const [acuModelsByManufacturer, setAcuModelsByManufacturer] = useState<Record<string, string[]>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('acuModelsByManufacturer')
+      return saved ? JSON.parse(saved) : { ...ACU_MODELS_BY_MANUFACTURER }
+    }
+    return { ...ACU_MODELS_BY_MANUFACTURER }
   })
 
   // 새로운 ECU 타입을 목록에 추가
@@ -151,13 +178,33 @@ export default function WorkPage() {
     }
   }
 
-  // 새로운 ACU 타입을 목록에 추가
+  // 새로운 ACU 타입을 목록에 추가 (기존 호환성용)
   const addNewAcuType = (newType: string) => {
     if (newType.trim() && !acuTypes.includes(newType.trim())) {
       const newList = [...acuTypes, newType.trim()]
       setAcuTypes(newList)
       localStorage.setItem('acuTypes', JSON.stringify(newList))
     }
+  }
+
+  // 새로운 ACU 모델을 제조사별 목록에 추가
+  const addNewAcuModel = (manufacturer: string, newModel: string) => {
+    if (newModel.trim() && manufacturer) {
+      const currentModels = acuModelsByManufacturer[manufacturer] || []
+      if (!currentModels.includes(newModel.trim())) {
+        const newModelsByManufacturer = {
+          ...acuModelsByManufacturer,
+          [manufacturer]: [...currentModels, newModel.trim()]
+        }
+        setAcuModelsByManufacturer(newModelsByManufacturer)
+        localStorage.setItem('acuModelsByManufacturer', JSON.stringify(newModelsByManufacturer))
+      }
+    }
+  }
+
+  // ACU 제조사별 사용 가능한 모델 목록 가져오기
+  const getAvailableAcuModels = (manufacturer: string): string[] => {
+    return acuModelsByManufacturer[manufacturer] || []
   }
 
   // 고객 데이터 로드
@@ -324,8 +371,9 @@ export default function WorkPage() {
       ecuMaker: '',
       ecuType: '',
       ecuTypeCustom: '',
-      acuType: '',
-      acuTypeCustom: '',
+      acuManufacturer: '',
+      acuModel: '',
+      acuModelCustom: '',
       selectedWorks: [],
       notes: '',
       workDetails: '',
@@ -340,6 +388,14 @@ export default function WorkPage() {
         stage2FileDescription: '',
         stage3File: undefined,
         stage3FileDescription: '',
+        acuOriginalFiles: [] as File[],
+        acuOriginalFileDescription: '',
+        acuStage1File: undefined,
+        acuStage1FileDescription: '',
+        acuStage2File: undefined,
+        acuStage2FileDescription: '',
+        acuStage3File: undefined,
+        acuStage3FileDescription: '',
         mediaFile1: undefined,
         mediaFile1Description: '',
         mediaFile2: undefined,
@@ -367,8 +423,9 @@ export default function WorkPage() {
       ecuMaker: work.ecuMaker || '',
       ecuType: work.ecuType,
       ecuTypeCustom: work.ecuTypeCustom,
-      acuType: work.acuType,
-      acuTypeCustom: work.acuTypeCustom,
+      acuManufacturer: work.acuManufacturer || '',
+      acuModel: work.acuModel || '',
+      acuModelCustom: work.acuModelCustom || '',
       selectedWorks: work.selectedWorks,
       notes: work.notes,
       workDetails: work.workDetails,
@@ -405,8 +462,9 @@ export default function WorkPage() {
       ecuMaker: '',
       ecuType: '',
       ecuTypeCustom: '',
-      acuType: '',
-      acuTypeCustom: '',
+      acuManufacturer: '',
+      acuModel: '',
+      acuModelCustom: '',
       selectedWorks: [],
       notes: '',
       workDetails: '',
@@ -421,6 +479,14 @@ export default function WorkPage() {
         stage2FileDescription: '',
         stage3File: undefined,
         stage3FileDescription: '',
+        acuOriginalFiles: [] as File[],
+        acuOriginalFileDescription: '',
+        acuStage1File: undefined,
+        acuStage1FileDescription: '',
+        acuStage2File: undefined,
+        acuStage2FileDescription: '',
+        acuStage3File: undefined,
+        acuStage3FileDescription: '',
         mediaFile1: undefined,
         mediaFile1Description: '',
         mediaFile2: undefined,
@@ -696,8 +762,9 @@ export default function WorkPage() {
       ecuMaker: '',
       ecuType: '',
       ecuTypeCustom: '',
-      acuType: '',
-      acuTypeCustom: '',
+      acuManufacturer: '',
+      acuModel: '',
+      acuModelCustom: '',
       selectedWorks: [],
       notes: '',
       workDetails: '',
@@ -712,6 +779,14 @@ export default function WorkPage() {
         stage2FileDescription: '',
         stage3File: undefined,
         stage3FileDescription: '',
+        acuOriginalFiles: [] as File[],
+        acuOriginalFileDescription: '',
+        acuStage1File: undefined,
+        acuStage1FileDescription: '',
+        acuStage2File: undefined,
+        acuStage2FileDescription: '',
+        acuStage3File: undefined,
+        acuStage3FileDescription: '',
         mediaFile1: undefined,
         mediaFile1Description: '',
         mediaFile2: undefined,
@@ -920,27 +995,59 @@ export default function WorkPage() {
                           <div><span className="font-medium">상태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.status === '완료' ? 'bg-green-100 text-green-800' : work.status === '진행중' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.status}</span></div>
                           {work.ecuMaker && <div><span className="font-medium">ECU 제조사:</span> {work.ecuMaker}</div>}
                           {work.ecuType && <div><span className="font-medium">ECU 모델:</span> {work.ecuType}</div>}
-                {work.acuType && <div><span className="font-medium">ACU 타입:</span> {work.acuType}</div>}
+                          {work.acuManufacturer && <div><span className="font-medium">ACU 제조사:</span> {work.acuManufacturer}</div>}
+                          {work.acuModel && <div><span className="font-medium">ACU 모델:</span> {work.acuModel}</div>}
+                          {/* 기존 데이터 호환성 */}
+                          {(work as any).acuType && !work.acuManufacturer && <div><span className="font-medium">ACU 타입:</span> {(work as any).acuType}</div>}
                           {work.ecuTypeCustom && <div><span className="font-medium">추가 정보:</span> {work.ecuTypeCustom}</div>}
                           {work.price && <div><span className="font-medium">금액:</span> {(parseFloat(work.price) / 10000).toFixed(1)}만원</div>}
                         </div>
                         <div className="mt-3">
                           <span className="font-medium text-gray-700">선택된 작업:</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {work.selectedWorks.map((workName, idx) => {
-                              const isECU = workName.startsWith('ECU:')
-                              const isACU = workName.startsWith('ACU:')
-                              const displayName = workName.replace(/^(ECU:|ACU:)/, '')
-                              const bgColor = isECU ? 'bg-blue-100 text-blue-800' : isACU ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                              const prefix = isECU ? '🔧 ECU' : isACU ? '⚙️ ACU' : ''
-                              
-                              return (
-                                <span key={idx} className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${bgColor}`}>
-                                  {prefix && <span className="mr-1">{prefix}:</span>}
-                                  {displayName}
-                                </span>
-                              )
-                            })}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                            {/* ECU 작업 */}
+                            <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                              <div className="flex items-center mb-2">
+                                <span className="text-sm font-medium text-blue-800">🔧 ECU/튜닝</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {work.selectedWorks
+                                  .filter(workName => workName.startsWith('ECU:'))
+                                  .map((workName, idx) => {
+                                    const displayName = workName.replace(/^ECU:/, '')
+                                    return (
+                                      <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {displayName}
+                                      </span>
+                                    )
+                                  })}
+                                {work.selectedWorks.filter(workName => workName.startsWith('ECU:')).length === 0 && (
+                                  <span className="text-xs text-blue-500 italic">선택된 ECU 작업 없음</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* ACU 작업 */}
+                            <div className="border border-green-200 rounded-lg p-3 bg-green-50">
+                              <div className="flex items-center mb-2">
+                                <span className="text-sm font-medium text-green-800">⚙️ ACU/튜닝</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {work.selectedWorks
+                                  .filter(workName => workName.startsWith('ACU:'))
+                                  .map((workName, idx) => {
+                                    const displayName = workName.replace(/^ACU:/, '')
+                                    return (
+                                      <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        {displayName}
+                                      </span>
+                                    )
+                                  })}
+                                {work.selectedWorks.filter(workName => workName.startsWith('ACU:')).length === 0 && (
+                                  <span className="text-xs text-green-500 italic">선택된 ACU 작업 없음</span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                         {work.workDetails && (
@@ -959,10 +1066,18 @@ export default function WorkPage() {
                         <div className="mt-3">
                           <span className="font-medium text-gray-700">첨부 파일:</span>
                           <div className="flex flex-wrap gap-2 mt-1">
-                            {work.files.originalFiles && work.files.originalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">📁 원본({work.files.originalFiles.length})</span>}
-                            {work.files.stage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">📈 Stage1</span>}
-                            {work.files.stage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">🚀 Stage2</span>}
-                            {work.files.stage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">🔥 Stage3</span>}
+                            {/* ECU 파일들 */}
+                            {work.files.originalFiles && work.files.originalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">🔧 ECU원본({work.files.originalFiles.length})</span>}
+                            {work.files.stage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-900">🔧 ECU Stage1</span>}
+                            {work.files.stage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-300 text-blue-900">🔧 ECU Stage2</span>}
+                            {work.files.stage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-400 text-blue-900">🔧 ECU Stage3</span>}
+                            
+                            {/* ACU 파일들 */}
+                            {work.files.acuOriginalFiles && work.files.acuOriginalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">⚙️ ACU원본({work.files.acuOriginalFiles.length})</span>}
+                            {work.files.acuStage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-200 text-green-900">⚙️ ACU Stage1</span>}
+                            {work.files.acuStage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-300 text-green-900">⚙️ ACU Stage2</span>}
+                            {work.files.acuStage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-400 text-green-900">⚙️ ACU Stage3</span>}
+                            
                             {/* 미디어 파일들 표시 */}
                             {(() => {
                               const mediaCount = [1, 2, 3, 4, 5].filter(i => {
@@ -1121,43 +1236,67 @@ export default function WorkPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ACU 타입
+                    ACU 제조사
                   </label>
                   <select
-                    name="acuType"
-                    value={currentRemappingWork.acuType}
+                    name="acuManufacturer"
+                    value={currentRemappingWork.acuManufacturer}
                     onChange={handleRemappingWorkInputChange}
                     className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="">ACU 타입을 선택하세요</option>
-                    {acuTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
+                    <option value="">ACU 제조사를 선택하세요</option>
+                    {ACU_MANUFACTURERS.map((manufacturer) => (
+                      <option key={manufacturer} value={manufacturer}>
+                        {manufacturer}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ACU 모델
+                  </label>
+                  <select
+                    name="acuModel"
+                    value={currentRemappingWork.acuModel}
+                    onChange={handleRemappingWorkInputChange}
+                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    disabled={!currentRemappingWork.acuManufacturer}
+                  >
+                    <option value="">
+                      {currentRemappingWork.acuManufacturer ? 'ACU 모델을 선택하세요' : '먼저 제조사를 선택하세요'}
+                    </option>
+                    {currentRemappingWork.acuManufacturer && getAvailableAcuModels(currentRemappingWork.acuManufacturer).map((model) => (
+                      <option key={model} value={model}>
+                        {model}
                       </option>
                     ))}
                   </select>
                   <div className="mt-2 flex space-x-2">
                     <input
                       type="text"
-                      name="customAcuType"
-                      value={currentRemappingWork.acuTypeCustom}
-                      onChange={(e) => setCurrentRemappingWork(prev => ({ ...prev, acuTypeCustom: e.target.value }))}
+                      name="customAcuModel"
+                      value={currentRemappingWork.acuModelCustom}
+                      onChange={(e) => setCurrentRemappingWork(prev => ({ ...prev, acuModelCustom: e.target.value }))}
                       className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="새로운 ACU 타입을 입력하여 목록에 추가"
+                      placeholder="새로운 ACU 모델을 입력하여 목록에 추가"
+                      disabled={!currentRemappingWork.acuManufacturer}
                     />
                     <button
                       type="button"
                       onClick={() => {
-                        if (currentRemappingWork.acuTypeCustom.trim()) {
-                          addNewAcuType(currentRemappingWork.acuTypeCustom.trim())
+                        if (currentRemappingWork.acuModelCustom.trim() && currentRemappingWork.acuManufacturer) {
+                          addNewAcuModel(currentRemappingWork.acuManufacturer, currentRemappingWork.acuModelCustom.trim())
                           setCurrentRemappingWork(prev => ({ 
                             ...prev, 
-                            acuType: currentRemappingWork.acuTypeCustom.trim(),
-                            acuTypeCustom: ''
+                            acuModel: currentRemappingWork.acuModelCustom.trim(),
+                            acuModelCustom: ''
                           }))
                         }
                       }}
-                      className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                      disabled={!currentRemappingWork.acuManufacturer || !currentRemappingWork.acuModelCustom.trim()}
+                      className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
                       title="목록에 추가하고 선택"
                     >
                       추가
@@ -1472,6 +1611,176 @@ export default function WorkPage() {
                         placeholder="3차 튜닝 설명을 입력하세요"
                         className="w-full border-red-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-xs"
                       />
+                    </div>
+                  </div>
+
+                  {/* ACU 파일 업로드 섹션 */}
+                  <div className="border-t border-gray-300 pt-6">
+                    <h5 className="text-md font-medium text-gray-900 mb-4">ACU 파일 업로드</h5>
+                    
+                    {/* 원본 ACU 파일 */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        원본 ACU 폴더
+                      </label>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <input
+                          type="file"
+                          id="acu-original-folder"
+                          className="hidden"
+                          multiple
+                          {...({ webkitdirectory: "", directory: "" } as any)}
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || [])
+                            handleFileChange('acuOriginalFiles', files)
+                          }}
+                        />
+                        <label
+                          htmlFor="acu-original-folder"
+                          className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-green-300 rounded-lg cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors"
+                        >
+                          <svg className="w-6 h-6 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                          <span className="text-sm text-green-600">
+                            {currentRemappingWork.files.acuOriginalFiles && currentRemappingWork.files.acuOriginalFiles.length > 0 
+                              ? `⚙️ ${currentRemappingWork.files.acuOriginalFiles.length}개 파일 선택됨` 
+                              : '⚙️ 원본 ACU 폴더 선택'}
+                          </span>
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        value={currentRemappingWork.files.acuOriginalFileDescription || ''}
+                        onChange={(e) => handleFileDescriptionChange('acuOriginalFileDescription', e.target.value)}
+                        placeholder="ACU 폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
+                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                      />
+                      {/* 선택된 ACU 파일 목록 표시 */}
+                      {currentRemappingWork.files.acuOriginalFiles && currentRemappingWork.files.acuOriginalFiles.length > 0 && (
+                        <div className="mt-2 p-3 bg-green-50 rounded-lg">
+                          <div className="text-sm font-medium text-green-700 mb-2">선택된 ACU 파일:</div>
+                          <div className="max-h-32 overflow-y-auto">
+                            {currentRemappingWork.files.acuOriginalFiles.map((file, index) => (
+                              <div key={index} className="text-xs text-green-600 py-1 flex items-center">
+                                <span className="mr-2">⚙️</span>
+                                <span className="truncate">{file.name}</span>
+                                <span className="ml-auto text-green-400">
+                                  ({(file.size / 1024).toFixed(1)} KB)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* ACU Stage 파일들 */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      {/* ACU 1차 튜닝 */}
+                      <div className="border border-green-200 rounded-lg p-4 bg-green-50">
+                        <label className="block text-sm font-medium text-green-800 mb-2">
+                          ⚙️ ACU 1차 튜닝
+                        </label>
+                        <div className="flex items-center space-x-3 mb-2">
+                          <input
+                            type="file"
+                            id="acu-stage1-file"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null
+                              handleFileChange('acuStage1File', file)
+                            }}
+                          />
+                          <label
+                            htmlFor="acu-stage1-file"
+                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-100 transition-colors text-xs w-full"
+                          >
+                            <span className="text-green-700">
+                              {currentRemappingWork.files.acuStage1File 
+                                ? `⚙️ ${(currentRemappingWork.files.acuStage1File as File).name} (${((currentRemappingWork.files.acuStage1File as File).size / 1024).toFixed(1)} KB)` 
+                                : '⚙️ ACU 1차 튜닝 파일 선택'}
+                            </span>
+                          </label>
+                        </div>
+                        <input
+                          type="text"
+                          value={currentRemappingWork.files.acuStage1FileDescription || ''}
+                          onChange={(e) => handleFileDescriptionChange('acuStage1FileDescription', e.target.value)}
+                          placeholder="ACU 1차 튜닝 설명을 입력하세요"
+                          className="w-full border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-xs"
+                        />
+                      </div>
+
+                      {/* ACU 2차 튜닝 */}
+                      <div className="border border-green-300 rounded-lg p-4 bg-green-100">
+                        <label className="block text-sm font-medium text-green-800 mb-2">
+                          ⚙️ ACU 2차 튜닝
+                        </label>
+                        <div className="flex items-center space-x-3 mb-2">
+                          <input
+                            type="file"
+                            id="acu-stage2-file"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null
+                              handleFileChange('acuStage2File', file)
+                            }}
+                          />
+                          <label
+                            htmlFor="acu-stage2-file"
+                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-400 rounded-lg cursor-pointer hover:border-green-600 hover:bg-green-200 transition-colors text-xs w-full"
+                          >
+                            <span className="text-green-800">
+                              {currentRemappingWork.files.acuStage2File 
+                                ? `⚙️ ${(currentRemappingWork.files.acuStage2File as File).name} (${((currentRemappingWork.files.acuStage2File as File).size / 1024).toFixed(1)} KB)` 
+                                : '⚙️ ACU 2차 튜닝 파일 선택'}
+                            </span>
+                          </label>
+                        </div>
+                        <input
+                          type="text"
+                          value={currentRemappingWork.files.acuStage2FileDescription || ''}
+                          onChange={(e) => handleFileDescriptionChange('acuStage2FileDescription', e.target.value)}
+                          placeholder="ACU 2차 튜닝 설명을 입력하세요"
+                          className="w-full border-green-400 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600 text-xs"
+                        />
+                      </div>
+
+                      {/* ACU 3차 튜닝 */}
+                      <div className="border border-green-400 rounded-lg p-4 bg-green-200">
+                        <label className="block text-sm font-medium text-green-900 mb-2">
+                          ⚙️ ACU 3차 튜닝
+                        </label>
+                        <div className="flex items-center space-x-3 mb-2">
+                          <input
+                            type="file"
+                            id="acu-stage3-file"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null
+                              handleFileChange('acuStage3File', file)
+                            }}
+                          />
+                          <label
+                            htmlFor="acu-stage3-file"
+                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-500 rounded-lg cursor-pointer hover:border-green-700 hover:bg-green-300 transition-colors text-xs w-full"
+                          >
+                            <span className="text-green-900">
+                              {currentRemappingWork.files.acuStage3File 
+                                ? `⚙️ ${(currentRemappingWork.files.acuStage3File as File).name} (${((currentRemappingWork.files.acuStage3File as File).size / 1024).toFixed(1)} KB)` 
+                                : '⚙️ ACU 3차 튜닝 파일 선택'}
+                            </span>
+                          </label>
+                        </div>
+                        <input
+                          type="text"
+                          value={currentRemappingWork.files.acuStage3FileDescription || ''}
+                          onChange={(e) => handleFileDescriptionChange('acuStage3FileDescription', e.target.value)}
+                          placeholder="ACU 3차 튜닝 설명을 입력하세요"
+                          className="w-full border-green-500 rounded-md shadow-sm focus:ring-green-700 focus:border-green-700 text-xs"
+                        />
+                      </div>
                     </div>
                   </div>
 
