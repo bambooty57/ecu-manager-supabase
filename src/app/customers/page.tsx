@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Script from 'next/script'
 import { getAllCustomers, createCustomer, createMultipleCustomers, deleteCustomer, updateCustomer } from '@/lib/customers'
+import { testSupabaseConnection } from '@/lib/supabase'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 
@@ -81,10 +82,17 @@ export default function CustomersPage() {
   const loadCustomers = async () => {
     setIsLoading(true)
     try {
+      // 연결 테스트 먼저 실행
+      const isConnected = await testSupabaseConnection()
+      if (!isConnected) {
+        console.warn('⚠️ Supabase 연결에 문제가 있습니다. 더미 데이터를 사용할 수 있습니다.')
+      }
+      
       const data = await getAllCustomers()
       setCustomers(data)
+      console.log('✅ 고객 데이터 로드 완료:', data.length, '명')
     } catch (error) {
-      console.error('Failed to load customers:', error)
+      console.error('❌ 고객 데이터 로드 실패:', error)
     } finally {
       setIsLoading(false)
     }
@@ -201,16 +209,30 @@ export default function CustomersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // 필수 필드 검증
+    if (!customerForm.name.trim()) {
+      alert('고객명을 입력해주세요.')
+      return
+    }
+    
+    if (!customerForm.phone.trim()) {
+      alert('전화번호를 입력해주세요.')
+      return
+    }
+    
     try {
+      console.log('🔧 고객 등록 시도:', customerForm)
+      
       const newCustomer = await createCustomer({
-        name: customerForm.name,
-        phone: customerForm.phone,
-        zipCode: customerForm.zipCode,
-        roadAddress: customerForm.roadAddress,
-        jibunAddress: customerForm.jibunAddress
+        name: customerForm.name.trim(),
+        phone: customerForm.phone.trim(),
+        zipCode: customerForm.zipCode.trim(),
+        roadAddress: customerForm.roadAddress.trim(),
+        jibunAddress: customerForm.jibunAddress.trim()
       })
 
       if (newCustomer) {
+        console.log('✅ 고객 등록 성공:', newCustomer)
         setCustomers(prev => [newCustomer, ...prev])
         setCustomerForm({
           name: '',
@@ -220,12 +242,17 @@ export default function CustomersPage() {
           jibunAddress: ''
         })
         setIsFormOpen(false)
+        alert('고객이 성공적으로 등록되었습니다.')
       } else {
+        console.error('❌ 고객 등록 실패: null 반환')
         alert('고객 등록 중 오류가 발생했습니다.')
       }
     } catch (error) {
-      console.error('Failed to create customer:', error)
-      alert('고객 등록 중 오류가 발생했습니다.')
+      console.error('❌ 고객 등록 오류:', error)
+      
+      // 오류 메시지 표시
+      const errorMessage = error instanceof Error ? error.message : '고객 등록 중 오류가 발생했습니다.'
+      alert(errorMessage)
     }
   }
 

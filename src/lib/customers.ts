@@ -36,7 +36,7 @@ const transformCustomerToDB = (customer: Omit<CustomerData, 'id' | 'registration
 })
 
 // 더미 고객 데이터 (환경변수가 placeholder일 때 사용)
-const DUMMY_CUSTOMERS: CustomerData[] = [
+let DUMMY_CUSTOMERS: CustomerData[] = [
   {
     id: 1,
     name: "김농부",
@@ -70,6 +70,7 @@ const DUMMY_CUSTOMERS: CustomerData[] = [
 const isPlaceholderEnvironment = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+  
   return url.includes('placeholder') || key.includes('placeholder')
 }
 
@@ -103,22 +104,69 @@ export const getAllCustomers = async (): Promise<CustomerData[]> => {
 
 // 고객 생성
 export const createCustomer = async (customerData: Omit<CustomerData, 'id' | 'registrationDate'>): Promise<CustomerData | null> => {
+  // 환경변수가 placeholder면 더미 데이터로 시뮬레이션
+  if (isPlaceholderEnvironment()) {
+    console.log('🔄 더미 모드: 고객 생성 시뮬레이션')
+    
+    // 새로운 ID 생성 (기존 최대 ID + 1)
+    const maxId = DUMMY_CUSTOMERS.length > 0 ? Math.max(...DUMMY_CUSTOMERS.map(c => c.id)) : 0
+    const newCustomer: CustomerData = {
+      id: maxId + 1,
+      ...customerData,
+      registrationDate: new Date().toISOString().split('T')[0]
+    }
+    
+    // 더미 데이터 배열에 추가
+    DUMMY_CUSTOMERS.unshift(newCustomer) // 맨 앞에 추가
+    
+    console.log('✅ 더미 고객 생성 완료:', newCustomer)
+    return newCustomer
+  }
+
   try {
+    console.log('🔧 Creating customer with data:', customerData)
+    
+    const insertData = transformCustomerToDB(customerData)
+    console.log('🔧 Transformed data for DB:', insertData)
+    
     const { data, error } = await supabase
       .from('customers')
-      .insert(transformCustomerToDB(customerData))
+      .insert(insertData)
       .select()
       .single()
 
     if (error) {
-      console.error('Error creating customer:', error)
+      console.error('❌ Supabase error creating customer:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      
+      // 특정 오류에 대한 사용자 친화적 메시지
+      if (error.code === '23505') {
+        throw new Error('이미 등록된 고객입니다.')
+      } else if (error.code === '42P01') {
+        throw new Error('데이터베이스 테이블을 찾을 수 없습니다.')
+      } else if (error.code === '42501') {
+        throw new Error('데이터베이스 접근 권한이 없습니다.')
+      }
+      
       throw error
     }
 
+    console.log('✅ Customer created successfully:', data)
     return transformCustomerFromDB(data)
   } catch (error) {
-    console.error('Failed to create customer:', error)
-    return null
+    console.error('❌ Failed to create customer:', error)
+    
+    // 네트워크 오류나 연결 문제인 경우
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('❌ Network error - using fallback')
+      throw new Error('네트워크 연결에 문제가 있습니다. 인터넷 연결을 확인해주세요.')
+    }
+    
+    throw error
   }
 }
 
@@ -163,6 +211,22 @@ export const createMultipleCustomers = async (customersData: Omit<CustomerData, 
 
 // 고객 수정
 export const updateCustomer = async (id: number, customerData: Partial<Omit<CustomerData, 'id' | 'registrationDate'>>): Promise<CustomerData | null> => {
+  // 더미 모드에서는 배열에서 수정
+  if (isPlaceholderEnvironment()) {
+    console.log('🔄 더미 모드: 고객 수정 시뮬레이션')
+    const index = DUMMY_CUSTOMERS.findIndex(c => c.id === id)
+    if (index !== -1) {
+      DUMMY_CUSTOMERS[index] = {
+        ...DUMMY_CUSTOMERS[index],
+        ...customerData
+      }
+      console.log('✅ 더미 고객 수정 완료:', DUMMY_CUSTOMERS[index])
+      return DUMMY_CUSTOMERS[index]
+    }
+    console.log('❌ 수정할 고객을 찾을 수 없습니다:', id)
+    return null
+  }
+
   try {
     const updateData: CustomerUpdate = {}
     
@@ -195,6 +259,19 @@ export const updateCustomer = async (id: number, customerData: Partial<Omit<Cust
 
 // 고객 삭제
 export const deleteCustomer = async (id: number): Promise<boolean> => {
+  // 더미 모드에서는 배열에서 제거
+  if (isPlaceholderEnvironment()) {
+    console.log('🔄 더미 모드: 고객 삭제 시뮬레이션')
+    const index = DUMMY_CUSTOMERS.findIndex(c => c.id === id)
+    if (index !== -1) {
+      DUMMY_CUSTOMERS.splice(index, 1)
+      console.log('✅ 더미 고객 삭제 완료:', id)
+      return true
+    }
+    console.log('❌ 삭제할 고객을 찾을 수 없습니다:', id)
+    return false
+  }
+
   try {
     const { error } = await supabase
       .from('customers')

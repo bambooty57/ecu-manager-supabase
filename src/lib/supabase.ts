@@ -18,12 +18,45 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 export const testSupabaseConnection = async () => {
   try {
     console.log('🧪 Testing Supabase connection...')
-    const { data, error } = await supabase.from('customers').select('count', { count: 'exact', head: true })
-    if (error) {
-      console.error('❌ Supabase connection failed:', error.message)
+    
+    // 1. 기본 연결 테스트
+    const { data: healthCheck, error: healthError } = await supabase
+      .from('customers')
+      .select('count', { count: 'exact', head: true })
+    
+    if (healthError) {
+      console.error('❌ Supabase health check failed:', {
+        message: healthError.message,
+        details: healthError.details,
+        hint: healthError.hint,
+        code: healthError.code
+      })
+      
+      // 특정 오류 코드에 대한 자세한 정보
+      if (healthError.code === '42P01') {
+        console.error('❌ 테이블이 존재하지 않습니다. 데이터베이스 스키마를 확인해주세요.')
+      } else if (healthError.code === '42501') {
+        console.error('❌ 데이터베이스 접근 권한이 없습니다. RLS 정책을 확인해주세요.')
+      }
+      
       return false
     }
+    
     console.log('✅ Supabase connection successful')
+    console.log('📊 Customers table count:', healthCheck)
+    
+    // 2. 테이블 구조 확인
+    const { data: sampleData, error: sampleError } = await supabase
+      .from('customers')
+      .select('*')
+      .limit(1)
+    
+    if (sampleError) {
+      console.error('❌ Sample data fetch failed:', sampleError)
+    } else {
+      console.log('📋 Sample customer data structure:', sampleData)
+    }
+    
     return true
   } catch (err) {
     console.error('❌ Supabase connection error:', err)
