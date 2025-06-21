@@ -670,6 +670,61 @@ export default function WorkPage() {
           })
         }
 
+        // ACU 파일들 처리
+        if (remappingWork.files.acuOriginalFiles && remappingWork.files.acuOriginalFiles.length > 0) {
+          for (const acuOriginalFile of remappingWork.files.acuOriginalFiles) {
+            const data = await convertFileToBase64(acuOriginalFile)
+            files.push({
+              name: acuOriginalFile.name,
+              size: acuOriginalFile.size,
+              type: acuOriginalFile.type,
+              data: data,
+              description: remappingWork.files.acuOriginalFileDescription || '원본 ACU 폴더',
+              category: 'acuOriginal',
+              uploadDate: new Date().toISOString()
+            })
+          }
+        }
+
+        if (remappingWork.files.acuStage1File) {
+          const data = await convertFileToBase64(remappingWork.files.acuStage1File)
+          files.push({
+            name: remappingWork.files.acuStage1File.name,
+            size: remappingWork.files.acuStage1File.size,
+            type: remappingWork.files.acuStage1File.type,
+            data: data,
+            description: remappingWork.files.acuStage1FileDescription || 'ACU Stage 1 튜닝 파일',
+            category: 'acuStage1',
+            uploadDate: new Date().toISOString()
+          })
+        }
+
+        if (remappingWork.files.acuStage2File) {
+          const data = await convertFileToBase64(remappingWork.files.acuStage2File)
+          files.push({
+            name: remappingWork.files.acuStage2File.name,
+            size: remappingWork.files.acuStage2File.size,
+            type: remappingWork.files.acuStage2File.type,
+            data: data,
+            description: remappingWork.files.acuStage2FileDescription || 'ACU Stage 2 튜닝 파일',
+            category: 'acuStage2',
+            uploadDate: new Date().toISOString()
+          })
+        }
+
+        if (remappingWork.files.acuStage3File) {
+          const data = await convertFileToBase64(remappingWork.files.acuStage3File)
+          files.push({
+            name: remappingWork.files.acuStage3File.name,
+            size: remappingWork.files.acuStage3File.size,
+            type: remappingWork.files.acuStage3File.type,
+            data: data,
+            description: remappingWork.files.acuStage3FileDescription || 'ACU Stage 3 튜닝 파일',
+            category: 'acuStage3',
+            uploadDate: new Date().toISOString()
+          })
+        }
+
         // 미디어 파일들 처리 (5개)
         for (let i = 1; i <= 5; i++) {
           const mediaFileKey = `mediaFile${i}` as keyof typeof remappingWork.files

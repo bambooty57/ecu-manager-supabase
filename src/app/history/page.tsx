@@ -668,7 +668,10 @@ export default function HistoryPage() {
                           고객/장비
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          ECU/튜닝
+                          🔧 ECU/튜닝
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ⚙️ ACU/튜닝
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           상태
@@ -692,17 +695,30 @@ export default function HistoryPage() {
                             <div className="text-sm text-gray-500">{record.equipmentType}</div>
                             <div className="text-xs text-gray-400">{record.manufacturer} {record.model}</div>
                           </td>
+                          {/* ECU/튜닝 칸 */}
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              {record.ecuType && <span className="inline-block mr-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">ECU: {record.ecuType}</span>}
-                              {record.acuType && <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded">ACU: {record.acuType}</span>}
+                              {record.ecuType && <span className="inline-block mr-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">🔧 {record.ecuType}</span>}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {record.tuningWork === '기타' && record.customTuningWork 
-                                ? record.customTuningWork 
-                                : record.tuningWork}
+                              {record.tuningWork && !record.tuningWork.startsWith('ACU:') && (
+                                record.tuningWork === '기타' && record.customTuningWork 
+                                  ? record.customTuningWork 
+                                  : record.tuningWork.replace('ECU:', '')
+                              )}
                             </div>
                             <div className="text-xs text-gray-400">{record.connectionMethod}</div>
+                          </td>
+                          {/* ACU/튜닝 칸 */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {record.acuType && <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded">⚙️ {record.acuType}</span>}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {record.tuningWork && record.tuningWork.startsWith('ACU:') && (
+                                record.tuningWork.replace('ACU:', '')
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
