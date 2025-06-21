@@ -747,13 +747,16 @@ export default function WorkPage() {
         }
 
         // Supabase에 저장할 작업 기록 데이터 생성
-                 const workRecordData: Omit<WorkRecordData, 'id' | 'createdAt' | 'updatedAt'> = {
+        const workRecordData: Omit<WorkRecordData, 'id' | 'createdAt' | 'updatedAt'> = {
           customerId: parseInt(formData.customerId),
           equipmentId: parseInt(formData.equipmentId),
           workDate: formData.workDate,
           workType: 'ECU 튜닝',
           workDescription: remappingWork.selectedWorks.join(', ') + (remappingWork.workDetails ? ` - ${remappingWork.workDetails}` : ''),
           ecuModel: remappingWork.ecuType || remappingWork.ecuTypeCustom,
+          ecuMaker: remappingWork.ecuMaker || '',
+          acuManufacturer: remappingWork.acuManufacturer || '',
+          acuModel: remappingWork.acuModel || remappingWork.acuModelCustom || '',
           connectionMethod: remappingWork.connectionMethod,
           toolsUsed: [remappingWork.ecuToolCategory],
           price: parseFloat(remappingWork.price) || 0,

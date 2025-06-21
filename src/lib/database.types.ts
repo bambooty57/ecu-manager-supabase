@@ -90,7 +90,10 @@ export interface Database {
           equipment_id: number | null
           work_type: string
           ecu_model: string | null
+          ecu_maker: string | null
           acu_type: string | null
+          acu_manufacturer: string | null
+          acu_model: string | null
           connection_method: string | null
           tools_used: string[] | null
           work_description: string | null
@@ -107,7 +110,10 @@ export interface Database {
           equipment_id?: number | null
           work_type: string
           ecu_model?: string | null
+          ecu_maker?: string | null
           acu_type?: string | null
+          acu_manufacturer?: string | null
+          acu_model?: string | null
           connection_method?: string | null
           tools_used?: string[] | null
           work_description?: string | null
@@ -124,7 +130,10 @@ export interface Database {
           equipment_id?: number | null
           work_type?: string
           ecu_model?: string | null
+          ecu_maker?: string | null
           acu_type?: string | null
+          acu_manufacturer?: string | null
+          acu_model?: string | null
           connection_method?: string | null
           tools_used?: string[] | null
           work_description?: string | null
