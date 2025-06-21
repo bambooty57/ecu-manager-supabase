@@ -98,10 +98,13 @@ export default function EquipmentPage() {
   // 모델 목록 로드
   const loadModels = async () => {
     try {
+      console.log('🔄 Loading models from database...')
       const models = await getModelsByManufacturerObject()
+      console.log('✅ Models loaded:', models)
       setModelsByManufacturer(models)
+      console.log('📊 Models state updated')
     } catch (error) {
-      console.error('Failed to load models:', error)
+      console.error('❌ Failed to load models:', error)
     }
   }
 
@@ -180,7 +183,11 @@ export default function EquipmentPage() {
 
   // 제조사별 모델명 목록 가져오기
   const getAvailableModels = (manufacturer: string) => {
-    return modelsByManufacturer[manufacturer] || []
+    console.log('🔍 Getting models for manufacturer:', manufacturer)
+    console.log('📋 Available models data:', modelsByManufacturer)
+    const models = modelsByManufacturer[manufacturer] || []
+    console.log('🎯 Models for', manufacturer, ':', models)
+    return models
   }
 
   // 새로운 ECU 타입을 목록에 추가

@@ -12,20 +12,20 @@ import AuthGuard from '@/components/AuthGuard'
 export default function WorkPage() {
   const router = useRouter()
   
-  // 실제 고객 데이터 state
+  // ?�제 고객 ?�이??state
   const [customers, setCustomers] = useState<CustomerData[]>([])
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true)
   
-  // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
+  // ?�늘 ?�짜�?YYYY-MM-DD ?�식?�로 가?�오�?
   const getTodayDate = () => {
     const today = new Date()
     return today.toISOString().split('T')[0]
   }
 
-  // Remapping 작업 정보 인터페이스
+  // Remapping ?�업 ?�보 ?�터?�이??
   interface RemappingWork {
     id: number
-    // ECU 정보
+    // ECU ?�보
     ecu: {
       toolCategory: string
       connectionMethod: string
@@ -37,7 +37,7 @@ export default function WorkPage() {
       price: string
       status: string
     }
-    // ACU 정보
+    // ACU ?�보
     acu: {
       toolCategory: string
       connectionMethod: string
@@ -86,13 +86,13 @@ export default function WorkPage() {
     equipmentId: '',
     workDate: getTodayDate(),
     price: '',
-    status: '예약' // 기본값을 예약으로 설정
+    status: '?�약' // 기본값을 ?�약?�로 ?�정
   })
 
-  // 다중 Remapping 작업 목록
+  // ?�중 Remapping ?�업 목록
   const [remappingWorks, setRemappingWorks] = useState<RemappingWork[]>([])
   
-  // 현재 편집 중인 Remapping 작업
+  // ?�재 ?�집 중인 Remapping ?�업
   const [currentRemappingWork, setCurrentRemappingWork] = useState({
     ecu: {
       toolCategory: '',
@@ -103,7 +103,7 @@ export default function WorkPage() {
       selectedWorks: [] as string[],
       workDetails: '',
       price: '',
-      status: '예약'
+      status: '?�약'
     },
     acu: {
       toolCategory: '',
@@ -114,7 +114,7 @@ export default function WorkPage() {
       selectedWorks: [] as string[],
       workDetails: '',
       price: '',
-      status: '예약'
+      status: '?�약'
     },
     notes: '',
     files: {
@@ -147,24 +147,24 @@ export default function WorkPage() {
     }
   })
 
-  // 작업 카테고리별 선택 상태 (현재 편집 중인 작업용)
+  // ?�업 카테고리�??�택 ?�태 (?�재 ?�집 중인 ?�업??
   const [workSelections, setWorkSelections] = useState<{[category: string]: string[]}>({
-    'ECU/튜닝': [],
-    'ACU/튜닝': []
+    'ECU/?�닝': [],
+    'ACU/?�닝': []
   })
 
-  // Remapping 작업 편집 모드
+  // Remapping ?�업 ?�집 모드
   const [isEditingRemapping, setIsEditingRemapping] = useState(false)
   const [editingRemappingId, setEditingRemappingId] = useState<number | null>(null)
 
-  // 선택된 고객의 장비 목록
+  // ?�택??고객???�비 목록
   const [availableEquipment, setAvailableEquipment] = useState<EquipmentData[]>([])
   
-  // 고객 자동완성 관련 state
+  // 고객 ?�동?�성 관??state
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   const [filteredCustomers, setFilteredCustomers] = useState<CustomerData[]>([])
 
-  // 동적 ECU 모델 목록 (로컬 스토리지에서 가져오기)
+  // ?�적 ECU 모델 목록 (로컬 ?�토리�??�서 가?�오�?
   const [ecuModels, setEcuModels] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('ecuModels')
@@ -173,7 +173,7 @@ export default function WorkPage() {
     return [...ECU_MODELS]
   })
 
-  // 동적 ACU 타입 목록 (로컬 스토리지에서 가져오기) - 기존 호환성용
+  // ?�적 ACU ?�??목록 (로컬 ?�토리�??�서 가?�오�? - 기존 ?�환?�용
   const [acuTypes, setAcuTypes] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('acuTypes')
@@ -182,7 +182,7 @@ export default function WorkPage() {
     return [...ACU_TYPES]
   })
 
-  // 동적 ACU 제조사별 모델 목록 (로컬 스토리지에서 가져오기)
+  // ?�적 ACU ?�조?�별 모델 목록 (로컬 ?�토리�??�서 가?�오�?
   const [acuModelsByManufacturer, setAcuModelsByManufacturer] = useState<Record<string, string[]>>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('acuModelsByManufacturer')
@@ -191,7 +191,7 @@ export default function WorkPage() {
     return { ...ACU_MODELS_BY_MANUFACTURER }
   })
 
-  // 새로운 ECU 타입을 목록에 추가
+  // ?�로??ECU ?�?�을 목록??추�?
   const addNewEcuType = (newType: string) => {
     if (newType.trim() && !ecuModels.includes(newType.trim())) {
       const newList = [...ecuModels, newType.trim()]
@@ -200,7 +200,7 @@ export default function WorkPage() {
     }
   }
 
-  // 새로운 ACU 타입을 목록에 추가 (기존 호환성용)
+  // ?�로??ACU ?�?�을 목록??추�? (기존 ?�환?�용)
   const addNewAcuType = (newType: string) => {
     if (newType.trim() && !acuTypes.includes(newType.trim())) {
       const newList = [...acuTypes, newType.trim()]
@@ -209,7 +209,7 @@ export default function WorkPage() {
     }
   }
 
-  // 새로운 ACU 모델을 제조사별 목록에 추가
+  // ?�로??ACU 모델???�조?�별 목록??추�?
   const addNewAcuModel = (manufacturer: string, newModel: string) => {
     if (newModel.trim() && manufacturer) {
       const currentModels = acuModelsByManufacturer[manufacturer] || []
@@ -224,7 +224,7 @@ export default function WorkPage() {
     }
   }
 
-  // ECU/ACU 타입 관리 상태
+  // ECU/ACU ?�??관�??�태
   const [showEcuManagement, setShowEcuManagement] = useState(false)
   const [showAcuManagement, setShowAcuManagement] = useState(false)
   const [selectedEcuModels, setSelectedEcuModels] = useState<string[]>([])
@@ -232,7 +232,7 @@ export default function WorkPage() {
   const [newEcuModel, setNewEcuModel] = useState('')
   const [newAcuType, setNewAcuType] = useState('')
 
-  // ECU 모델 선택/해제
+  // ECU 모델 ?�택/?�제
   const handleEcuModelSelect = (model: string) => {
     setSelectedEcuModels(prev => 
       prev.includes(model) 
@@ -241,7 +241,7 @@ export default function WorkPage() {
     )
   }
 
-  // ACU 타입 선택/해제
+  // ACU ?�???�택/?�제
   const handleAcuTypeSelect = (type: string) => {
     setSelectedAcuTypes(prev => 
       prev.includes(type) 
@@ -250,48 +250,48 @@ export default function WorkPage() {
     )
   }
 
-  // 선택된 ECU 모델 삭제
+  // ?�택??ECU 모델 ??��
   const deleteSelectedEcuModels = () => {
     if (selectedEcuModels.length === 0) {
-      alert('삭제할 ECU 모델을 선택해주세요.')
+      alert('??��??ECU 모델???�택?�주?�요.')
       return
     }
 
-    if (confirm(`선택된 ${selectedEcuModels.length}개의 ECU 모델을 삭제하시겠습니까?`)) {
+    if (confirm(`?�택??${selectedEcuModels.length}개의 ECU 모델????��?�시겠습?�까?`)) {
       const newEcuModels = ecuModels.filter(model => !selectedEcuModels.includes(model))
       setEcuModels(newEcuModels)
       localStorage.setItem('ecuModels', JSON.stringify(newEcuModels))
       setSelectedEcuModels([])
-      alert('선택된 ECU 모델이 삭제되었습니다.')
+      alert('?�택??ECU 모델????��?�었?�니??')
     }
   }
 
-  // 선택된 ACU 타입 삭제
+  // ?�택??ACU ?�????��
   const deleteSelectedAcuTypes = () => {
     if (selectedAcuTypes.length === 0) {
-      alert('삭제할 ACU 타입을 선택해주세요.')
+      alert('??��??ACU ?�?�을 ?�택?�주?�요.')
       return
     }
 
-    if (confirm(`선택된 ${selectedAcuTypes.length}개의 ACU 타입을 삭제하시겠습니까?`)) {
+    if (confirm(`?�택??${selectedAcuTypes.length}개의 ACU ?�?�을 ??��?�시겠습?�까?`)) {
       const newAcuTypes = acuTypes.filter(type => !selectedAcuTypes.includes(type))
       setAcuTypes(newAcuTypes)
       localStorage.setItem('acuTypes', JSON.stringify(newAcuTypes))
       setSelectedAcuTypes([])
-      alert('선택된 ACU 타입이 삭제되었습니다.')
+      alert('?�택??ACU ?�?�이 ??��?�었?�니??')
     }
   }
 
-  // 새로운 ECU 모델 추가 (중복 확인)
+  // ?�로??ECU 모델 추�? (중복 ?�인)
   const handleAddNewEcuModel = () => {
     const trimmedModel = newEcuModel.trim()
     if (!trimmedModel) {
-      alert('ECU 모델명을 입력해주세요.')
+      alert('ECU 모델명을 ?�력?�주?�요.')
       return
     }
 
     if (ecuModels.includes(trimmedModel)) {
-      alert('이미 목록에 있는 ECU 모델입니다.')
+      alert('?��? 목록???�는 ECU 모델?�니??')
       return
     }
 
@@ -299,19 +299,19 @@ export default function WorkPage() {
     setEcuModels(newEcuModels)
     localStorage.setItem('ecuModels', JSON.stringify(newEcuModels))
     setNewEcuModel('')
-    alert('새로운 ECU 모델이 추가되었습니다.')
+    alert('?�로??ECU 모델??추�??�었?�니??')
   }
 
-  // 새로운 ACU 타입 추가 (중복 확인)
+  // ?�로??ACU ?�??추�? (중복 ?�인)
   const handleAddNewAcuType = () => {
     const trimmedType = newAcuType.trim()
     if (!trimmedType) {
-      alert('ACU 타입명을 입력해주세요.')
+      alert('ACU ?�?�명???�력?�주?�요.')
       return
     }
 
     if (acuTypes.includes(trimmedType)) {
-      alert('이미 목록에 있는 ACU 타입입니다.')
+      alert('?��? 목록???�는 ACU ?�?�입?�다.')
       return
     }
 
@@ -319,20 +319,20 @@ export default function WorkPage() {
     setAcuTypes(newAcuTypes)
     localStorage.setItem('acuTypes', JSON.stringify(newAcuTypes))
     setNewAcuType('')
-    alert('새로운 ACU 타입이 추가되었습니다.')
+    alert('?�로??ACU ?�?�이 추�??�었?�니??')
   }
 
-  // ACU 제조사별 사용 가능한 모델 목록 가져오기
+  // ACU ?�조?�별 ?�용 가?�한 모델 목록 가?�오�?
   const getAvailableAcuModels = (manufacturer: string): string[] => {
     return acuModelsByManufacturer[manufacturer] || []
   }
 
-  // 고객 데이터 로드
+  // 고객 ?�이??로드
   useEffect(() => {
     loadCustomers()
   }, [])
 
-  // 페이지 포커스 시 고객 목록 새로고침
+  // ?�이지 ?�커????고객 목록 ?�로고침
   useEffect(() => {
     const handleFocus = () => {
       loadCustomers()
@@ -356,22 +356,22 @@ export default function WorkPage() {
   const loadCustomers = async () => {
     setIsLoadingCustomers(true)
     try {
-      console.log('🔄 고객 데이터 로딩 시작...')
+      console.log('?�� 고객 ?�이??로딩 ?�작...')
       const data = await getAllCustomers()
-      console.log('✅ 로드된 고객 데이터:', data)
+      console.log('??로드??고객 ?�이??', data)
       setCustomers(data)
       setFilteredCustomers(data)
     } catch (error) {
-      console.error('❌ 고객 데이터 로딩 실패:', error)
+      console.error('??고객 ?�이??로딩 ?�패:', error)
     } finally {
       setIsLoadingCustomers(false)
     }
   }
   
-  // 드롭다운 외부 클릭 감지용 ref
+  // ?�롭?�운 ?��? ?�릭 감�???ref
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // 작업 선택/해제 핸들러
+  // ?�업 ?�택/?�제 ?�들??
   const handleWorkSelection = (category: string, work: string) => {
     setWorkSelections(prev => {
       const categoryWorks = prev[category] || []
@@ -379,30 +379,30 @@ export default function WorkPage() {
       
       let newCategoryWorks
       if (isSelected) {
-        // 선택 해제
+        // ?�택 ?�제
         newCategoryWorks = categoryWorks.filter(w => w !== work)
       } else {
-        // 선택 추가
+        // ?�택 추�?
         newCategoryWorks = [...categoryWorks, work]
       }
       
       const newSelections = { ...prev, [category]: newCategoryWorks }
       
-      // 현재 Remapping 작업의 선택된 작업 목록 업데이트 (ECU/ACU 별로)
-      if (category === 'ECU/튜닝') {
+      // ?�재 Remapping ?�업???�택???�업 목록 ?�데?�트 (ECU/ACU 별로)
+      if (category === 'ECU/?�닝') {
         setCurrentRemappingWork(prev => ({
           ...prev,
           ecu: {
             ...prev.ecu,
-            selectedWorks: newSelections['ECU/튜닝']
+            selectedWorks: newSelections['ECU/?�닝']
           }
         }))
-      } else if (category === 'ACU/튜닝') {
+      } else if (category === 'ACU/?�닝') {
         setCurrentRemappingWork(prev => ({
           ...prev,
           acu: {
             ...prev.acu,
-            selectedWorks: newSelections['ACU/튜닝']
+            selectedWorks: newSelections['ACU/?�닝']
           }
         }))
       }
@@ -411,7 +411,7 @@ export default function WorkPage() {
     })
   }
 
-  // 카테고리 전체 선택/해제
+  // 카테고리 ?�체 ?�택/?�제
   const handleCategoryToggle = (category: string) => {
     const categoryWorks = TUNING_WORKS_BY_CATEGORY[category as keyof typeof TUNING_WORKS_BY_CATEGORY] || []
     const currentSelections = workSelections[category] || []
@@ -423,21 +423,21 @@ export default function WorkPage() {
         [category]: isAllSelected ? [] : [...categoryWorks]
       }
       
-      // 현재 Remapping 작업의 선택된 작업 목록 업데이트 (ECU/ACU 별로)
-      if (category === 'ECU/튜닝') {
+      // ?�재 Remapping ?�업???�택???�업 목록 ?�데?�트 (ECU/ACU 별로)
+      if (category === 'ECU/?�닝') {
         setCurrentRemappingWork(prev => ({
           ...prev,
           ecu: {
             ...prev.ecu,
-            selectedWorks: newSelections['ECU/튜닝']
+            selectedWorks: newSelections['ECU/?�닝']
           }
         }))
-      } else if (category === 'ACU/튜닝') {
+      } else if (category === 'ACU/?�닝') {
         setCurrentRemappingWork(prev => ({
           ...prev,
           acu: {
             ...prev.acu,
-            selectedWorks: newSelections['ACU/튜닝']
+            selectedWorks: newSelections['ACU/?�닝']
           }
         }))
       }
@@ -446,7 +446,7 @@ export default function WorkPage() {
     })
   }
 
-  // Remapping 작업 입력 핸들러
+  // Remapping ?�업 ?�력 ?�들??
   const handleRemappingWorkInputChange = (section: 'ecu' | 'acu' | 'general', field: string, value: string) => {
     if (section === 'general') {
       setCurrentRemappingWork(prev => ({
@@ -454,7 +454,7 @@ export default function WorkPage() {
         [field]: value
       }))
     } else {
-      // 금액 입력 시 만원 단위를 원 단위로 변환
+      // 금액 ?�력 ??만원 ?�위�????�위�?변??
       if (field === 'price') {
         const priceInWon = value ? parseFloat(value) * 10000 : ''
         setCurrentRemappingWork(prev => ({
@@ -477,7 +477,7 @@ export default function WorkPage() {
     }
   }
 
-  // 파일 입력 핸들러
+  // ?�일 ?�력 ?�들??
   const handleFileChange = (fileType: string, file: File | File[] | null, description?: string) => {
     setCurrentRemappingWork(prev => ({
       ...prev,
@@ -489,7 +489,7 @@ export default function WorkPage() {
     }))
   }
 
-  // 파일 설명만 업데이트하는 함수
+  // ?�일 ?�명�??�데?�트?�는 ?�수
   const handleFileDescriptionChange = (descriptionField: string, value: string) => {
     setCurrentRemappingWork(prev => ({
       ...prev,
@@ -500,14 +500,14 @@ export default function WorkPage() {
     }))
   }
 
-  // Remapping 작업 추가
+  // Remapping ?�업 추�?
   const handleAddRemappingWork = () => {
-    // ECU 또는 ACU 중 최소 하나는 설정되어야 함
+    // ECU ?�는 ACU �?최소 ?�나???�정?�어????
     const hasEcuWork = currentRemappingWork.ecu.toolCategory && currentRemappingWork.ecu.selectedWorks.length > 0
     const hasAcuWork = currentRemappingWork.acu.toolCategory && currentRemappingWork.acu.selectedWorks.length > 0
     
     if (!hasEcuWork && !hasAcuWork) {
-      alert('ECU 또는 ACU 중 최소 하나 이상의 작업을 설정해주세요.')
+      alert('ECU ?�는 ACU �?최소 ?�나 ?�상???�업???�정?�주?�요.')
       return
     }
 
@@ -517,18 +517,18 @@ export default function WorkPage() {
     }
 
     if (isEditingRemapping && editingRemappingId) {
-      // 편집 모드
+      // ?�집 모드
       setRemappingWorks(prev => prev.map(work => 
         work.id === editingRemappingId ? newRemappingWork : work
       ))
       setIsEditingRemapping(false)
       setEditingRemappingId(null)
     } else {
-      // 추가 모드
+      // 추�? 모드
       setRemappingWorks(prev => [...prev, newRemappingWork])
     }
 
-    // 현재 Remapping 작업 초기화
+    // ?�재 Remapping ?�업 초기??
     setCurrentRemappingWork({
       ecu: {
         toolCategory: '',
@@ -539,7 +539,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '?�약'
       },
       acu: {
         toolCategory: '',
@@ -550,7 +550,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '?�약'
       },
       notes: '',
       files: {
@@ -584,12 +584,12 @@ export default function WorkPage() {
     })
 
     setWorkSelections({
-      'ECU/튜닝': [],
-      'ACU/튜닝': []
+      'ECU/?�닝': [],
+      'ACU/?�닝': []
     })
   }
 
-  // Remapping 작업 편집
+  // Remapping ?�업 ?�집
   const handleEditRemappingWork = (work: RemappingWork) => {
     setCurrentRemappingWork({
       ecu: {
@@ -618,24 +618,24 @@ export default function WorkPage() {
       files: work.files as any
     })
 
-    // 작업 선택 상태 복원
+    // ?�업 ?�택 ?�태 복원
     setWorkSelections({
-      'ECU/튜닝': work.ecu.selectedWorks,
-      'ACU/튜닝': work.acu.selectedWorks
+      'ECU/?�닝': work.ecu.selectedWorks,
+      'ACU/?�닝': work.acu.selectedWorks
     })
 
     setIsEditingRemapping(true)
     setEditingRemappingId(work.id)
   }
 
-  // Remapping 작업 삭제
+  // Remapping ?�업 ??��
   const handleDeleteRemappingWork = (id: number) => {
-    if (confirm('이 Remapping 작업을 삭제하시겠습니까?')) {
+    if (confirm('??Remapping ?�업????��?�시겠습?�까?')) {
       setRemappingWorks(prev => prev.filter(work => work.id !== id))
     }
   }
 
-  // Remapping 작업 편집 취소
+  // Remapping ?�업 ?�집 취소
   const handleCancelRemappingEdit = () => {
     setCurrentRemappingWork({
       ecu: {
@@ -647,7 +647,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '?�약'
       },
       acu: {
         toolCategory: '',
@@ -658,7 +658,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '?�약'
       },
       notes: '',
       files: {
@@ -692,8 +692,8 @@ export default function WorkPage() {
     })
 
     setWorkSelections({
-      'ECU/튜닝': [],
-      'ACU/튜닝': []
+      'ECU/?�닝': [],
+      'ACU/?�닝': []
     })
 
     setIsEditingRemapping(false)
@@ -703,7 +703,7 @@ export default function WorkPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     
-    // 금액 입력 시 만원 단위를 원 단위로 변환
+    // 금액 ?�력 ??만원 ?�위�????�위�?변??
     if (name === 'price') {
       const priceInWon = value ? parseFloat(value) * 10000 : ''
       setFormData(prev => ({ ...prev, [name]: priceInWon.toString() }))
@@ -712,12 +712,12 @@ export default function WorkPage() {
     
     setFormData(prev => ({ ...prev, [name]: value }))
 
-    // 고객명 검색 처리
+    // 고객�?검??처리
     if (name === 'customerName') {
       if (value.trim() === '') {
         setFilteredCustomers(customers)
-        setShowCustomerDropdown(true) // 빈 값일 때도 드롭다운 유지
-        // 고객명이 비어있으면 고객 ID도 초기화
+        setShowCustomerDropdown(true) // �?값일 ?�도 ?�롭?�운 ?��?
+        // 고객명이 비어?�으�?고객 ID??초기??
         setFormData(prev => ({ ...prev, customerId: '', equipmentId: '' }))
         setAvailableEquipment([])
       } else {
@@ -731,28 +731,28 @@ export default function WorkPage() {
       }
     }
 
-    // 장비 선택 처리
+    // ?�비 ?�택 처리
     if (name === 'equipmentId') {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
 
-    // 기타 입력 처리
+    // 기�? ?�력 처리
     if (!['customerName', 'equipmentId'].includes(name)) {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
   }
 
-  // 고객 선택 처리
+  // 고객 ?�택 처리
   const handleCustomerSelect = async (customer: CustomerData) => {
     setFormData(prev => ({
       ...prev,
       customerId: customer.id.toString(),
       customerName: customer.name,
-      equipmentId: '' // 고객 변경 시 장비 선택 초기화
+      equipmentId: '' // 고객 변�????�비 ?�택 초기??
     }))
     setShowCustomerDropdown(false)
 
-    // 선택된 고객의 장비 목록 업데이트 - 실제 Supabase 데이터 사용
+    // ?�택??고객???�비 목록 ?�데?�트 - ?�제 Supabase ?�이???�용
     try {
       const customerEquipment = await getEquipmentByCustomerId(customer.id)
       setAvailableEquipment(customerEquipment)
@@ -762,49 +762,49 @@ export default function WorkPage() {
     }
   }
 
-  // 폼 제출 핸들러
+  // ???�출 ?�들??
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // 필수 필드 검증
+    // ?�수 ?�드 검�?
     if (!formData.customerId) {
-      alert('고객을 선택해주세요.')
+      alert('고객???�택?�주?�요.')
       return
     }
     
     if (!formData.equipmentId) {
-      alert('장비를 선택해주세요.')
+      alert('?�비�??�택?�주?�요.')
       return
     }
     
     if (remappingWorks.length === 0) {
-      alert('최소 하나 이상의 Remapping 작업을 추가해주세요.')
+      alert('최소 ?�나 ?�상??Remapping ?�업??추�??�주?�요.')
       return
     }
 
-    // 선택된 고객과 장비 정보 가져오기
+    // ?�택??고객�??�비 ?�보 가?�오�?
     const selectedCustomer = customers.find(c => c.id.toString() === formData.customerId)
     const selectedEquipment = availableEquipment.find(e => e.id.toString() === formData.equipmentId)
     
-    // 파일을 Base64로 변환하는 함수
+    // ?�일??Base64�?변?�하???�수
     const convertFileToBase64 = (file: File): Promise<string> => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = () => {
           const result = reader.result as string
-          resolve(result.split(',')[1]) // Base64 데이터만 추출
+          resolve(result.split(',')[1]) // Base64 ?�이?�만 추출
         }
         reader.onerror = reject
         reader.readAsDataURL(file)
       })
     }
 
-    // 작업 이력 데이터 생성 및 Supabase에 저장 (각 Remapping 작업별로 개별 이력 생성)
+    // ?�업 ?�력 ?�이???�성 �?Supabase???�??(�?Remapping ?�업별로 개별 ?�력 ?�성)
     const workHistoryEntries = []
     
     for (const [index, remappingWork] of remappingWorks.entries()) {
       try {
-        // 파일 데이터 처리
+        // ?�일 ?�이??처리
         const files: any[] = []
         
         if (remappingWork.files.originalFiles && remappingWork.files.originalFiles.length > 0) {
@@ -815,7 +815,7 @@ export default function WorkPage() {
               size: originalFile.size,
               type: originalFile.type,
               data: data,
-              description: remappingWork.files.originalFileDescription || '원본 ECU 폴더',
+              description: remappingWork.files.originalFileDescription || '?�본 ECU ?�더',
               category: 'original',
               uploadDate: new Date().toISOString()
             })
@@ -829,7 +829,7 @@ export default function WorkPage() {
             size: remappingWork.files.stage1File.size,
             type: remappingWork.files.stage1File.type,
             data: data,
-            description: remappingWork.files.stage1FileDescription || 'Stage 1 튜닝 파일',
+            description: remappingWork.files.stage1FileDescription || 'Stage 1 ?�닝 ?�일',
             category: 'stage1',
             uploadDate: new Date().toISOString()
           })
@@ -842,7 +842,7 @@ export default function WorkPage() {
             size: remappingWork.files.stage2File.size,
             type: remappingWork.files.stage2File.type,
             data: data,
-            description: remappingWork.files.stage2FileDescription || 'Stage 2 튜닝 파일',
+            description: remappingWork.files.stage2FileDescription || 'Stage 2 ?�닝 ?�일',
             category: 'stage2',
             uploadDate: new Date().toISOString()
           })
@@ -855,13 +855,13 @@ export default function WorkPage() {
             size: remappingWork.files.stage3File.size,
             type: remappingWork.files.stage3File.type,
             data: data,
-            description: remappingWork.files.stage3FileDescription || 'Stage 3 튜닝 파일',
+            description: remappingWork.files.stage3FileDescription || 'Stage 3 ?�닝 ?�일',
             category: 'stage3',
             uploadDate: new Date().toISOString()
           })
         }
 
-        // ACU 파일들 처리
+        // ACU ?�일??처리
         if (remappingWork.files.acuOriginalFiles && remappingWork.files.acuOriginalFiles.length > 0) {
           for (const acuOriginalFile of remappingWork.files.acuOriginalFiles) {
             const data = await convertFileToBase64(acuOriginalFile)
@@ -870,7 +870,7 @@ export default function WorkPage() {
               size: acuOriginalFile.size,
               type: acuOriginalFile.type,
               data: data,
-              description: remappingWork.files.acuOriginalFileDescription || '원본 ACU 폴더',
+              description: remappingWork.files.acuOriginalFileDescription || '?�본 ACU ?�더',
               category: 'acuOriginal',
               uploadDate: new Date().toISOString()
             })
@@ -884,7 +884,7 @@ export default function WorkPage() {
             size: remappingWork.files.acuStage1File.size,
             type: remappingWork.files.acuStage1File.type,
             data: data,
-            description: remappingWork.files.acuStage1FileDescription || 'ACU Stage 1 튜닝 파일',
+            description: remappingWork.files.acuStage1FileDescription || 'ACU Stage 1 ?�닝 ?�일',
             category: 'acuStage1',
             uploadDate: new Date().toISOString()
           })
@@ -897,7 +897,7 @@ export default function WorkPage() {
             size: remappingWork.files.acuStage2File.size,
             type: remappingWork.files.acuStage2File.type,
             data: data,
-            description: remappingWork.files.acuStage2FileDescription || 'ACU Stage 2 튜닝 파일',
+            description: remappingWork.files.acuStage2FileDescription || 'ACU Stage 2 ?�닝 ?�일',
             category: 'acuStage2',
             uploadDate: new Date().toISOString()
           })
@@ -910,13 +910,13 @@ export default function WorkPage() {
             size: remappingWork.files.acuStage3File.size,
             type: remappingWork.files.acuStage3File.type,
             data: data,
-            description: remappingWork.files.acuStage3FileDescription || 'ACU Stage 3 튜닝 파일',
+            description: remappingWork.files.acuStage3FileDescription || 'ACU Stage 3 ?�닝 ?�일',
             category: 'acuStage3',
             uploadDate: new Date().toISOString()
           })
         }
 
-        // 미디어 파일들 처리 (5개)
+        // 미디???�일??처리 (5�?
         for (let i = 1; i <= 5; i++) {
           const mediaFileKey = `mediaFile${i}` as keyof typeof remappingWork.files
           const mediaDescKey = `mediaFile${i}Description` as keyof typeof remappingWork.files
@@ -930,14 +930,14 @@ export default function WorkPage() {
               size: mediaFile.size,
               type: mediaFile.type,
               data: data,
-              description: mediaDesc || `미디어 파일 ${i}`,
+              description: mediaDesc || `미디???�일 ${i}`,
               category: `media${i}`,
               uploadDate: new Date().toISOString()
             })
           }
         }
 
-        // Supabase에 저장할 작업 기록 데이터 생성
+        // Supabase???�?�할 ?�업 기록 ?�이???�성
         const allSelectedWorks = [...remappingWork.ecu.selectedWorks, ...remappingWork.acu.selectedWorks]
         const workDescription = allSelectedWorks.join(', ') + 
           (remappingWork.ecu.workDetails ? ` - ECU: ${remappingWork.ecu.workDetails}` : '') +
@@ -947,7 +947,7 @@ export default function WorkPage() {
           customerId: parseInt(formData.customerId),
           equipmentId: parseInt(formData.equipmentId),
           workDate: formData.workDate,
-          workType: 'ECU 튜닝',
+          workType: 'ECU ?�닝',
           workDescription: workDescription,
           ecuModel: remappingWork.ecu.type || remappingWork.ecu.typeCustom,
           ecuMaker: remappingWork.ecu.maker || '',
@@ -960,53 +960,53 @@ export default function WorkPage() {
           files: files
         }
 
-        // Supabase에 작업 기록 저장
+        // Supabase???�업 기록 ?�??
         const savedRecord = await createWorkRecord(workRecordData)
         
         if (savedRecord) {
           workHistoryEntries.push(savedRecord)
-          console.log(`✅ 작업 기록 ${index + 1} 저장 완료:`, savedRecord)
+          console.log(`???�업 기록 ${index + 1} ?�???�료:`, savedRecord)
         } else {
-          console.error(`❌ 작업 기록 ${index + 1} 저장 실패`)
-          alert(`작업 기록 ${index + 1} 저장 중 오류가 발생했습니다.`)
+          console.error(`???�업 기록 ${index + 1} ?�???�패`)
+          alert(`?�업 기록 ${index + 1} ?�??�??�류가 발생?�습?�다.`)
         }
       } catch (error) {
-        console.error(`❌ 작업 기록 ${index + 1} 처리 중 오류:`, error)
-        alert(`작업 기록 ${index + 1} 처리 중 오류가 발생했습니다.`)
+        console.error(`???�업 기록 ${index + 1} 처리 �??�류:`, error)
+        alert(`?�업 기록 ${index + 1} 처리 �??�류가 발생?�습?�다.`)
       }
     }
     
-    console.log('=== 작업 등록 디버깅 ===')
+    console.log('=== ?�업 ?�록 ?�버�?===')
     console.log('remappingWorks 배열:', remappingWorks)
     console.log('remappingWorks.length:', remappingWorks.length)
-    console.log('Supabase에 저장된 workHistoryEntries:', workHistoryEntries)
+    console.log('Supabase???�?�된 workHistoryEntries:', workHistoryEntries)
     console.log('workHistoryEntries.length:', workHistoryEntries.length)
-    console.log('=== 디버깅 끝 ===')
+    console.log('=== ?�버�???===')
     
     const allWorks = remappingWorks.flatMap(work => [...work.ecu.selectedWorks, ...work.acu.selectedWorks])
     
-    // 저장 성공 여부 확인
+    // ?�???�공 ?��? ?�인
     if (workHistoryEntries.length === 0) {
-      alert('작업 등록 중 오류가 발생했습니다. 다시 시도해주세요.')
+      alert('?�업 ?�록 �??�류가 발생?�습?�다. ?�시 ?�도?�주?�요.')
       return
     }
     
-    // 사용자에게 작업이력 페이지로 이동할지 확인
-    const goToHistory = confirm(`작업이 성공적으로 등록되었습니다!\n총 ${workHistoryEntries.length}개의 작업 이력이 Supabase에 저장되었습니다.\n(${remappingWorks.length}개의 Remapping 작업)\n선택된 작업: ${allWorks.join(', ')}\n\n작업이력 페이지로 이동하시겠습니까?`)
+    // ?�용?�에�??�업?�력 ?�이지�??�동?��? ?�인
+    const goToHistory = confirm(`?�업???�공?�으�??�록?�었?�니??\n�?${workHistoryEntries.length}개의 ?�업 ?�력??Supabase???�?�되?�습?�다.\n(${remappingWorks.length}개의 Remapping ?�업)\n?�택???�업: ${allWorks.join(', ')}\n\n?�업?�력 ?�이지�??�동?�시겠습?�까?`)
     
     if (goToHistory) {
       router.push('/history')
       return
     }
     
-    // 폼 초기화
+    // ??초기??
     setFormData({
       customerId: '',
       customerName: '',
       equipmentId: '',
       workDate: getTodayDate(),
       price: '',
-      status: '예약'
+      status: '?�약'
     })
     
     setRemappingWorks([])
@@ -1020,7 +1020,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '?�약'
       },
       acu: {
         toolCategory: '',
@@ -1031,7 +1031,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '?�약'
       },
       notes: '',
       files: {
@@ -1065,8 +1065,8 @@ export default function WorkPage() {
     })
     
     setWorkSelections({
-      'ECU/튜닝': [],
-      'ACU/튜닝': []
+      'ECU/?�닝': [],
+      'ACU/?�닝': []
     })
     
     setIsEditingRemapping(false)
@@ -1075,10 +1075,10 @@ export default function WorkPage() {
     setAvailableEquipment([])
   }
 
-  // 파일 URL 정리 (메모리 누수 방지)
+  // ?�일 URL ?�리 (메모�??�수 방�?)
   useEffect(() => {
     return () => {
-      // 컴포넌트 언마운트 시 생성된 URL들 정리
+      // 컴포?�트 ?�마?�트 ???�성??URL???�리
       for (let i = 1; i <= 5; i++) {
         const fileKey = `mediaFile${i}` as keyof typeof currentRemappingWork.files
         const file = currentRemappingWork.files[fileKey] as File | undefined
@@ -1089,7 +1089,7 @@ export default function WorkPage() {
     }
   }, [currentRemappingWork.files])
 
-  // 외부 클릭 시 드롭다운 닫기
+  // ?��? ?�릭 ???�롭?�운 ?�기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -1113,28 +1113,29 @@ export default function WorkPage() {
 
   return (
     <AuthGuard>
-              <Navigation />
-      <main className="pt-20 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-6">
-      {/* 페이지 헤더 */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">작업 등록</h1>
-        <p className="mt-2 text-gray-600">
-          새로운 ECU 튜닝 작업을 등록하고 관리합니다.
-        </p>
-      </div>
+      <div className="min-h-screen bg-gray-900">
+        <Navigation />
+        <main className="pt-20 pb-8">
+          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="space-y-6">
+        {/* ?�이지 ?�더 */}
+        <div>
+          <h1 className="text-3xl font-bold text-white">?�업 ?�록</h1>
+          <p className="mt-2 text-gray-300">
+            ?�로??ECU ?�닝 ?�업???�록?�고 관리합?�다.
+          </p>
+        </div>
 
-      {/* 작업 등록 폼 */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-6">새 작업 등록</h2>
+        {/* ?�업 ?�록 ??*/}
+        <div className="bg-gray-800 shadow rounded-lg p-6">
+          <h2 className="text-lg font-medium text-white mb-6">???�업 ?�록</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 고객 및 장비 정보 */}
+          {/* 고객 �??�비 ?�보 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="relative" ref={dropdownRef}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                고객 선택 *
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                고객 ?�택 *
               </label>
               <input
                 type="text"
@@ -1142,47 +1143,47 @@ export default function WorkPage() {
                 value={formData.customerName}
                 onChange={handleInputChange}
                 onFocus={() => {
-                  // 포커스 시 전체 고객 목록 표시
+                  // ?�커?????�체 고객 목록 ?�시
                   setFilteredCustomers(customers)
                   setShowCustomerDropdown(true)
                 }}
-                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="고객을 선택하거나 검색하세요..."
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder="고객???�택?�거??검?�하?�요..."
                 required
                 autoComplete="off"
                 style={{ imeMode: 'active' }}
                 lang="ko"
               />
               
-              {/* 고객 자동완성 드롭다운 */}
+              {/* 고객 ?�동?�성 ?�롭?�운 */}
               {showCustomerDropdown && (
-                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-10 mt-1 w-full bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
                   {isLoadingCustomers ? (
-                    <div className="px-4 py-3 text-gray-500 text-center">
-                      고객 데이터 로딩 중...
+                    <div className="px-4 py-3 text-gray-400 text-center">
+                      고객 ?�이??로딩 �?..
                     </div>
                   ) : filteredCustomers.length > 0 ? (
                     <>
                       {formData.customerName.trim() === '' && (
-                        <div className="px-4 py-2 bg-gray-50 text-sm text-gray-600 border-b border-gray-200">
-                          전체 고객 목록 ({filteredCustomers.length}명)
+                        <div className="px-4 py-2 bg-gray-600 text-sm text-gray-300 border-b border-gray-600">
+                          ?�체 고객 목록 ({filteredCustomers.length}�?
                         </div>
                       )}
                       {filteredCustomers.map((customer) => (
                         <div
                           key={customer.id}
                           onClick={() => handleCustomerSelect(customer)}
-                          className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          className="px-4 py-3 hover:bg-gray-600 cursor-pointer border-b border-gray-600 last:border-b-0"
                         >
-                          <div className="font-medium text-gray-900">{customer.name}</div>
-                          <div className="text-sm text-gray-500">{customer.phone}</div>
+                          <div className="font-medium text-white">{customer.name}</div>
+                          <div className="text-sm text-gray-300">{customer.phone}</div>
                           <div className="text-xs text-gray-400">{customer.roadAddress}</div>
                         </div>
                       ))}
                     </>
                   ) : (
-                    <div className="px-4 py-3 text-gray-500 text-center">
-                      {formData.customerName.trim() === '' ? '고객 데이터를 불러오지 못했습니다.' : '검색 결과가 없습니다.'}
+                    <div className="px-4 py-3 text-gray-400 text-center">
+                      {formData.customerName.trim() === '' ? '고객 ?�이?��? 불러?��? 못했?�니??' : '검??결과가 ?�습?�다.'}
                     </div>
                   )}
                 </div>
@@ -1190,28 +1191,28 @@ export default function WorkPage() {
 
 
               {formData.customerId && (
-                <div className="mt-2 p-3 bg-blue-50 rounded-md">
-                  <p className="text-sm text-blue-700">
-                    📍 {customers.find(c => c.id.toString() === formData.customerId)?.roadAddress}
+                <div className="mt-2 p-3 bg-blue-900 rounded-md">
+                  <p className="text-sm text-blue-300">
+                    ?�� {customers.find(c => c.id.toString() === formData.customerId)?.roadAddress}
                   </p>
                 </div>
               )}
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                장비 선택 *
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                ?�비 ?�택 *
               </label>
               <select
                 name="equipmentId"
                 value={formData.equipmentId}
                 onChange={handleInputChange}
-                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 required
                 disabled={!formData.customerId}
               >
                 <option value="">
-                  {formData.customerId ? '장비를 선택하세요' : '먼저 고객을 선택하세요'}
+                  {formData.customerId ? '?�비�??�택?�세?? : '먼�? 고객???�택?�세??}
                 </option>
                 {availableEquipment.map((equipment) => (
                   <option key={equipment.id} value={equipment.id}>
@@ -1220,45 +1221,45 @@ export default function WorkPage() {
                 ))}
               </select>
               {formData.equipmentId && (
-                <div className="mt-2 p-3 bg-green-50 rounded-md">
-                  <p className="text-sm text-green-700">
-                    🚜 {availableEquipment.find(e => e.id.toString() === formData.equipmentId)?.serialNumber}
+                <div className="mt-2 p-3 bg-green-900 rounded-md">
+                  <p className="text-sm text-green-300">
+                    ?�� {availableEquipment.find(e => e.id.toString() === formData.equipmentId)?.serialNumber}
                   </p>
                 </div>
               )}
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                작업 날짜 *
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                ?�업 ?�짜 *
               </label>
               <input
                 type="date"
                 name="workDate"
                 value={formData.workDate}
                 onChange={handleInputChange}
-                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
           </div>
 
-          {/* 등록된 Remapping 작업 목록 */}
+          {/* ?�록??Remapping ?�업 목록 */}
           {remappingWorks.length > 0 && (
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">등록된 Remapping 작업 ({remappingWorks.length}개)</h3>
+            <div className="border-t border-gray-600 pt-6">
+              <h3 className="text-lg font-medium text-white mb-4">?�록??Remapping ?�업 ({remappingWorks.length}�?</h3>
               <div className="space-y-4">
                 {remappingWorks.map((work, index) => (
-                  <div key={work.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div key={work.id} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">Remapping #{index + 1}</h4>
+                        <h4 className="font-medium text-white">Remapping #{index + 1}</h4>
                         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* ECU/튜닝 섹션 */}
+                          {/* ECU/?�닝 ?�션 */}
                           <div className="space-y-3">
-                            <h5 className="font-medium text-blue-800">🔧 ECU/튜닝</h5>
+                            <h5 className="font-medium text-blue-300">?�� ECU/?�닝</h5>
                             
-                            {/* 1. 제조사-모델명 (파란색 박스) */}
+                            {/* 1. ?�조??모델�?(?��???박스) */}
                             <div className="bg-blue-100 border border-blue-300 rounded-lg p-3">
                               <div className="text-sm font-medium text-blue-900">
                                 {work.ecu.maker && work.ecu.type ? (
@@ -1268,58 +1269,58 @@ export default function WorkPage() {
                                 ) : work.ecu.type ? (
                                   work.ecu.type
                                 ) : (
-                                  <span className="text-blue-500 italic">제조사-모델명 미설정</span>
+                                  <span className="text-blue-500 italic">?�조??모델�?미설??/span>
                                 )}
                               </div>
                               {work.ecu.typeCustom && (
                                 <div className="text-xs text-blue-700 mt-1">
-                                  추가: {work.ecu.typeCustom}
+                                  추�?: {work.ecu.typeCustom}
                                 </div>
                               )}
                             </div>
                             
-                            {/* 2. 작업내용 */}
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <div className="text-xs font-medium text-blue-800 mb-2">작업내용</div>
+                            {/* 2. ?�업?�용 */}
+                            <div className="bg-blue-900 border border-blue-700 rounded-lg p-3">
+                              <div className="text-xs font-medium text-blue-300 mb-2">?�업?�용</div>
                               <div className="flex flex-wrap gap-1">
                                 {work.ecu.selectedWorks && work.ecu.selectedWorks.length > 0 ? (
                                   work.ecu.selectedWorks.map((workName, idx) => (
-                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-800">
+                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-300">
                                       {workName}
                                     </span>
                                   ))
                                 ) : (
-                                  <span className="text-xs text-blue-500 italic">작업내용 미설정</span>
+                                  <span className="text-xs text-blue-500 italic">?�업?�용 미설??/span>
                                 )}
                               </div>
                               {work.ecu.workDetails && (
                                 <div className="mt-2 text-xs text-blue-700">
-                                  <span className="font-medium">상세:</span> {work.ecu.workDetails}
+                                  <span className="font-medium">?�세:</span> {work.ecu.workDetails}
                                 </div>
                               )}
                             </div>
                             
-                            {/* 3. 연결방법 */}
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <div className="text-xs font-medium text-blue-800 mb-1">연결방법</div>
+                            {/* 3. ?�결방법 */}
+                            <div className="bg-blue-900 border border-blue-700 rounded-lg p-3">
+                              <div className="text-xs font-medium text-blue-300 mb-1">?�결방법</div>
                               <div className="text-sm text-blue-900">
-                                {work.ecu.connectionMethod || <span className="text-blue-500 italic">연결방법 미설정</span>}
+                                {work.ecu.connectionMethod || <span className="text-blue-500 italic">?�결방법 미설??/span>}
                               </div>
                             </div>
                             
-                            {/* 추가 정보 */}
-                            <div className="text-xs text-gray-600 space-y-1">
+                            {/* 추�? ?�보 */}
+                            <div className="text-xs text-gray-400 space-y-1">
                               {work.ecu.toolCategory && <div><span className="font-medium">카테고리:</span> {work.ecu.toolCategory}</div>}
                               {work.ecu.price && <div><span className="font-medium">금액:</span> {(parseFloat(work.ecu.price) / 10000).toFixed(1)}만원</div>}
-                              {work.ecu.status && <div><span className="font-medium">상태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.ecu.status === '완료' ? 'bg-green-100 text-green-800' : work.ecu.status === '진행중' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.ecu.status}</span></div>}
+                              {work.ecu.status && <div><span className="font-medium">?�태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.ecu.status === '?�료' ? 'bg-green-100 text-green-300' : work.ecu.status === '진행�? ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.ecu.status}</span></div>}
                             </div>
                           </div>
 
-                          {/* ACU/튜닝 섹션 */}
+                          {/* ACU/?�닝 ?�션 */}
                           <div className="space-y-3">
-                            <h5 className="font-medium text-green-800">⚙️ ACU/튜닝</h5>
+                            <h5 className="font-medium text-green-300">?�️ ACU/?�닝</h5>
                             
-                            {/* 1. 제조사-모델명 (초록색 박스) */}
+                            {/* 1. ?�조??모델�?(초록??박스) */}
                             <div className="bg-green-100 border border-green-300 rounded-lg p-3">
                               <div className="text-sm font-medium text-green-900">
                                 {work.acu.manufacturer && work.acu.model ? (
@@ -1329,83 +1330,83 @@ export default function WorkPage() {
                                 ) : work.acu.model ? (
                                   work.acu.model
                                 ) : (
-                                  <span className="text-green-500 italic">제조사-모델명 미설정</span>
+                                  <span className="text-green-500 italic">?�조??모델�?미설??/span>
                                 )}
                               </div>
                               {work.acu.modelCustom && (
                                 <div className="text-xs text-green-700 mt-1">
-                                  추가: {work.acu.modelCustom}
+                                  추�?: {work.acu.modelCustom}
                                 </div>
                               )}
                             </div>
                             
-                            {/* 2. 작업내용 */}
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                              <div className="text-xs font-medium text-green-800 mb-2">작업내용</div>
+                            {/* 2. ?�업?�용 */}
+                            <div className="bg-green-900 border border-green-700 rounded-lg p-3">
+                              <div className="text-xs font-medium text-green-300 mb-2">?�업?�용</div>
                               <div className="flex flex-wrap gap-1">
                                 {work.acu.selectedWorks && work.acu.selectedWorks.length > 0 ? (
                                   work.acu.selectedWorks.map((workName, idx) => (
-                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-200 text-green-800">
+                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-200 text-green-300">
                                       {workName}
                                     </span>
                                   ))
                                 ) : (
-                                  <span className="text-xs text-green-500 italic">작업내용 미설정</span>
+                                  <span className="text-xs text-green-500 italic">?�업?�용 미설??/span>
                                 )}
                               </div>
                               {work.acu.workDetails && (
                                 <div className="mt-2 text-xs text-green-700">
-                                  <span className="font-medium">상세:</span> {work.acu.workDetails}
+                                  <span className="font-medium">?�세:</span> {work.acu.workDetails}
                                 </div>
                               )}
                             </div>
                             
-                            {/* 3. 연결방법 */}
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                              <div className="text-xs font-medium text-green-800 mb-1">연결방법</div>
+                            {/* 3. ?�결방법 */}
+                            <div className="bg-green-900 border border-green-700 rounded-lg p-3">
+                              <div className="text-xs font-medium text-green-300 mb-1">?�결방법</div>
                               <div className="text-sm text-green-900">
-                                {work.acu.connectionMethod || <span className="text-green-500 italic">연결방법 미설정</span>}
+                                {work.acu.connectionMethod || <span className="text-green-500 italic">?�결방법 미설??/span>}
                               </div>
                             </div>
                             
-                            {/* 추가 정보 */}
-                            <div className="text-xs text-gray-600 space-y-1">
+                            {/* 추�? ?�보 */}
+                            <div className="text-xs text-gray-400 space-y-1">
                               {work.acu.toolCategory && <div><span className="font-medium">카테고리:</span> {work.acu.toolCategory}</div>}
                               {work.acu.price && <div><span className="font-medium">금액:</span> {(parseFloat(work.acu.price) / 10000).toFixed(1)}만원</div>}
-                              {work.acu.status && <div><span className="font-medium">상태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.acu.status === '완료' ? 'bg-green-100 text-green-800' : work.acu.status === '진행중' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.acu.status}</span></div>}
+                              {work.acu.status && <div><span className="font-medium">?�태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.acu.status === '?�료' ? 'bg-green-100 text-green-300' : work.acu.status === '진행�? ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.acu.status}</span></div>}
                             </div>
                           </div>
                         </div>
 
                         {work.notes && (
                           <div className="mt-2">
-                            <span className="font-medium text-gray-700">메모:</span>
-                            <p className="text-sm text-gray-600 mt-1">{work.notes}</p>
+                            <span className="font-medium text-gray-300">메모:</span>
+                            <p className="text-sm text-gray-400 mt-1">{work.notes}</p>
                           </div>
                         )}
-                        {/* 첨부 파일 정보 */}
+                        {/* 첨�? ?�일 ?�보 */}
                         <div className="mt-3">
-                          <span className="font-medium text-gray-700">첨부 파일:</span>
+                                                      <span className="font-medium text-gray-300">첨�? ?�일:</span>
                           <div className="flex flex-wrap gap-2 mt-1">
-                            {/* ECU 파일들 */}
-                            {work.files.originalFiles && work.files.originalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">🔧 ECU원본({work.files.originalFiles.length})</span>}
-                            {work.files.stage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-900">🔧 ECU Stage1</span>}
-                            {work.files.stage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-300 text-blue-900">🔧 ECU Stage2</span>}
-                            {work.files.stage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-400 text-blue-900">🔧 ECU Stage3</span>}
+                            {/* ECU ?�일??*/}
+                            {work.files.originalFiles && work.files.originalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-300">?�� ECU?�본({work.files.originalFiles.length})</span>}
+                            {work.files.stage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-900">?�� ECU Stage1</span>}
+                            {work.files.stage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-300 text-blue-900">?�� ECU Stage2</span>}
+                            {work.files.stage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-400 text-blue-900">?�� ECU Stage3</span>}
                             
-                            {/* ACU 파일들 */}
-                            {work.files.acuOriginalFiles && work.files.acuOriginalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">⚙️ ACU원본({work.files.acuOriginalFiles.length})</span>}
-                            {work.files.acuStage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-200 text-green-900">⚙️ ACU Stage1</span>}
-                            {work.files.acuStage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-300 text-green-900">⚙️ ACU Stage2</span>}
-                            {work.files.acuStage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-400 text-green-900">⚙️ ACU Stage3</span>}
+                            {/* ACU ?�일??*/}
+                            {work.files.acuOriginalFiles && work.files.acuOriginalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-300">?�️ ACU?�본({work.files.acuOriginalFiles.length})</span>}
+                            {work.files.acuStage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-200 text-green-900">?�️ ACU Stage1</span>}
+                            {work.files.acuStage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-300 text-green-900">?�️ ACU Stage2</span>}
+                            {work.files.acuStage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-400 text-green-900">?�️ ACU Stage3</span>}
                             
-                            {/* 미디어 파일들 표시 */}
+                            {/* 미디???�일???�시 */}
                             {(() => {
                               const mediaCount = [1, 2, 3, 4, 5].filter(i => {
                                 const fileKey = `mediaFile${i}` as keyof typeof work.files
                                 return work.files[fileKey]
                               }).length
-                              return mediaCount > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">📷 미디어({mediaCount})</span>
+                              return mediaCount > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">?�� 미디??{mediaCount})</span>
                             })()}
                           </div>
                         </div>
@@ -1414,16 +1415,16 @@ export default function WorkPage() {
                         <button
                           type="button"
                           onClick={() => handleEditRemappingWork(work)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="text-blue-600 hover:text-blue-300 text-sm font-medium"
                         >
-                          편집
+                          ?�집
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteRemappingWork(work.id)}
                           className="text-red-600 hover:text-red-800 text-sm font-medium"
                         >
-                          삭제
+                          ??��
                         </button>
                       </div>
                     </div>
@@ -1433,38 +1434,38 @@ export default function WorkPage() {
             </div>
           )}
 
-          {/* Remapping 작업 추가/편집 */}
-          <div className="border-t border-gray-200 pt-6">
+          {/* Remapping ?�업 추�?/?�집 */}
+          <div className="border-t border-gray-600 pt-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                {isEditingRemapping ? 'Remapping 편집' : 'Remapping 추가'}
+              <h3 className="text-lg font-medium text-white">
+                {isEditingRemapping ? 'Remapping ?�집' : 'Remapping 추�?'}
               </h3>
               {isEditingRemapping && (
                 <button
                   type="button"
                   onClick={handleCancelRemappingEdit}
-                  className="text-gray-600 hover:text-gray-800 text-sm"
+                  className="text-gray-400 hover:text-gray-200 text-sm"
                 >
-                  편집 취소
+                  ?�집 취소
                 </button>
               )}
             </div>
             
             <div className="space-y-6">
-              {/* ECU 섹션 */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h4 className="text-lg font-medium text-blue-800 mb-4">🔧 ECU 정보</h4>
+              {/* ECU ?�션 */}
+              <div className="bg-blue-900 border border-blue-700 rounded-lg p-6">
+                <h4 className="text-lg font-medium text-blue-300 mb-4">?�� ECU ?�보</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ECU 장비 카테고리
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ECU ?�비 카테고리
                     </label>
                     <select
                       value={currentRemappingWork.ecu.toolCategory}
                       onChange={(e) => handleRemappingWorkInputChange('ecu', 'toolCategory', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">장비 카테고리를 선택하세요</option>
+                      <option value="">?�비 카테고리�??�택?�세??/option>
                       {ECU_TOOL_CATEGORIES.map((category) => (
                         <option key={category} value={category}>
                           {category}
@@ -1474,15 +1475,15 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      연결 방법
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ?�결 방법
                     </label>
                     <select
                       value={currentRemappingWork.ecu.connectionMethod}
                       onChange={(e) => handleRemappingWorkInputChange('ecu', 'connectionMethod', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">연결 방법을 선택하세요</option>
+                      <option value="">?�결 방법???�택?�세??/option>
                       {CONNECTION_METHODS.map((method) => (
                         <option key={method} value={method}>
                           {method}
@@ -1492,15 +1493,15 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ECU 제조사
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ECU ?�조??
                     </label>
                     <select
                       value={currentRemappingWork.ecu.maker}
                       onChange={(e) => handleRemappingWorkInputChange('ecu', 'maker', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">ECU 제조사를 선택하세요</option>
+                      <option value="">ECU ?�조?��? ?�택?�세??/option>
                       {ECU_MAKERS.map((maker) => (
                         <option key={maker} value={maker}>
                           {maker}
@@ -1511,24 +1512,24 @@ export default function WorkPage() {
 
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-gray-300">
                         ECU 모델
                       </label>
                       <button
                         type="button"
                         onClick={() => setShowEcuManagement(true)}
                         className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
-                        title="ECU 모델 관리"
+                        title="ECU 모델 관�?
                       >
-                        관리
+                        관�?
                       </button>
                     </div>
                     <select
                       value={currentRemappingWork.ecu.type}
                       onChange={(e) => handleRemappingWorkInputChange('ecu', 'type', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">ECU 모델을 선택하세요</option>
+                      <option value="">ECU 모델???�택?�세??/option>
                       {ecuModels.map((type) => (
                         <option key={type} value={type}>
                           {type}
@@ -1540,8 +1541,8 @@ export default function WorkPage() {
                         type="text"
                         value={currentRemappingWork.ecu.typeCustom}
                         onChange={(e) => handleRemappingWorkInputChange('ecu', 'typeCustom', e.target.value)}
-                        className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="새로운 ECU 모델을 입력하여 목록에 추가"
+                        className="flex-1 border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="?�로??ECU 모델???�력?�여 목록??추�?"
                       />
                       <button
                         type="button"
@@ -1553,21 +1554,21 @@ export default function WorkPage() {
                           }
                         }}
                         className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
-                        title="목록에 추가하고 선택"
+                        title="목록??추�??�고 ?�택"
                       >
-                        추가
+                        추�?
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ECU 작업 상태
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ECU ?�업 ?�태
                     </label>
                     <select
                       value={currentRemappingWork.ecu.status}
                       onChange={(e) => handleRemappingWorkInputChange('ecu', 'status', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
                       {WORK_STATUS.map((status) => (
                         <option key={status} value={status}>
@@ -1578,14 +1579,14 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ECU 작업 금액 (만원)
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ECU ?�업 금액 (만원)
                     </label>
                     <input
                       type="number"
                       value={currentRemappingWork.ecu.price ? (parseFloat(currentRemappingWork.ecu.price) / 10000).toString() : ''}
                       onChange={(e) => handleRemappingWorkInputChange('ecu', 'price', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       placeholder="35 (35만원)"
                       min="0"
                       step="0.1"
@@ -1593,35 +1594,35 @@ export default function WorkPage() {
                   </div>
                 </div>
 
-                {/* ECU 작업 상세 정보 */}
+                {/* ECU ?�업 ?�세 ?�보 */}
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ECU 작업 상세 정보
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    ECU ?�업 ?�세 ?�보
                   </label>
                   <textarea
                     value={currentRemappingWork.ecu.workDetails}
                     onChange={(e) => handleRemappingWorkInputChange('ecu', 'workDetails', e.target.value)}
                     rows={3}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="ECU 작업 내용, 특이사항, 주의사항 등을 상세히 입력하세요..."
+                    className="w-full border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="ECU ?�업 ?�용, ?�이?�항, 주의?�항 ?�을 ?�세???�력?�세??.."
                   />
                 </div>
               </div>
 
-              {/* ACU 섹션 */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <h4 className="text-lg font-medium text-green-800 mb-4">⚙️ ACU 정보</h4>
+              {/* ACU ?�션 */}
+              <div className="bg-green-900 border border-green-700 rounded-lg p-6">
+                <h4 className="text-lg font-medium text-green-300 mb-4">?�️ ACU ?�보</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ACU 장비 카테고리
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ACU ?�비 카테고리
                     </label>
                     <select
                       value={currentRemappingWork.acu.toolCategory}
                       onChange={(e) => handleRemappingWorkInputChange('acu', 'toolCategory', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                     >
-                      <option value="">장비 카테고리를 선택하세요</option>
+                      <option value="">?�비 카테고리�??�택?�세??/option>
                       {ECU_TOOL_CATEGORIES.map((category) => (
                         <option key={category} value={category}>
                           {category}
@@ -1631,15 +1632,15 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      연결 방법
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ?�결 방법
                     </label>
                     <select
                       value={currentRemappingWork.acu.connectionMethod}
                       onChange={(e) => handleRemappingWorkInputChange('acu', 'connectionMethod', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                     >
-                      <option value="">연결 방법을 선택하세요</option>
+                      <option value="">?�결 방법???�택?�세??/option>
                       {CONNECTION_METHODS.map((method) => (
                         <option key={method} value={method}>
                           {method}
@@ -1649,15 +1650,15 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ACU 제조사
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ACU ?�조??
                     </label>
                     <select
                       value={currentRemappingWork.acu.manufacturer}
                       onChange={(e) => handleRemappingWorkInputChange('acu', 'manufacturer', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                     >
-                      <option value="">ACU 제조사를 선택하세요</option>
+                      <option value="">ACU ?�조?��? ?�택?�세??/option>
                       {ACU_MANUFACTURERS.map((manufacturer) => (
                         <option key={manufacturer} value={manufacturer}>
                           {manufacturer}
@@ -1668,26 +1669,26 @@ export default function WorkPage() {
 
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-gray-300">
                         ACU 모델
                       </label>
                       <button
                         type="button"
                         onClick={() => setShowAcuManagement(true)}
                         className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
-                        title="ACU 타입 관리"
+                        title="ACU ?�??관�?
                       >
-                        관리
+                        관�?
                       </button>
                     </div>
                     <select
                       value={currentRemappingWork.acu.model}
                       onChange={(e) => handleRemappingWorkInputChange('acu', 'model', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                       disabled={!currentRemappingWork.acu.manufacturer}
                     >
                       <option value="">
-                        {currentRemappingWork.acu.manufacturer ? 'ACU 모델을 선택하세요' : '먼저 제조사를 선택하세요'}
+                        {currentRemappingWork.acu.manufacturer ? 'ACU 모델???�택?�세?? : '먼�? ?�조?��? ?�택?�세??}
                       </option>
                       {currentRemappingWork.acu.manufacturer && getAvailableAcuModels(currentRemappingWork.acu.manufacturer).map((model) => (
                         <option key={model} value={model}>
@@ -1700,8 +1701,8 @@ export default function WorkPage() {
                         type="text"
                         value={currentRemappingWork.acu.modelCustom}
                         onChange={(e) => handleRemappingWorkInputChange('acu', 'modelCustom', e.target.value)}
-                        className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                        placeholder="새로운 ACU 모델을 입력하여 목록에 추가"
+                        className="flex-1 border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                        placeholder="?�로??ACU 모델???�력?�여 목록??추�?"
                         disabled={!currentRemappingWork.acu.manufacturer}
                       />
                       <button
@@ -1715,21 +1716,21 @@ export default function WorkPage() {
                         }}
                         disabled={!currentRemappingWork.acu.manufacturer || !currentRemappingWork.acu.modelCustom.trim()}
                         className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        title="목록에 추가하고 선택"
+                        title="목록??추�??�고 ?�택"
                       >
-                        추가
+                        추�?
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ACU 작업 상태
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ACU ?�업 ?�태
                     </label>
                     <select
                       value={currentRemappingWork.acu.status}
                       onChange={(e) => handleRemappingWorkInputChange('acu', 'status', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                     >
                       {WORK_STATUS.map((status) => (
                         <option key={status} value={status}>
@@ -1740,14 +1741,14 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ACU 작업 금액 (만원)
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ACU ?�업 금액 (만원)
                     </label>
                     <input
                       type="number"
                       value={currentRemappingWork.acu.price ? (parseFloat(currentRemappingWork.acu.price) / 10000).toString() : ''}
                       onChange={(e) => handleRemappingWorkInputChange('acu', 'price', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                       placeholder="25 (25만원)"
                       min="0"
                       step="0.1"
@@ -1755,67 +1756,67 @@ export default function WorkPage() {
                   </div>
                 </div>
 
-                {/* ACU 작업 상세 정보 */}
+                {/* ACU ?�업 ?�세 ?�보 */}
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ACU 작업 상세 정보
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    ACU ?�업 ?�세 ?�보
                   </label>
                   <textarea
                     value={currentRemappingWork.acu.workDetails}
                     onChange={(e) => handleRemappingWorkInputChange('acu', 'workDetails', e.target.value)}
                     rows={3}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                    placeholder="ACU 작업 내용, 특이사항, 주의사항 등을 상세히 입력하세요..."
+                    className="w-full border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    placeholder="ACU ?�업 ?�용, ?�이?�항, 주의?�항 ?�을 ?�세???�력?�세??.."
                   />
                 </div>
               </div>
 
-              {/* 공통 정보 섹션 */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                <h4 className="text-lg font-medium text-gray-800 mb-4">📝 공통 정보</h4>
+              {/* 공통 ?�보 ?�션 */}
+              <div className="bg-gray-700 border border-gray-600 rounded-lg p-6">
+                <h4 className="text-lg font-medium text-gray-800 mb-4">?�� 공통 ?�보</h4>
                 
-                {/* 작업 메모 */}
+                {/* ?�업 메모 */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    작업 메모
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    ?�업 메모
                   </label>
                   <textarea
                     value={currentRemappingWork.notes}
                     onChange={(e) => handleRemappingWorkInputChange('general', 'notes', e.target.value)}
                     rows={2}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500"
-                    placeholder="이 Remapping 작업에 대한 간단한 메모를 입력하세요..."
+                    className="w-full border-gray-600 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500"
+                    placeholder="??Remapping ?�업???�??간단??메모�??�력?�세??.."
                   />
                 </div>
 
-                {/* 튜닝 작업 선택 */}
+                {/* ?�닝 ?�업 ?�택 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-4">
-                    튜닝 작업 선택 (다중 선택 가능)
+                  <label className="block text-sm font-medium text-gray-300 mb-4">
+                    ?�닝 ?�업 ?�택 (?�중 ?�택 가??
                   </label>
                   
-                  {/* 선택된 작업 요약 */}
+                  {/* ?�택???�업 ?�약 */}
                   {(currentRemappingWork.ecu.selectedWorks.length > 0 || currentRemappingWork.acu.selectedWorks.length > 0) && (
-                    <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="text-sm font-medium text-gray-900 mb-2">
-                        선택된 작업 (ECU: {currentRemappingWork.ecu.selectedWorks.length}개, ACU: {currentRemappingWork.acu.selectedWorks.length}개):
+                    <div className="mb-4 p-3 bg-gray-700 rounded-lg border border-gray-600">
+                      <div className="text-sm font-medium text-white mb-2">
+                        ?�택???�업 (ECU: {currentRemappingWork.ecu.selectedWorks.length}�? ACU: {currentRemappingWork.acu.selectedWorks.length}�?:
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div>
-                          <div className="text-xs font-medium text-blue-800 mb-1">🔧 ECU 작업:</div>
+                          <div className="text-xs font-medium text-blue-300 mb-1">?�� ECU ?�업:</div>
                           <div className="flex flex-wrap gap-1">
                             {currentRemappingWork.ecu.selectedWorks.map((work, index) => (
-                              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-300">
                                 {work}
                               </span>
                             ))}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs font-medium text-green-800 mb-1">⚙️ ACU 작업:</div>
+                          <div className="text-xs font-medium text-green-300 mb-1">?�️ ACU ?�업:</div>
                           <div className="flex flex-wrap gap-1">
                             {currentRemappingWork.acu.selectedWorks.map((work, index) => (
-                              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-300">
                                 {work}
                               </span>
                             ))}
@@ -1825,16 +1826,16 @@ export default function WorkPage() {
                     </div>
                   )}
                   
-                  {/* 카테고리별 작업 선택 */}
+                  {/* 카테고리�??�업 ?�택 */}
                   <div className="space-y-4">
                     {TUNING_CATEGORIES.map((category) => {
                       const categoryWorks = TUNING_WORKS_BY_CATEGORY[category as keyof typeof TUNING_WORKS_BY_CATEGORY] || []
                       const selectedInCategory = workSelections[category] || []
                       const isAllSelected = categoryWorks.length > 0 && categoryWorks.every(work => selectedInCategory.includes(work))
                       const isPartialSelected = selectedInCategory.length > 0 && !isAllSelected
-                      const borderColor = category === 'ECU/튜닝' ? 'border-blue-200' : 'border-green-200'
-                      const bgColor = category === 'ECU/튜닝' ? 'bg-blue-50' : 'bg-green-50'
-                      const textColor = category === 'ECU/튜닝' ? 'text-blue-800' : 'text-green-800'
+                      const borderColor = category === 'ECU/?�닝' ? 'border-blue-700' : 'border-green-700'
+                      const bgColor = category === 'ECU/?�닝' ? 'bg-blue-900' : 'bg-green-900'
+                      const textColor = category === 'ECU/?�닝' ? 'text-blue-300' : 'text-green-300'
                       
                       return (
                         <div key={category} className={`border ${borderColor} ${bgColor} rounded-lg p-4`}>
@@ -1848,14 +1849,14 @@ export default function WorkPage() {
                                   if (el) el.indeterminate = isPartialSelected
                                 }}
                                 onChange={() => handleCategoryToggle(category)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded"
                               />
                               <label htmlFor={`category-${category}`} className={`ml-2 text-sm font-medium ${textColor}`}>
-                                {category === 'ECU/튜닝' ? '🔧 ' : '⚙️ '}{category}
+                                {category === 'ECU/?�닝' ? '?�� ' : '?�️ '}{category}
                               </label>
                             </div>
                             <span className="text-xs text-gray-500">
-                              {selectedInCategory.length}/{categoryWorks.length} 선택됨
+                              {selectedInCategory.length}/{categoryWorks.length} ?�택??
                             </span>
                           </div>
                           
@@ -1867,9 +1868,9 @@ export default function WorkPage() {
                                     type="checkbox"
                                     checked={selectedInCategory.includes(work)}
                                     onChange={() => handleWorkSelection(category, work)}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded"
                                   />
-                                  <span className="ml-2 text-sm text-gray-700">{work}</span>
+                                  <span className="ml-2 text-sm text-gray-300">{work}</span>
                                 </label>
                               )
                             })}
@@ -1881,14 +1882,14 @@ export default function WorkPage() {
                 </div>
               </div>
 
-              {/* 파일 첨부 섹션 */}
-              <div className="mt-8 border-t border-gray-200 pt-6">
-                <h4 className="text-md font-medium text-gray-900 mb-4">파일 첨부</h4>
+              {/* ?�일 첨�? ?�션 */}
+              <div className="mt-8 border-t border-gray-600 pt-6">
+                <h4 className="text-md font-medium text-white mb-4">?�일 첨�?</h4>
                 <div className="space-y-6">
-                  {/* 원본 ECU 파일 */}
+                  {/* ?�본 ECU ?�일 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      원본 ECU 폴더
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ?�본 ECU ?�더
                     </label>
                     <div className="flex items-center space-x-3 mb-2">
                       <input
@@ -1904,15 +1905,15 @@ export default function WorkPage() {
                       />
                       <label
                         htmlFor="original-folder"
-                        className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                        className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-900 transition-colors"
                       >
                         <svg className="w-6 h-6 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-gray-400">
                           {currentRemappingWork.files.originalFiles && currentRemappingWork.files.originalFiles.length > 0 
-                            ? `📁 ${currentRemappingWork.files.originalFiles.length}개 파일 선택됨` 
-                            : '📁 원본 폴더 선택'}
+                            ? `?�� ${currentRemappingWork.files.originalFiles.length}�??�일 ?�택?? 
+                            : '?�� ?�본 ?�더 ?�택'}
                         </span>
                       </label>
                     </div>
@@ -1920,17 +1921,17 @@ export default function WorkPage() {
                       type="text"
                       value={currentRemappingWork.files.originalFileDescription || ''}
                       onChange={(e) => handleFileDescriptionChange('originalFileDescription', e.target.value)}
-                      placeholder="폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="?�더 ?�명???�력?�세??(?? ?�본 백업 ?�더, ?�기 ?�용 ??"
+                      className="w-full border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     />
-                    {/* 선택된 파일 목록 표시 */}
+                    {/* ?�택???�일 목록 ?�시 */}
                     {currentRemappingWork.files.originalFiles && currentRemappingWork.files.originalFiles.length > 0 && (
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                        <div className="text-sm font-medium text-gray-700 mb-2">선택된 파일:</div>
+                      <div className="mt-2 p-3 bg-gray-700 rounded-lg">
+                        <div className="text-sm font-medium text-gray-300 mb-2">?�택???�일:</div>
                         <div className="max-h-32 overflow-y-auto">
                           {currentRemappingWork.files.originalFiles.map((file, index) => (
-                            <div key={index} className="text-xs text-gray-600 py-1 flex items-center">
-                              <span className="mr-2">📄</span>
+                            <div key={index} className="text-xs text-gray-400 py-1 flex items-center">
+                              <span className="mr-2">?��</span>
                               <span className="truncate">{file.name}</span>
                               <span className="ml-auto text-gray-400">
                                 ({(file.size / 1024).toFixed(1)} KB)
@@ -1942,12 +1943,12 @@ export default function WorkPage() {
                     )}
                   </div>
 
-                  {/* Stage 파일들 */}
+                  {/* Stage ?�일??*/}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* 1차 튜닝 */}
-                    <div className="border border-green-200 rounded-lg p-4 bg-green-50">
-                      <label className="block text-sm font-medium text-green-800 mb-2">
-                        📈 1차 튜닝
+                    {/* 1�??�닝 */}
+                    <div className="border border-green-700 rounded-lg p-4 bg-green-900">
+                      <label className="block text-sm font-medium text-green-300 mb-2">
+                        ?�� 1�??�닝
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
                         <input
@@ -1965,8 +1966,8 @@ export default function WorkPage() {
                         >
                           <span className="text-green-700">
                             {currentRemappingWork.files.stage1File 
-                              ? `📄 ${(currentRemappingWork.files.stage1File as File).name} (${((currentRemappingWork.files.stage1File as File).size / 1024).toFixed(1)} KB)` 
-                              : '📄 1차 튜닝 파일 선택'}
+                              ? `?�� ${(currentRemappingWork.files.stage1File as File).name} (${((currentRemappingWork.files.stage1File as File).size / 1024).toFixed(1)} KB)` 
+                              : '?�� 1�??�닝 ?�일 ?�택'}
                           </span>
                         </label>
                       </div>
@@ -1974,15 +1975,15 @@ export default function WorkPage() {
                         type="text"
                         value={currentRemappingWork.files.stage1FileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('stage1FileDescription', e.target.value)}
-                        placeholder="1차 튜닝 설명을 입력하세요"
+                        placeholder="1�??�닝 ?�명???�력?�세??
                         className="w-full border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-xs"
                       />
                     </div>
 
-                    {/* 2차 튜닝 */}
+                    {/* 2�??�닝 */}
                     <div className="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
                       <label className="block text-sm font-medium text-yellow-800 mb-2">
-                        🚀 2차 튜닝
+                        ?? 2�??�닝
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
                         <input
@@ -2000,8 +2001,8 @@ export default function WorkPage() {
                         >
                           <span className="text-yellow-800">
                             {currentRemappingWork.files.stage2File 
-                              ? `⚡ ${(currentRemappingWork.files.stage2File as File).name} (${((currentRemappingWork.files.stage2File as File).size / 1024).toFixed(1)} KB)` 
-                              : '⚡ 2차 튜닝 파일 선택'}
+                              ? `??${(currentRemappingWork.files.stage2File as File).name} (${((currentRemappingWork.files.stage2File as File).size / 1024).toFixed(1)} KB)` 
+                              : '??2�??�닝 ?�일 ?�택'}
                           </span>
                         </label>
                       </div>
@@ -2009,15 +2010,15 @@ export default function WorkPage() {
                         type="text"
                         value={currentRemappingWork.files.stage2FileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('stage2FileDescription', e.target.value)}
-                        placeholder="2차 튜닝 설명을 입력하세요"
+                        placeholder="2�??�닝 ?�명???�력?�세??
                         className="w-full border-yellow-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-xs"
                       />
                     </div>
 
-                    {/* 3차 튜닝 */}
+                    {/* 3�??�닝 */}
                     <div className="border border-red-200 rounded-lg p-4 bg-red-50">
                       <label className="block text-sm font-medium text-red-800 mb-2">
-                        🔥 3차 튜닝
+                        ?�� 3�??�닝
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
                         <input
@@ -2035,8 +2036,8 @@ export default function WorkPage() {
                         >
                           <span className="text-red-800">
                             {currentRemappingWork.files.stage3File 
-                              ? `🔥 ${(currentRemappingWork.files.stage3File as File).name} (${((currentRemappingWork.files.stage3File as File).size / 1024).toFixed(1)} KB)` 
-                              : '🔥 3차 튜닝 파일 선택'}
+                              ? `?�� ${(currentRemappingWork.files.stage3File as File).name} (${((currentRemappingWork.files.stage3File as File).size / 1024).toFixed(1)} KB)` 
+                              : '?�� 3�??�닝 ?�일 ?�택'}
                           </span>
                         </label>
                       </div>
@@ -2044,20 +2045,20 @@ export default function WorkPage() {
                         type="text"
                         value={currentRemappingWork.files.stage3FileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('stage3FileDescription', e.target.value)}
-                        placeholder="3차 튜닝 설명을 입력하세요"
+                        placeholder="3�??�닝 ?�명???�력?�세??
                         className="w-full border-red-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-xs"
                       />
                     </div>
                   </div>
 
-                  {/* ACU 파일 업로드 섹션 */}
-                  <div className="border-t border-gray-300 pt-6">
-                    <h5 className="text-md font-medium text-gray-900 mb-4">ACU 파일 업로드</h5>
+                  {/* ACU ?�일 ?�로???�션 */}
+                  <div className="border-t border-gray-600 pt-6">
+                    <h5 className="text-md font-medium text-white mb-4">ACU ?�일 ?�로??/h5>
                     
-                    {/* 원본 ACU 파일 */}
+                    {/* ?�본 ACU ?�일 */}
                     <div className="mb-6">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        원본 ACU 폴더
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        ?�본 ACU ?�더
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
                         <input
@@ -2073,15 +2074,15 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="acu-original-folder"
-                          className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-green-300 rounded-lg cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors"
+                          className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-green-300 rounded-lg cursor-pointer hover:border-green-400 hover:bg-green-900 transition-colors"
                         >
                           <svg className="w-6 h-6 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
                           <span className="text-sm text-green-600">
                             {currentRemappingWork.files.acuOriginalFiles && currentRemappingWork.files.acuOriginalFiles.length > 0 
-                              ? `⚙️ ${currentRemappingWork.files.acuOriginalFiles.length}개 파일 선택됨` 
-                              : '⚙️ 원본 ACU 폴더 선택'}
+                              ? `?�️ ${currentRemappingWork.files.acuOriginalFiles.length}�??�일 ?�택?? 
+                              : '?�️ ?�본 ACU ?�더 ?�택'}
                           </span>
                         </label>
                       </div>
@@ -2089,17 +2090,17 @@ export default function WorkPage() {
                         type="text"
                         value={currentRemappingWork.files.acuOriginalFileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('acuOriginalFileDescription', e.target.value)}
-                        placeholder="ACU 폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
-                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                        placeholder="ACU ?�더 ?�명???�력?�세??(?? ?�본 백업 ?�더, ?�기 ?�용 ??"
+                        className="w-full border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                       />
-                      {/* 선택된 ACU 파일 목록 표시 */}
+                      {/* ?�택??ACU ?�일 목록 ?�시 */}
                       {currentRemappingWork.files.acuOriginalFiles && currentRemappingWork.files.acuOriginalFiles.length > 0 && (
-                        <div className="mt-2 p-3 bg-green-50 rounded-lg">
-                          <div className="text-sm font-medium text-green-700 mb-2">선택된 ACU 파일:</div>
+                        <div className="mt-2 p-3 bg-green-900 rounded-lg">
+                          <div className="text-sm font-medium text-green-700 mb-2">?�택??ACU ?�일:</div>
                           <div className="max-h-32 overflow-y-auto">
                             {currentRemappingWork.files.acuOriginalFiles.map((file, index) => (
                               <div key={index} className="text-xs text-green-600 py-1 flex items-center">
-                                <span className="mr-2">⚙️</span>
+                                <span className="mr-2">?�️</span>
                                 <span className="truncate">{file.name}</span>
                                 <span className="ml-auto text-green-400">
                                   ({(file.size / 1024).toFixed(1)} KB)
@@ -2111,12 +2112,12 @@ export default function WorkPage() {
                       )}
                     </div>
 
-                    {/* ACU Stage 파일들 */}
+                    {/* ACU Stage ?�일??*/}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      {/* ACU 1차 튜닝 */}
-                      <div className="border border-green-200 rounded-lg p-4 bg-green-50">
-                        <label className="block text-sm font-medium text-green-800 mb-2">
-                          ⚙️ ACU 1차 튜닝
+                      {/* ACU 1�??�닝 */}
+                      <div className="border border-green-700 rounded-lg p-4 bg-green-900">
+                        <label className="block text-sm font-medium text-green-300 mb-2">
+                          ?�️ ACU 1�??�닝
                         </label>
                         <div className="flex items-center space-x-3 mb-2">
                           <input
@@ -2134,8 +2135,8 @@ export default function WorkPage() {
                           >
                             <span className="text-green-700">
                               {currentRemappingWork.files.acuStage1File 
-                                ? `⚙️ ${(currentRemappingWork.files.acuStage1File as File).name} (${((currentRemappingWork.files.acuStage1File as File).size / 1024).toFixed(1)} KB)` 
-                                : '⚙️ ACU 1차 튜닝 파일 선택'}
+                                ? `?�️ ${(currentRemappingWork.files.acuStage1File as File).name} (${((currentRemappingWork.files.acuStage1File as File).size / 1024).toFixed(1)} KB)` 
+                                : '?�️ ACU 1�??�닝 ?�일 ?�택'}
                             </span>
                           </label>
                         </div>
@@ -2143,15 +2144,15 @@ export default function WorkPage() {
                           type="text"
                           value={currentRemappingWork.files.acuStage1FileDescription || ''}
                           onChange={(e) => handleFileDescriptionChange('acuStage1FileDescription', e.target.value)}
-                          placeholder="ACU 1차 튜닝 설명을 입력하세요"
+                          placeholder="ACU 1�??�닝 ?�명???�력?�세??
                           className="w-full border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-xs"
                         />
                       </div>
 
-                      {/* ACU 2차 튜닝 */}
+                      {/* ACU 2�??�닝 */}
                       <div className="border border-green-300 rounded-lg p-4 bg-green-100">
-                        <label className="block text-sm font-medium text-green-800 mb-2">
-                          ⚙️ ACU 2차 튜닝
+                        <label className="block text-sm font-medium text-green-300 mb-2">
+                          ?�️ ACU 2�??�닝
                         </label>
                         <div className="flex items-center space-x-3 mb-2">
                           <input
@@ -2167,10 +2168,10 @@ export default function WorkPage() {
                             htmlFor="acu-stage2-file"
                             className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-400 rounded-lg cursor-pointer hover:border-green-600 hover:bg-green-200 transition-colors text-xs w-full"
                           >
-                            <span className="text-green-800">
+                            <span className="text-green-300">
                               {currentRemappingWork.files.acuStage2File 
-                                ? `⚙️ ${(currentRemappingWork.files.acuStage2File as File).name} (${((currentRemappingWork.files.acuStage2File as File).size / 1024).toFixed(1)} KB)` 
-                                : '⚙️ ACU 2차 튜닝 파일 선택'}
+                                ? `?�️ ${(currentRemappingWork.files.acuStage2File as File).name} (${((currentRemappingWork.files.acuStage2File as File).size / 1024).toFixed(1)} KB)` 
+                                : '?�️ ACU 2�??�닝 ?�일 ?�택'}
                             </span>
                           </label>
                         </div>
@@ -2178,15 +2179,15 @@ export default function WorkPage() {
                           type="text"
                           value={currentRemappingWork.files.acuStage2FileDescription || ''}
                           onChange={(e) => handleFileDescriptionChange('acuStage2FileDescription', e.target.value)}
-                          placeholder="ACU 2차 튜닝 설명을 입력하세요"
+                          placeholder="ACU 2�??�닝 ?�명???�력?�세??
                           className="w-full border-green-400 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600 text-xs"
                         />
                       </div>
 
-                      {/* ACU 3차 튜닝 */}
+                      {/* ACU 3�??�닝 */}
                       <div className="border border-green-400 rounded-lg p-4 bg-green-200">
                         <label className="block text-sm font-medium text-green-900 mb-2">
-                          ⚙️ ACU 3차 튜닝
+                          ?�️ ACU 3�??�닝
                         </label>
                         <div className="flex items-center space-x-3 mb-2">
                           <input
@@ -2204,8 +2205,8 @@ export default function WorkPage() {
                           >
                             <span className="text-green-900">
                               {currentRemappingWork.files.acuStage3File 
-                                ? `⚙️ ${(currentRemappingWork.files.acuStage3File as File).name} (${((currentRemappingWork.files.acuStage3File as File).size / 1024).toFixed(1)} KB)` 
-                                : '⚙️ ACU 3차 튜닝 파일 선택'}
+                                ? `?�️ ${(currentRemappingWork.files.acuStage3File as File).name} (${((currentRemappingWork.files.acuStage3File as File).size / 1024).toFixed(1)} KB)` 
+                                : '?�️ ACU 3�??�닝 ?�일 ?�택'}
                             </span>
                           </label>
                         </div>
@@ -2213,17 +2214,17 @@ export default function WorkPage() {
                           type="text"
                           value={currentRemappingWork.files.acuStage3FileDescription || ''}
                           onChange={(e) => handleFileDescriptionChange('acuStage3FileDescription', e.target.value)}
-                          placeholder="ACU 3차 튜닝 설명을 입력하세요"
+                          placeholder="ACU 3�??�닝 ?�명???�력?�세??
                           className="w-full border-green-500 rounded-md shadow-sm focus:ring-green-700 focus:border-green-700 text-xs"
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* 사진/영상 첨부 (5개) */}
+                  {/* ?�진/?�상 첨�? (5�? */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-4">
-                      사진/영상 첨부 (최대 5개)
+                    <label className="block text-sm font-medium text-gray-300 mb-4">
+                      ?�진/?�상 첨�? (최�? 5�?
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                       {[1, 2, 3, 4, 5].map((index) => {
@@ -2235,10 +2236,10 @@ export default function WorkPage() {
                         return (
                           <div key={index} className="border border-purple-200 rounded-lg p-3 bg-purple-50">
                             <label className="block text-xs font-medium text-purple-800 mb-2">
-                              📷 미디어 {index}
+                              ?�� 미디??{index}
                             </label>
                             
-                            {/* 파일 선택 및 미리보기 */}
+                            {/* ?�일 ?�택 �?미리보기 */}
                             <div className="mb-2">
                               <input
                                 type="file"
@@ -2251,7 +2252,7 @@ export default function WorkPage() {
                                 }}
                               />
                               
-                              {/* 미리보기 영역 */}
+                              {/* 미리보기 ?�역 */}
                               {file ? (
                                 <div className="relative">
                                   {file.type.startsWith('image/') ? (
@@ -2266,7 +2267,7 @@ export default function WorkPage() {
                                           htmlFor={`media-file-${index}`}
                                           className="text-white text-xs font-medium cursor-pointer px-2 py-1 bg-purple-600 rounded hover:bg-purple-700"
                                         >
-                                          파일 변경
+                                          ?�일 변�?
                                         </label>
                                       </div>
                                     </div>
@@ -2283,25 +2284,25 @@ export default function WorkPage() {
                                           htmlFor={`media-file-${index}`}
                                           className="text-white text-xs font-medium cursor-pointer px-2 py-1 bg-purple-600 rounded hover:bg-purple-700"
                                         >
-                                          파일 변경
+                                          ?�일 변�?
                                         </label>
                                       </div>
                                       <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-1 py-0.5 rounded">
-                                        🎥 동영상
+                                        ?�� ?�영??
                                       </div>
                                     </div>
                                   ) : (
                                     <div className="w-full h-32 bg-gray-100 rounded-lg border border-purple-300 flex items-center justify-center">
                                       <div className="text-center text-gray-500">
-                                        <div className="text-lg">📄</div>
-                                        <div className="text-xs">미리보기 불가</div>
+                                        <div className="text-lg">?��</div>
+                                        <div className="text-xs">미리보기 불�?</div>
                                       </div>
                                     </div>
                                   )}
                                   
-                                  {/* 파일 정보 */}
+                                  {/* ?�일 ?�보 */}
                                   <div className="mt-1 text-xs text-purple-600 truncate" title={file.name}>
-                                    📄 {file.name}
+                                    ?�� {file.name}
                                   </div>
                                   <div className="text-xs text-purple-500">
                                     ({(file.size / 1024).toFixed(1)} KB)
@@ -2313,19 +2314,19 @@ export default function WorkPage() {
                                   className="flex items-center justify-center px-2 py-2 border-2 border-dashed border-purple-300 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-100 transition-colors text-xs w-full h-32"
                                 >
                                   <div className="text-center text-purple-700">
-                                    <div className="text-2xl mb-1">📷</div>
-                                    <div>파일 선택</div>
-                                    <div className="text-purple-500">이미지/동영상</div>
+                                    <div className="text-2xl mb-1">?��</div>
+                                    <div>?�일 ?�택</div>
+                                    <div className="text-purple-500">?��?지/?�영??/div>
                                   </div>
                                 </label>
                               )}
                             </div>
                             
-                            {/* 설명 입력 */}
+                            {/* ?�명 ?�력 */}
                             <textarea
                               value={description || ''}
                               onChange={(e) => handleFileDescriptionChange(`mediaFile${index}Description`, e.target.value)}
-                              placeholder={`미디어 ${index} 설명`}
+                              placeholder={`미디??${index} ?�명`}
                               className="w-full border-purple-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-xs resize-none"
                               rows={2}
                               maxLength={100}
@@ -2347,7 +2348,7 @@ export default function WorkPage() {
                   onClick={handleAddRemappingWork}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {isEditingRemapping ? 'Remapping 수정' : 'Remapping 추가'}
+                  {isEditingRemapping ? 'Remapping ?�정' : 'Remapping 추�?'}
                 </button>
               </div>
             </div>
@@ -2357,11 +2358,11 @@ export default function WorkPage() {
 
 
 
-          {/* 제출 버튼 */}
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          {/* ?�출 버튼 */}
+          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-600">
             <button
               type="button"
-              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-6 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               취소
             </button>
@@ -2369,7 +2370,7 @@ export default function WorkPage() {
               type="submit"
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              작업 등록
+              ?�업 ?�록
             </button>
           </div>
         </form>
@@ -2380,12 +2381,12 @@ export default function WorkPage() {
         </div>
       </main>
 
-      {/* ECU 모델 관리 모달 */}
+      {/* ECU 모델 관�?모달 */}
       {showEcuManagement && (
         <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-[9999]">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-gray-700">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-900">🔧 ECU 모델 관리</h3>
+              <h3 className="text-lg font-medium text-white">?�� ECU 모델 관�?/h3>
               <button
                 type="button"
                 onClick={() => {
@@ -2393,25 +2394,25 @@ export default function WorkPage() {
                   setSelectedEcuModels([])
                   setNewEcuModel('')
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-400"
               >
-                <span className="sr-only">닫기</span>
+                <span className="sr-only">?�기</span>
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            {/* 새 ECU 모델 추가 */}
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="text-md font-medium text-blue-800 mb-3">새 ECU 모델 추가</h4>
+            {/* ??ECU 모델 추�? */}
+            <div className="mb-6 p-4 bg-blue-900 border border-blue-700 rounded-lg">
+              <h4 className="text-md font-medium text-blue-300 mb-3">??ECU 모델 추�?</h4>
               <div className="flex space-x-3">
                 <input
                   type="text"
                   value={newEcuModel}
                   onChange={(e) => setNewEcuModel(e.target.value)}
-                  className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="새 ECU 모델명을 입력하세요"
+                  className="flex-1 border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="??ECU 모델명을 ?�력?�세??
                   onKeyPress={(e) => e.key === 'Enter' && handleAddNewEcuModel()}
                 />
                 <button
@@ -2419,15 +2420,15 @@ export default function WorkPage() {
                   onClick={handleAddNewEcuModel}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
-                  추가
+                  추�?
                 </button>
               </div>
             </div>
 
-            {/* 선택 삭제 */}
+            {/* ?�택 ??�� */}
             <div className="mb-4 flex justify-between items-center">
-              <div className="text-sm text-gray-600">
-                총 {ecuModels.length}개 모델 | 선택됨: {selectedEcuModels.length}개
+              <div className="text-sm text-gray-400">
+                �?{ecuModels.length}�?모델 | ?�택?? {selectedEcuModels.length}�?
               </div>
               <div className="space-x-2">
                 <button
@@ -2439,9 +2440,9 @@ export default function WorkPage() {
                       setSelectedEcuModels([...ecuModels])
                     }
                   }}
-                  className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors"
+                  className="px-3 py-1 bg-gray-7000 text-white rounded text-sm hover:bg-gray-600 transition-colors"
                 >
-                  {selectedEcuModels.length === ecuModels.length ? '전체 해제' : '전체 선택'}
+                  {selectedEcuModels.length === ecuModels.length ? '?�체 ?�제' : '?�체 ?�택'}
                 </button>
                 <button
                   type="button"
@@ -2449,13 +2450,13 @@ export default function WorkPage() {
                   disabled={selectedEcuModels.length === 0}
                   className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  선택 삭제 ({selectedEcuModels.length})
+                  ?�택 ??�� ({selectedEcuModels.length})
                 </button>
               </div>
             </div>
 
             {/* ECU 모델 목록 */}
-            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+            <div className="max-h-96 overflow-y-auto border border-gray-600 rounded-lg">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
                 {ecuModels.map((model, index) => (
                   <div
@@ -2463,7 +2464,7 @@ export default function WorkPage() {
                     className={`flex items-center p-2 rounded-lg border transition-colors cursor-pointer ${
                       selectedEcuModels.includes(model)
                         ? 'bg-blue-100 border-blue-300'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                        : 'bg-gray-700 border-gray-600 hover:bg-gray-700'
                     }`}
                     onClick={() => handleEcuModelSelect(model)}
                   >
@@ -2471,9 +2472,9 @@ export default function WorkPage() {
                       type="checkbox"
                       checked={selectedEcuModels.includes(model)}
                       onChange={() => handleEcuModelSelect(model)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded mr-3"
                     />
-                    <span className="text-sm text-gray-900 flex-1 truncate" title={model}>
+                    <span className="text-sm text-white flex-1 truncate" title={model}>
                       {model}
                     </span>
                   </div>
@@ -2491,19 +2492,19 @@ export default function WorkPage() {
                 }}
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
               >
-                완료
+                ?�료
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ACU 타입 관리 모달 */}
+      {/* ACU ?�??관�?모달 */}
       {showAcuManagement && (
         <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-[9999]">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-gray-700">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-900">⚙️ ACU 타입 관리</h3>
+              <h3 className="text-lg font-medium text-white">?�️ ACU ?�??관�?/h3>
               <button
                 type="button"
                 onClick={() => {
@@ -2511,25 +2512,25 @@ export default function WorkPage() {
                   setSelectedAcuTypes([])
                   setNewAcuType('')
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-400"
               >
-                <span className="sr-only">닫기</span>
+                <span className="sr-only">?�기</span>
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            {/* 새 ACU 타입 추가 */}
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <h4 className="text-md font-medium text-green-800 mb-3">새 ACU 타입 추가</h4>
+            {/* ??ACU ?�??추�? */}
+            <div className="mb-6 p-4 bg-green-900 border border-green-700 rounded-lg">
+              <h4 className="text-md font-medium text-green-300 mb-3">??ACU ?�??추�?</h4>
               <div className="flex space-x-3">
                 <input
                   type="text"
                   value={newAcuType}
                   onChange={(e) => setNewAcuType(e.target.value)}
-                  className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                  placeholder="새 ACU 타입명을 입력하세요"
+                  className="flex-1 border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  placeholder="??ACU ?�?�명???�력?�세??
                   onKeyPress={(e) => e.key === 'Enter' && handleAddNewAcuType()}
                 />
                 <button
@@ -2537,15 +2538,15 @@ export default function WorkPage() {
                   onClick={handleAddNewAcuType}
                   className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
                 >
-                  추가
+                  추�?
                 </button>
               </div>
             </div>
 
-            {/* 선택 삭제 */}
+            {/* ?�택 ??�� */}
             <div className="mb-4 flex justify-between items-center">
-              <div className="text-sm text-gray-600">
-                총 {acuTypes.length}개 타입 | 선택됨: {selectedAcuTypes.length}개
+              <div className="text-sm text-gray-400">
+                �?{acuTypes.length}�??�??| ?�택?? {selectedAcuTypes.length}�?
               </div>
               <div className="space-x-2">
                 <button
@@ -2557,9 +2558,9 @@ export default function WorkPage() {
                       setSelectedAcuTypes([...acuTypes])
                     }
                   }}
-                  className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors"
+                  className="px-3 py-1 bg-gray-7000 text-white rounded text-sm hover:bg-gray-600 transition-colors"
                 >
-                  {selectedAcuTypes.length === acuTypes.length ? '전체 해제' : '전체 선택'}
+                  {selectedAcuTypes.length === acuTypes.length ? '?�체 ?�제' : '?�체 ?�택'}
                 </button>
                 <button
                   type="button"
@@ -2567,13 +2568,13 @@ export default function WorkPage() {
                   disabled={selectedAcuTypes.length === 0}
                   className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  선택 삭제 ({selectedAcuTypes.length})
+                  ?�택 ??�� ({selectedAcuTypes.length})
                 </button>
               </div>
             </div>
 
-            {/* ACU 타입 목록 */}
-            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+            {/* ACU ?�??목록 */}
+            <div className="max-h-96 overflow-y-auto border border-gray-600 rounded-lg">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
                 {acuTypes.map((type, index) => (
                   <div
@@ -2581,7 +2582,7 @@ export default function WorkPage() {
                     className={`flex items-center p-2 rounded-lg border transition-colors cursor-pointer ${
                       selectedAcuTypes.includes(type)
                         ? 'bg-green-100 border-green-300'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                        : 'bg-gray-700 border-gray-600 hover:bg-gray-700'
                     }`}
                     onClick={() => handleAcuTypeSelect(type)}
                   >
@@ -2589,9 +2590,9 @@ export default function WorkPage() {
                       type="checkbox"
                       checked={selectedAcuTypes.includes(type)}
                       onChange={() => handleAcuTypeSelect(type)}
-                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-3"
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-600 rounded mr-3"
                     />
-                    <span className="text-sm text-gray-900 flex-1 truncate" title={type}>
+                    <span className="text-sm text-white flex-1 truncate" title={type}>
                       {type}
                     </span>
                   </div>
@@ -2609,7 +2610,7 @@ export default function WorkPage() {
                 }}
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
               >
-                완료
+                ?�료
               </button>
             </div>
           </div>
