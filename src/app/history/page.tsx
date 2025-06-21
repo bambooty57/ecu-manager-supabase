@@ -996,8 +996,10 @@ export default function HistoryPage() {
                                 {record.status}
                               </span>
                             </td>
-                            <td className="px-3 py-4 whitespace-nowrap text-sm text-white">
-                              {record.price ? `${(record.price / 10000).toLocaleString()}만원` : 'NaN만원'}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                              {record.totalPrice && record.totalPrice > 0 
+                                ? `${record.totalPrice.toLocaleString()}만원` 
+                                : '미입력'}
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex space-x-2">
@@ -1109,7 +1111,9 @@ export default function HistoryPage() {
                           <div className="flex justify-between">
                             <span className="text-sm text-gray-400">금액:</span>
                             <span className="text-sm font-medium text-white">
-                              {record.price ? `${(record.price / 10000).toLocaleString()}만원` : 'NaN만원'}
+                              {record.totalPrice && record.totalPrice > 0 
+                                ? `${record.totalPrice.toLocaleString()}만원` 
+                                : '미입력'}
                             </span>
                           </div>
                         </div>
@@ -1213,80 +1217,101 @@ export default function HistoryPage() {
                       {selectedRecord.status}
                     </span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">작업 금액:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {selectedRecord.totalPrice && selectedRecord.totalPrice > 0 
+                        ? `${selectedRecord.totalPrice.toLocaleString()}만원` 
+                        : '미입력'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* 작업 정보 */}
+              {/* ECU 작업 정보 */}
               <div className="space-y-4">
-                <h4 className="text-md font-medium text-gray-900 border-b pb-2">작업 정보</h4>
-                <div className="space-y-3">
+                <h4 className="text-md font-medium text-blue-700 border-b border-blue-200 pb-2">🔧 ECU 작업 정보</h4>
+                <div className="space-y-3 bg-blue-50 p-3 rounded-lg">
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">ECU 제조사:</span>
-                    <span className="text-sm text-gray-900">{selectedRecord.ecuMaker || 'N/A'}</span>
+                    <span className="text-sm text-gray-600">ECU 제조사:</span>
+                    <span className="text-sm text-gray-900 font-medium">{selectedRecord.ecuMaker || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">ECU 모델:</span>
-                    <span className="text-sm text-gray-900">{selectedRecord.ecuType}</span>
-                  </div>
-                  {selectedRecord.acuManufacturer && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">ACU 제조사:</span>
-                      <span className="text-sm text-gray-900">{selectedRecord.acuManufacturer}</span>
-                    </div>
-                  )}
-                  {selectedRecord.acuModel && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">ACU 모델:</span>
-                      <span className="text-sm text-gray-900">{selectedRecord.acuModel}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">연결 방법:</span>
-                    <span className="text-sm text-gray-900">{selectedRecord.connectionMethod}</span>
+                    <span className="text-sm text-gray-600">ECU 모델:</span>
+                    <span className="text-sm text-gray-900 font-medium">{selectedRecord.ecuType || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">사용 도구:</span>
-                    <span className="text-sm text-gray-900">{selectedRecord.ecuTool}</span>
+                    <span className="text-sm text-gray-600">연결 방법:</span>
+                    <span className="text-sm text-gray-900 font-medium">{selectedRecord.connectionMethod || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">사용 도구:</span>
+                    <span className="text-sm text-gray-900 font-medium">{selectedRecord.ecuTool || 'N/A'}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-sm font-medium text-gray-700">튜닝 작업:</span>
-                    <div className="text-sm text-gray-900 whitespace-pre-wrap break-words">
-                      {(() => {
-                        const tuningWork = selectedRecord.tuningWork === '기타' && selectedRecord.customTuningWork 
-                          ? selectedRecord.customTuningWork 
-                          : selectedRecord.tuningWork;
-                        
-                        // 새로운 형식(ECU:/ACU: 접두사가 있는 경우)인지 확인
-                        if (typeof tuningWork === 'string' && (tuningWork.includes('ECU:') || tuningWork.includes('ACU:'))) {
-                          return tuningWork.split(',').map((work: string, index: number) => {
-                            const trimmedWork = work.trim();
-                            const isECU = trimmedWork.startsWith('ECU:');
-                            const isACU = trimmedWork.startsWith('ACU:');
-                            const displayName = trimmedWork.replace(/^(ECU:|ACU:)/, '');
-                            const bgColor = isECU ? 'bg-blue-100 text-blue-800' : isACU ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
-                            const prefix = isECU ? '🔧 ECU' : isACU ? '⚙️ ACU' : '';
-                            
-                            return (
-                              <span key={index} className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mr-1 mb-1 ${bgColor}`}>
-                                {prefix && <span className="mr-1">{prefix}:</span>}
-                                {displayName}
-                              </span>
-                            );
-                          });
-                        } else {
-                          // 기존 형식(접두사 없는 경우)
-                          return tuningWork;
-                        }
-                      })()}
+                    <span className="text-sm font-medium text-gray-700">ECU 튜닝 작업:</span>
+                    <div className="text-sm text-gray-900">
+                      {selectedRecord.ecuTuningWorks && selectedRecord.ecuTuningWorks.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {selectedRecord.ecuTuningWorks.map((work: string, index: number) => (
+                            <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {work}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 italic">작업 없음</span>
+                      )}
                     </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">작업 금액:</span>
-                    <span className="text-sm font-medium text-gray-900">{(selectedRecord.price / 10000).toLocaleString()}만원</span>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* ACU 작업 정보 (별도 행) */}
+            {(selectedRecord.acuManufacturer || selectedRecord.acuModel || (selectedRecord.acuTuningWorks && selectedRecord.acuTuningWorks.length > 0)) && (
+              <div className="mt-6">
+                <div className="space-y-4">
+                  <h4 className="text-md font-medium text-green-700 border-b border-green-200 pb-2">⚙️ ACU 작업 정보</h4>
+                  <div className="space-y-3 bg-green-50 p-3 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">ACU 제조사:</span>
+                        <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuManufacturer || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">ACU 모델:</span>
+                        <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuModel || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">연결 방법:</span>
+                        <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuConnectionMethod || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">사용 도구:</span>
+                        <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuTool || 'N/A'}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-sm font-medium text-gray-700">ACU 튜닝 작업:</span>
+                      <div className="text-sm text-gray-900">
+                        {selectedRecord.acuTuningWorks && selectedRecord.acuTuningWorks.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedRecord.acuTuningWorks.map((work: string, index: number) => (
+                              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {work}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 italic">작업 없음</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* 메모 */}
             {selectedRecord.notes && (
@@ -1323,22 +1348,32 @@ export default function HistoryPage() {
                     return acc
                   }, {})
 
+                  // ECU, ACU, 미디어로 대분류
+                  const ecuCategories = ['original', 'read', 'modified', 'vr', 'stage1', 'stage2', 'stage3']
+                  const acuCategories = ['acuOriginal', 'acuRead', 'acuModified', 'acuStage1', 'acuStage2', 'acuStage3']
+                  const mediaCategories = ['before', 'after', 'media']
+
+                  const ecuFiles = Object.entries(filesByCategory).filter(([category]) => ecuCategories.includes(category))
+                  const acuFiles = Object.entries(filesByCategory).filter(([category]) => acuCategories.includes(category))
+                  const mediaFiles = Object.entries(filesByCategory).filter(([category]) => mediaCategories.includes(category))
+                  const otherFiles = Object.entries(filesByCategory).filter(([category]) => !ecuCategories.includes(category) && !acuCategories.includes(category) && !mediaCategories.includes(category))
+
                   const categoryNames: { [key: string]: string } = {
-                    original: '📁 원본 ECU 파일',
-                    read: '📖 읽은 ECU 파일',
-                    modified: '✏️ 수정된 ECU 파일',
-                    vr: '🔍 VR 파일',
-                    stage1: '📈 ECU 1차 튜닝 파일',
-                    stage2: '🚀 ECU 2차 튜닝 파일', 
-                    stage3: '🔥 ECU 3차 튜닝 파일',
-                    acuOriginal: '⚙️ 원본 ACU 파일',
-                    acuRead: '⚙️ 읽은 ACU 파일',
-                    acuModified: '⚙️ 수정된 ACU 파일',
-                    acuStage1: '⚙️ ACU 1차 튜닝 파일',
-                    acuStage2: '⚙️ ACU 2차 튜닝 파일',
-                    acuStage3: '⚙️ ACU 3차 튜닝 파일',
-                    before: '📷 작업 전 미디어',
-                    after: '📷 작업 후 미디어',
+                    original: '📁 원본 파일',
+                    read: '📖 1차 파일', 
+                    modified: '✏️ 2차 파일',
+                    vr: '🔍 3차 파일',
+                    stage1: '📈 1차 튜닝 파일',
+                    stage2: '🚀 2차 튜닝 파일', 
+                    stage3: '🔥 3차 튜닝 파일',
+                    acuOriginal: '📁 원본 파일',
+                    acuRead: '📖 1차 파일',
+                    acuModified: '✏️ 2차 파일',
+                    acuStage1: '📈 1차 튜닝 파일',
+                    acuStage2: '🚀 2차 튜닝 파일',
+                    acuStage3: '🔥 3차 튜닝 파일',
+                    before: '📷 작업 전',
+                    after: '📷 작업 후',
                     media: '📷 미디어 파일',
                     other: '📁 기타 파일'
                   }
@@ -1363,7 +1398,26 @@ export default function HistoryPage() {
                     other: 'bg-slate-50 border-slate-200'
                   }
 
-                  return Object.entries(filesByCategory).map(([category, files]: [string, any]) => (
+                  const renderFileGroup = (title: string, files: [string, any][], bgColor: string, downloadAllLabel: string) => {
+                    if (files.length === 0) return null
+                    
+                    const allFiles = files.flatMap(([, fileArray]) => fileArray)
+                    
+                    return (
+                      <div className={`mb-6 p-4 rounded-lg border-2 ${bgColor}`}>
+                        <div className="flex justify-between items-center mb-4">
+                          <h5 className="text-lg font-bold text-gray-800">{title} ({allFiles.length}개)</h5>
+                          <button
+                            onClick={() => handleCategoryDownload(allFiles, downloadAllLabel)}
+                            className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <span>📦 {downloadAllLabel} 전체 다운로드</span>
+                          </button>
+                        </div>
+                        {files.map(([category, categoryFiles]: [string, any]) => (
                     <div key={category} className={`mb-4 p-4 rounded-lg border ${categoryColors[category] || categoryColors.other}`}>
                       <div className="flex justify-between items-center mb-3">
                         <h5 className="text-sm font-medium text-gray-800">
@@ -1428,7 +1482,19 @@ export default function HistoryPage() {
                         ))}
                       </div>
                     </div>
-                  ))
+                         ))}
+                       </div>
+                     )
+                   }
+
+                   return (
+                     <div>
+                       {renderFileGroup('🔧 ECU 파일', ecuFiles, 'bg-blue-50 border-blue-300', 'ECU')}
+                       {renderFileGroup('⚙️ ACU 파일', acuFiles, 'bg-green-50 border-green-300', 'ACU')}
+                       {renderFileGroup('📷 미디어 파일', mediaFiles, 'bg-purple-50 border-purple-300', '미디어')}
+                       {renderFileGroup('📁 기타 파일', otherFiles, 'bg-gray-50 border-gray-300', '기타')}
+                     </div>
+                   )
                 })()}
               </div>
             )}
