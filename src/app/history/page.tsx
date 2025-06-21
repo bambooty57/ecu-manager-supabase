@@ -199,22 +199,142 @@ export default function HistoryPage() {
         
         // remappingWorks가 배열이고 내용이 있는지 확인
         const firstWork = record.remappingWorks && record.remappingWorks.length > 0 ? record.remappingWorks[0] : null;
-
-        return {
-          ...record,
-          customerName: customer?.name || '알 수 없음',
-          equipmentType: equipment?.equipmentType || '알 수 없음',
-          manufacturer: equipment?.manufacturer || '알 수 없음',
-          model: equipment?.model || '알 수 없음',
-          serial: equipment?.serialNumber || '',
-          // workDescription 대신 remappingWorks의 내용을 기반으로 표시
-          tuningWork: firstWork ? firstWork.stage : record.workType,
-          customTuningWork: firstWork ? firstWork.stage : record.workType,
-          // ecuModel, connectionMethod 등도 remappingWorks에서 가져와야 함 (UI에 따라 추가 구현 필요)
-          ecuType: 'N/A', // 임시 값
-          connectionMethod: 'N/A', // 임시 값
-          registrationDate: record.workDate
+        
+        // ECU 정보 추출
+        let ecuMaker = '';
+        let ecuType = '';
+        let connectionMethod = '';
+        let ecuTuningWorks: string[] = [];
+        
+        // ACU 정보 추출
+        let acuManufacturer = '';
+        let acuModel = '';
+        let acuType = '';
+        let acuTuningWorks: string[] = [];
+        
+        // 파일 정보 추출
+        let allFiles: any[] = [];
+        
+        if (firstWork) {
+          // 타입 안전성을 위해 any로 캐스팅
+          const work = firstWork as any;
+          
+          // ECU 정보가 있는 경우
+          if (work.ecu) {
+            ecuMaker = work.ecu.maker || '';
+            ecuType = work.ecu.type || work.ecu.typeCustom || '';
+            connectionMethod = work.ecu.connectionMethod || '';
+            
+            // ECU 튜닝 작업들 추출
+            if (work.ecu.tuningWorks) {
+              const ecuWorks = work.ecu.tuningWorks;
+              if (ecuWorks.powerUp) ecuTuningWorks.push('파워업');
+              if (ecuWorks.dpfRemoval) ecuTuningWorks.push('DPF 제거');
+              if (ecuWorks.egrRemoval) ecuTuningWorks.push('EGR 제거');
+              if (ecuWorks.adblueRemoval) ecuTuningWorks.push('AdBlue 제거');
+              if (ecuWorks.speedLimitRemoval) ecuTuningWorks.push('속도제한해제');
+            }
+          }
+          
+          // ACU 정보가 있는 경우
+          if (work.acu) {
+            acuManufacturer = work.acu.manufacturer || '';
+            acuModel = work.acu.model || work.acu.modelCustom || '';
+            acuType = work.acu.type || '';
+            if (!connectionMethod) {
+              connectionMethod = work.acu.connectionMethod || '';
+            }
+            
+            // ACU 튜닝 작업들 추출
+            if (work.acu.tuningWorks) {
+              const acuWorks = work.acu.tuningWorks;
+              if (acuWorks.powerUp) acuTuningWorks.push('파워업');
+              if (acuWorks.dpfRemoval) acuTuningWorks.push('DPF 제거');
+              if (acuWorks.egrRemoval) acuTuningWorks.push('EGR 제거');
+              if (acuWorks.adblueRemoval) acuTuningWorks.push('AdBlue 제거');
+              if (acuWorks.speedLimitRemoval) acuTuningWorks.push('속도제한해제');
+            }
+          }
+          
+          // 파일 정보 추출
+          if (work.files) {
+            // files 객체에서 각 카테고리별 파일들을 추출
+            Object.entries(work.files).forEach(([category, fileData]: [string, any]) => {
+              if (fileData && fileData.file) {
+                allFiles.push({
+                  name: fileData.file.name || `${category}.bin`,
+                  size: fileData.file.size || 0,
+                  type: fileData.file.type || 'application/octet-stream',
+                  data: fileData.file.data || '',
+                  description: fileData.description || '',
+                  category: category,
+                  uploadDate: new Date().toISOString()
+                });
+              }
+            });
+          }
+          
+          // 미디어 파일 추출
+          if (work.media) {
+            if (work.media.before) {
+              allFiles.push({
+                name: work.media.before.name || 'before_media',
+                size: work.media.before.size || 0,
+                type: work.media.before.type || 'image/jpeg',
+                data: work.media.before.data || '',
+                description: '작업 전 미디어',
+                category: 'media',
+                uploadDate: new Date().toISOString()
+              });
+            }
+            if (work.media.after) {
+              allFiles.push({
+                name: work.media.after.name || 'after_media',
+                size: work.media.after.size || 0,
+                type: work.media.after.type || 'image/jpeg',
+                data: work.media.after.data || '',
+                description: '작업 후 미디어',
+                category: 'media',
+                uploadDate: new Date().toISOString()
+              });
+            }
+          }
         }
+        
+        // 데이터베이스의 기존 필드도 확인 (타입 안전성을 위해 any로 캐스팅)
+        const recordAny = record as any;
+        if (!ecuMaker && recordAny.ecuMaker) ecuMaker = recordAny.ecuMaker;
+        if (!ecuType && recordAny.ecuModel) ecuType = recordAny.ecuModel;
+        if (!connectionMethod && recordAny.connectionMethod) connectionMethod = recordAny.connectionMethod;
+        if (!acuManufacturer && recordAny.acuManufacturer) acuManufacturer = recordAny.acuManufacturer;
+        if (!acuModel && recordAny.acuModel) acuModel = recordAny.acuModel;
+
+                  return {
+            ...record,
+            customerName: customer?.name || '알 수 없음',
+            equipmentType: equipment?.equipmentType || '알 수 없음',
+            manufacturer: equipment?.manufacturer || '알 수 없음',
+            model: equipment?.model || '알 수 없음',
+            serial: equipment?.serialNumber || '',
+            // ECU 정보
+            ecuMaker: ecuMaker,
+            ecuType: ecuType,
+            connectionMethod: connectionMethod,
+            ecuTuningWorks: ecuTuningWorks,
+            // ACU 정보
+            acuManufacturer: acuManufacturer,
+            acuModel: acuModel,
+            acuType: acuType,
+            acuTuningWorks: acuTuningWorks,
+            // 작업 정보 (기존 호환성을 위해 유지)
+            tuningWork: firstWork?.stage || record.workType,
+            customTuningWork: firstWork?.stage || record.workType,
+            registrationDate: record.workDate,
+            // 가격 정보 (만원 단위로 변환)
+            price: record.totalPrice || 0,
+            // 파일 정보
+            files: allFiles
+          }
       })
 
       setWorkRecords(enrichedWorkRecords)
@@ -818,53 +938,53 @@ export default function HistoryPage() {
                             </td>
                             {/* ECU/튜닝 칸 */}
                             <td className="px-3 py-4 whitespace-nowrap">
-                              {/* 1. 제조사-모델명 (파란 박스) */}
-                              <div className="text-sm text-white mb-1">
-                                {(record.ecuMaker || record.ecuType) && (
-                                  <span className="inline-block mr-2 px-2 py-1 text-xs bg-blue-600 text-white rounded">
-                                    🔧 {record.ecuMaker ? `${record.ecuMaker}-${record.ecuType || 'N/A'}` : record.ecuType}
-                                  </span>
-                                )}
-                              </div>
-                              {/* 2. 튜닝작업내용 */}
-                              <div className="text-sm text-gray-300 mb-1">
-                                {(() => {
-                                  if (!record.tuningWork) return null
-                                  
-                                  // ECU 작업만 추출 (ECU: 접두사가 있는 것과 일반 작업)
-                                  const workParts = record.tuningWork.split(', ')
-                                  const ecuWorks = workParts.filter((work: string) => 
-                                    work.startsWith('ECU:') || (!work.startsWith('ACU:') && !work.includes('ACU:'))
-                                  ).map((work: string) => work.replace('ECU:', '').trim())
-                                  
-                                  return ecuWorks.length > 0 ? ecuWorks.join(', ') : '작업 없음'
-                                })()}
-                              </div>
-                              {/* 3. 연결방법 */}
-                              <div className="text-xs text-gray-400">
-                                {record.connectionMethod || 'N/A'}
-                              </div>
+                              {(record.ecuMaker || record.ecuType) ? (
+                                <>
+                                  {/* 1. 제조사-모델명 (파란 박스) */}
+                                  <div className="text-sm text-white mb-1">
+                                    <span className="inline-block mr-2 px-2 py-1 text-xs bg-blue-600 text-white rounded">
+                                      🔧 {record.ecuMaker && record.ecuType ? `${record.ecuMaker}-${record.ecuType}` : (record.ecuMaker || record.ecuType)}
+                                    </span>
+                                  </div>
+                                  {/* 2. 연결방법 */}
+                                  <div className="text-sm text-gray-300 mb-1">
+                                    {record.connectionMethod || 'N/A'}
+                                  </div>
+                                  {/* 3. 작업내용 */}
+                                  <div className="text-xs text-gray-400">
+                                    {record.ecuTuningWorks && record.ecuTuningWorks.length > 0 
+                                      ? record.ecuTuningWorks.join(', ') 
+                                      : (record.tuningWork || 'N/A')}
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-gray-500 text-sm">N/A</span>
+                              )}
                             </td>
                             {/* ACU/튜닝 칸 */}
                             <td className="px-3 py-4 whitespace-nowrap">
-                              <div className="text-sm text-white">
-                                {record.acuType && <span className="inline-block mr-2 px-2 py-1 text-xs bg-green-600 text-white rounded">⚙️ {record.acuType}</span>}
-                              </div>
-                              <div className="text-sm text-gray-300">
-                                {(() => {
-                                  if (!record.tuningWork) return null
-                                  
-                                  // ACU 작업만 추출
-                                  const workParts = record.tuningWork.split(', ')
-                                  const acuWorks = workParts.filter((work: string) => 
-                                    work.startsWith('ACU:')
-                                  ).map((work: string) => work.replace('ACU:', '').trim())
-                                  
-                                  return acuWorks.length > 0 ? acuWorks.join(', ') : null
-                                })()}
-                              </div>
-                              <div className="text-xs text-gray-400">{record.acuManufacturer} {record.acuModel}</div>
-                              <div className="text-xs text-gray-400">{record.connectionMethod}</div>
+                              {(record.acuManufacturer || record.acuModel || record.acuType) ? (
+                                <>
+                                  {/* 1. 제조사-모델명 (초록 박스) */}
+                                  <div className="text-sm text-white mb-1">
+                                    <span className="inline-block mr-2 px-2 py-1 text-xs bg-green-600 text-white rounded">
+                                      ⚙️ {record.acuManufacturer && record.acuModel ? `${record.acuManufacturer}-${record.acuModel}` : (record.acuManufacturer || record.acuModel || record.acuType)}
+                                    </span>
+                                  </div>
+                                  {/* 2. 연결방법 */}
+                                  <div className="text-sm text-gray-300 mb-1">
+                                    {record.connectionMethod || 'N/A'}
+                                  </div>
+                                  {/* 3. 작업내용 */}
+                                  <div className="text-xs text-gray-400">
+                                    {record.acuTuningWorks && record.acuTuningWorks.length > 0 
+                                      ? record.acuTuningWorks.join(', ') 
+                                      : 'N/A'}
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-gray-500 text-sm">N/A</span>
+                              )}
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap">
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -882,7 +1002,7 @@ export default function HistoryPage() {
                               </span>
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap text-sm text-white">
-                              {(record.price / 10000).toLocaleString()}만원
+                              {record.price ? `${(record.price / 10000).toLocaleString()}만원` : 'NaN만원'}
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex space-x-2">
@@ -945,16 +1065,42 @@ export default function HistoryPage() {
                             <span className="text-sm text-gray-400">모델:</span>
                             <span className="text-sm text-white">{record.model}</span>
                           </div>
-                          {record.ecuType && (
+                          {(record.ecuMaker || record.ecuType) && (
                             <div className="flex justify-between">
                               <span className="text-sm text-gray-400">ECU:</span>
-                              <span className="text-sm text-white">{record.ecuType}</span>
+                              <span className="text-sm text-white">
+                                {record.ecuMaker && record.ecuType ? `${record.ecuMaker}-${record.ecuType}` : (record.ecuMaker || record.ecuType)}
+                              </span>
                             </div>
                           )}
-                          {record.acuType && (
+                          {record.ecuTuningWorks && record.ecuTuningWorks.length > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-400">ECU 작업:</span>
+                              <span className="text-sm text-white">
+                                {record.ecuTuningWorks.join(', ')}
+                              </span>
+                            </div>
+                          )}
+                          {(record.acuManufacturer || record.acuModel || record.acuType) && (
                             <div className="flex justify-between">
                               <span className="text-sm text-gray-400">ACU:</span>
-                              <span className="text-sm text-white">{record.acuType}</span>
+                              <span className="text-sm text-white">
+                                {record.acuManufacturer && record.acuModel ? `${record.acuManufacturer}-${record.acuModel}` : (record.acuManufacturer || record.acuModel || record.acuType)}
+                              </span>
+                            </div>
+                          )}
+                          {record.acuTuningWorks && record.acuTuningWorks.length > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-400">ACU 작업:</span>
+                              <span className="text-sm text-white">
+                                {record.acuTuningWorks.join(', ')}
+                              </span>
+                            </div>
+                          )}
+                          {record.connectionMethod && (
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-400">연결방법:</span>
+                              <span className="text-sm text-white">{record.connectionMethod}</span>
                             </div>
                           )}
                           <div className="flex justify-between">
@@ -967,7 +1113,9 @@ export default function HistoryPage() {
                           </div>
                           <div className="flex justify-between">
                             <span className="text-sm text-gray-400">금액:</span>
-                            <span className="text-sm font-medium text-white">{(record.price / 10000).toLocaleString()}만원</span>
+                            <span className="text-sm font-medium text-white">
+                              {record.price ? `${(record.price / 10000).toLocaleString()}만원` : 'NaN만원'}
+                            </span>
                           </div>
                         </div>
                         
@@ -1181,39 +1329,43 @@ export default function HistoryPage() {
                   }, {})
 
                   const categoryNames: { [key: string]: string } = {
-                    original: '📁 원본 ECU 폴더',
-                    stage1: '📈 1차 튜닝 파일',
-                    stage2: '🚀 2차 튜닝 파일', 
-                    stage3: '🔥 3차 튜닝 파일',
-                    acuOriginal: '⚙️ 원본 ACU 폴더',
+                    original: '📁 원본 ECU 파일',
+                    read: '📖 읽은 ECU 파일',
+                    modified: '✏️ 수정된 ECU 파일',
+                    vr: '🔍 VR 파일',
+                    stage1: '📈 ECU 1차 튜닝 파일',
+                    stage2: '🚀 ECU 2차 튜닝 파일', 
+                    stage3: '🔥 ECU 3차 튜닝 파일',
+                    acuOriginal: '⚙️ 원본 ACU 파일',
+                    acuRead: '⚙️ 읽은 ACU 파일',
+                    acuModified: '⚙️ 수정된 ACU 파일',
                     acuStage1: '⚙️ ACU 1차 튜닝 파일',
                     acuStage2: '⚙️ ACU 2차 튜닝 파일',
                     acuStage3: '⚙️ ACU 3차 튜닝 파일',
-                    media1: '📷 미디어 파일 1',
-                    media2: '📷 미디어 파일 2',
-                    media3: '📷 미디어 파일 3',
-                    media4: '📷 미디어 파일 4',
-                    media5: '📷 미디어 파일 5',
-                    media: '📷 미디어 파일 (구버전)',
+                    before: '📷 작업 전 미디어',
+                    after: '📷 작업 후 미디어',
+                    media: '📷 미디어 파일',
                     other: '📁 기타 파일'
                   }
 
                   const categoryColors: { [key: string]: string } = {
                     original: 'bg-gray-50 border-gray-200',
+                    read: 'bg-blue-50 border-blue-200',
+                    modified: 'bg-orange-50 border-orange-200',
+                    vr: 'bg-violet-50 border-violet-200',
                     stage1: 'bg-green-50 border-green-200',
                     stage2: 'bg-yellow-50 border-yellow-200',
                     stage3: 'bg-red-50 border-red-200',
                     acuOriginal: 'bg-teal-50 border-teal-200',
-                    acuStage1: 'bg-cyan-50 border-cyan-200',
-                    acuStage2: 'bg-sky-50 border-sky-200',
-                    acuStage3: 'bg-indigo-50 border-indigo-200',
-                    media1: 'bg-purple-50 border-purple-200',
-                    media2: 'bg-purple-50 border-purple-200',
-                    media3: 'bg-purple-50 border-purple-200',
-                    media4: 'bg-purple-50 border-purple-200',
-                    media5: 'bg-purple-50 border-purple-200',
-                    media: 'bg-blue-50 border-blue-200',
-                    other: 'bg-indigo-50 border-indigo-200'
+                    acuRead: 'bg-cyan-50 border-cyan-200',
+                    acuModified: 'bg-emerald-50 border-emerald-200',
+                    acuStage1: 'bg-sky-50 border-sky-200',
+                    acuStage2: 'bg-indigo-50 border-indigo-200',
+                    acuStage3: 'bg-purple-50 border-purple-200',
+                    before: 'bg-pink-50 border-pink-200',
+                    after: 'bg-rose-50 border-rose-200',
+                    media: 'bg-fuchsia-50 border-fuchsia-200',
+                    other: 'bg-slate-50 border-slate-200'
                   }
 
                   return Object.entries(filesByCategory).map(([category, files]: [string, any]) => (
