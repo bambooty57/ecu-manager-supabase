@@ -202,13 +202,15 @@ export default function HistoryPage() {
         // ECU 정보 추출
         let ecuMaker = '';
         let ecuType = '';
-        let connectionMethod = '';
+        let ecuConnectionMethod = '';
+        let ecuTool = '';
         let ecuTuningWorks: string[] = [];
         
         // ACU 정보 추출
         let acuManufacturer = '';
         let acuModel = '';
-        let acuType = '';
+        let acuConnectionMethod = '';
+        let acuTool = '';
         let acuTuningWorks: string[] = [];
         
         // 파일 정보 추출
@@ -225,7 +227,8 @@ export default function HistoryPage() {
             console.log('🔧 ECU 정보 발견:', firstWork.ecu)
             ecuMaker = firstWork.ecu.maker || '';
             ecuType = firstWork.ecu.type || firstWork.ecu.typeCustom || '';
-            connectionMethod = firstWork.ecu.connectionMethod || '';
+            ecuConnectionMethod = firstWork.ecu.connectionMethod || '';
+            ecuTool = firstWork.ecu.toolCategory || firstWork.ecu.tool || '';
             ecuTuningWorks = firstWork.ecu.selectedWorks || [];
           }
           
@@ -234,16 +237,47 @@ export default function HistoryPage() {
             console.log('⚙️ ACU 정보 발견:', firstWork.acu)
             acuManufacturer = firstWork.acu.manufacturer || '';
             acuModel = firstWork.acu.model || firstWork.acu.modelCustom || '';
-            acuType = firstWork.acu.type || '';
-            if (!connectionMethod) {
-              connectionMethod = firstWork.acu.connectionMethod || '';
-            }
+            acuConnectionMethod = firstWork.acu.connectionMethod || '';
+            acuTool = firstWork.acu.toolCategory || firstWork.acu.tool || '';
             acuTuningWorks = firstWork.acu.selectedWorks || [];
           }
           
           // 파일 정보 추출
           if (firstWork.files) {
             Object.entries(firstWork.files).forEach(([category, fileData]: [string, any]) => {
+              if (fileData && fileData.file) {
+                // 파일 카테고리 매핑
+                let mappedCategory = category;
+                if (category === 'original') mappedCategory = 'original';
+                else if (category === 'read') mappedCategory = 'read';
+                else if (category === 'modified') mappedCategory = 'modified';
+                else if (category === 'vr') mappedCategory = 'vr';
+                
+                allFiles.push({
+                  name: fileData.file.name || `${category}.bin`,
+                  size: fileData.file.size || 0,
+                  type: fileData.file.type || 'application/octet-stream',
+                  data: fileData.file.data || '',
+                  description: fileData.description || '',
+                  category: mappedCategory,
+                  uploadDate: new Date().toISOString()
+                });
+              }
+            });
+          }
+          
+          // ACU 파일 추출 (별도 처리)
+          if (firstWork.files) {
+            // ACU 관련 파일들을 찾아서 acuOriginal, acuRead 등으로 분류
+            const acuFileMapping: { [key: string]: string } = {
+              'acuOriginalFiles': 'acuOriginal',
+              'acuStage1File': 'acuRead', 
+              'acuStage2File': 'acuModified',
+              'acuStage3File': 'acuStage3'
+            };
+            
+            Object.entries(acuFileMapping).forEach(([fileKey, category]) => {
+              const fileData = (firstWork.files as any)[fileKey];
               if (fileData && fileData.file) {
                 allFiles.push({
                   name: fileData.file.name || `${category}.bin`,
@@ -267,7 +301,7 @@ export default function HistoryPage() {
                 type: firstWork.media.before.type || 'image/jpeg',
                 data: firstWork.media.before.data || '',
                 description: '작업 전 미디어',
-                category: 'media',
+                category: 'before',
                 uploadDate: new Date().toISOString()
               });
             }
@@ -278,9 +312,27 @@ export default function HistoryPage() {
                 type: firstWork.media.after.type || 'image/jpeg',
                 data: firstWork.media.after.data || '',
                 description: '작업 후 미디어',
-                category: 'media',
+                category: 'after',
                 uploadDate: new Date().toISOString()
               });
+            }
+          }
+          
+          // 추가 미디어 파일들 (mediaFile1~5)
+          if (firstWork.files) {
+            for (let i = 1; i <= 5; i++) {
+              const mediaFile = (firstWork.files as any)[`mediaFile${i}`];
+              if (mediaFile && mediaFile.file) {
+                allFiles.push({
+                  name: mediaFile.file.name || `media_${i}`,
+                  size: mediaFile.file.size || 0,
+                  type: mediaFile.file.type || 'image/jpeg',
+                  data: mediaFile.file.data || '',
+                  description: mediaFile.description || `미디어 파일 ${i}`,
+                  category: 'media',
+                  uploadDate: new Date().toISOString()
+                });
+              }
             }
           }
         }
@@ -289,7 +341,7 @@ export default function HistoryPage() {
         const recordAny = record as any;
         if (!ecuMaker && recordAny.ecuMaker) ecuMaker = recordAny.ecuMaker;
         if (!ecuType && recordAny.ecuModel) ecuType = recordAny.ecuModel;
-        if (!connectionMethod && recordAny.connectionMethod) connectionMethod = recordAny.connectionMethod;
+        if (!ecuConnectionMethod && recordAny.connectionMethod) ecuConnectionMethod = recordAny.connectionMethod;
         if (!acuManufacturer && recordAny.acuManufacturer) acuManufacturer = recordAny.acuManufacturer;
         if (!acuModel && recordAny.acuModel) acuModel = recordAny.acuModel;
 
@@ -303,12 +355,14 @@ export default function HistoryPage() {
           // ECU 정보
           ecuMaker: ecuMaker,
           ecuType: ecuType,
-          connectionMethod: connectionMethod,
+          connectionMethod: ecuConnectionMethod,
+          ecuTool: ecuTool,
           ecuTuningWorks: ecuTuningWorks,
           // ACU 정보
           acuManufacturer: acuManufacturer,
           acuModel: acuModel,
-          acuType: acuType,
+          acuConnectionMethod: acuConnectionMethod,
+          acuTool: acuTool,
           acuTuningWorks: acuTuningWorks,
           // 작업 정보 (기존 호환성을 위해 유지)
           tuningWork: record.workType,
@@ -1283,14 +1337,14 @@ export default function HistoryPage() {
                         <span className="text-sm text-gray-600">ACU 모델:</span>
                         <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuModel || 'N/A'}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">연결 방법:</span>
-                        <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuConnectionMethod || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">사용 도구:</span>
-                        <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuTool || 'N/A'}</span>
-                      </div>
+                                             <div className="flex justify-between">
+                         <span className="text-sm text-gray-600">연결 방법:</span>
+                         <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuConnectionMethod || 'N/A'}</span>
+                       </div>
+                       <div className="flex justify-between">
+                         <span className="text-sm text-gray-600">사용 도구:</span>
+                         <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuTool || 'N/A'}</span>
+                       </div>
                     </div>
                     <div className="space-y-1">
                       <span className="text-sm font-medium text-gray-700">ACU 튜닝 작업:</span>
