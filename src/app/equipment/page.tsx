@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, ECU_MODELS, ACU_TYPES } from '@/constants'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getAllEquipment, createEquipment, deleteEquipment, updateEquipment, EquipmentData } from '@/lib/equipment'
+import { getModelsByManufacturerObject, addEquipmentModel } from '@/lib/equipment-models'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 
@@ -82,10 +83,8 @@ export default function EquipmentPage() {
     return [...ACU_TYPES]
   })
   
-  // 제조사별 모델 목록 상태 (동적으로 추가 가능)
-  const [modelsByManufacturer, setModelsByManufacturer] = useState<Record<string, string[]>>({
-    ...MANUFACTURER_MODELS
-  })
+  // 제조사별 모델 목록 상태 (데이터베이스에서 가져옴)
+  const [modelsByManufacturer, setModelsByManufacturer] = useState<Record<string, string[]>>({})
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -93,7 +92,18 @@ export default function EquipmentPage() {
   useEffect(() => {
     loadCustomers()
     loadEquipments()
+    loadModels()
   }, [])
+
+  // 모델 목록 로드
+  const loadModels = async () => {
+    try {
+      const models = await getModelsByManufacturerObject()
+      setModelsByManufacturer(models)
+    } catch (error) {
+      console.error('Failed to load models:', error)
+    }
+  }
 
   // 페이지 포커스 시 고객 목록 새로고침
   useEffect(() => {
@@ -289,19 +299,21 @@ export default function EquipmentPage() {
     alert('새로운 ACU 타입이 추가되었습니다.')
   }
 
-  // 새로운 모델을 제조사별 목록에 추가
-  const addNewModel = (manufacturer: string, newModel: string) => {
+  // 새로운 모델을 데이터베이스에 추가
+  const addNewModel = async (manufacturer: string, newModel: string) => {
     if (manufacturer && newModel.trim()) {
-      setModelsByManufacturer(prev => {
-        const currentModels = prev[manufacturer] || []
-        if (!currentModels.includes(newModel.trim())) {
-          return {
-            ...prev,
-            [manufacturer]: [...currentModels, newModel.trim()]
-          }
+      try {
+        const result = await addEquipmentModel(manufacturer, newModel.trim())
+        if (result) {
+          // 성공적으로 추가되면 모델 목록 새로고침
+          await loadModels()
+          console.log('새로운 모델이 추가되었습니다:', manufacturer, newModel.trim())
+        } else {
+          console.log('이미 존재하는 모델입니다:', manufacturer, newModel.trim())
         }
-        return prev
-      })
+      } catch (error) {
+        console.error('모델 추가 중 오류 발생:', error)
+      }
     }
   }
 
@@ -523,41 +535,62 @@ export default function EquipmentPage() {
 
   return (
     <AuthGuard>
-              <Navigation />
-      <main className="pt-20 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-6">
+      <div className="min-h-screen bg-gray-900">
+        <Navigation />
+        <main className="pt-20 pb-8">
+          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="space-y-6">
       {/* 페이지 헤더 */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">장비 관리</h1>
-          <p className="mt-2 text-gray-600">농기계 장비 정보를 등록하고 관리합니다.</p>
+          <h1 className="text-3xl font-bold text-white">장비 관리</h1>
+          <p className="mt-2 text-gray-300">농기계 장비 정보를 등록하고 관리합니다.</p>
         </div>
-        <button
-          onClick={() => setIsFormOpen(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          + 장비 등록
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`p-2 rounded-md ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            + 장비 등록
+          </button>
+        </div>
       </div>
 
       {/* 검색 및 필터 */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-gray-800 p-6 rounded-lg shadow">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">검색</label>
             <input
               type="text"
-                              placeholder="고객명, 모델명, 기대번호 검색..."
+              placeholder="고객명, 모델명, 기대번호 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">장비 종류</label>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">모든 장비 종류</option>
               {EQUIPMENT_TYPES.map(type => (
@@ -566,10 +599,11 @@ export default function EquipmentPage() {
             </select>
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">제조사</label>
             <select
               value={filterManufacturer}
               onChange={(e) => setFilterManufacturer(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">모든 제조사</option>
               {MANUFACTURERS.map(manufacturer => (
@@ -577,90 +611,80 @@ export default function EquipmentPage() {
               ))}
             </select>
           </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setViewMode('table')}
-              className={`px-3 py-2 rounded-md ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-            >
-              테이블
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`px-3 py-2 rounded-md ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-            >
-              그리드
-            </button>
-          </div>
+          <div></div>
         </div>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-400">
           총 {filteredEquipments.length}개의 장비가 등록되어 있습니다.
         </div>
       </div>
 
       {/* 장비 목록 */}
       {isLoadingEquipments ? (
-        <div className="bg-white rounded-lg shadow p-12">
+        <div className="bg-gray-800 rounded-lg shadow p-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">장비 데이터를 불러오는 중...</p>
+            <p className="mt-4 text-gray-300">장비 데이터를 불러오는 중...</p>
           </div>
         </div>
       ) : viewMode === 'table' ? (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-gray-800 rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-700">
+            <h2 className="text-lg font-medium text-white">장비 목록</h2>
+          </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-700">
+              <thead className="bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">고객명</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">장비 정보</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제조사/모델</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">사용시간</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ECU 타입</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACU 타입</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">등록일</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">고객명</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">장비 정보</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">제조사/모델</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">사용시간</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ECU 타입</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ACU 타입</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">등록일</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">작업</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-gray-800 divide-y divide-gray-700">
                 {filteredEquipments.map((equipment) => (
-                  <tr key={equipment.id} className="hover:bg-gray-50">
+                  <tr key={equipment.id} className="hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{equipment.customerName}</div>
+                      <div className="text-sm font-medium text-white">{equipment.customerName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{equipment.equipmentType}</div>
-                      <div className="text-sm text-gray-500">기대번호: {equipment.serialNumber}</div>
+                      <div className="text-sm text-white">{equipment.equipmentType}</div>
+                      <div className="text-sm text-gray-400">기대번호: {equipment.serialNumber}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{equipment.manufacturer}</div>
-                      <div className="text-sm text-gray-500">{equipment.model}</div>
+                      <div className="text-sm text-white">{equipment.manufacturer}</div>
+                      <div className="text-sm text-gray-400">{equipment.model}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{equipment.usageHours.toLocaleString()}시간</div>
+                      <div className="text-sm text-white">{equipment.usageHours.toLocaleString()}시간</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                      <span className="px-2 py-1 text-xs font-medium bg-blue-600 text-blue-100 rounded-full">
                         {equipment.ecuType}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                      <span className="px-2 py-1 text-xs font-medium bg-green-600 text-green-100 rounded-full">
                         {equipment.acuType}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                       {equipment.registrationDate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button
                         onClick={() => handleViewDetail(equipment)}
-                        className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200 cursor-pointer"
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-2 py-1 rounded transition-all duration-200 cursor-pointer"
                       >
                         상세보기
                       </button>
                       <button
                         onClick={() => handleDelete(equipment.id)}
-                        className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded transition-all duration-200 cursor-pointer"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900 p-1 rounded transition-all duration-200 cursor-pointer"
                         title="삭제"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -674,27 +698,27 @@ export default function EquipmentPage() {
             </table>
           </div>
           {filteredEquipments.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-400">
               등록된 장비가 없습니다.
             </div>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredEquipments.map((equipment) => (
-            <div key={equipment.id} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+            <div key={equipment.id} className="bg-gray-800 rounded-lg shadow p-6 hover:shadow-md hover:bg-gray-700 transition-all">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{equipment.customerName}</h3>
+                <h3 className="text-lg font-semibold text-white">{equipment.customerName}</h3>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleViewDetail(equipment)}
-                    className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200 cursor-pointer text-sm"
+                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-2 py-1 rounded transition-all duration-200 cursor-pointer text-sm"
                   >
                     상세보기
                   </button>
                   <button
                     onClick={() => handleDelete(equipment.id)}
-                    className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded transition-all duration-200 cursor-pointer"
+                    className="text-red-400 hover:text-red-300 hover:bg-red-900 p-1 rounded transition-all duration-200 cursor-pointer"
                     title="삭제"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -703,31 +727,31 @@ export default function EquipmentPage() {
                   </button>
                 </div>
               </div>
-              <div className="space-y-2 text-sm">
-                <div><span className="font-medium">장비:</span> {equipment.equipmentType}</div>
-                <div><span className="font-medium">제조사:</span> {equipment.manufacturer}</div>
-                <div><span className="font-medium">모델:</span> {equipment.model}</div>
-                                          <div><span className="font-medium">기대번호:</span> {equipment.serialNumber}</div>
-                <div><span className="font-medium">사용시간:</span> {equipment.usageHours.toLocaleString()}시간</div>
-                <div><span className="font-medium">ECU:</span> 
-                  <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+              <div className="space-y-2 text-sm text-gray-300">
+                <div><span className="font-medium text-white">장비:</span> {equipment.equipmentType}</div>
+                <div><span className="font-medium text-white">제조사:</span> {equipment.manufacturer}</div>
+                <div><span className="font-medium text-white">모델:</span> {equipment.model}</div>
+                <div><span className="font-medium text-white">기대번호:</span> {equipment.serialNumber}</div>
+                <div><span className="font-medium text-white">사용시간:</span> {equipment.usageHours.toLocaleString()}시간</div>
+                <div><span className="font-medium text-white">ECU:</span> 
+                  <span className="ml-2 px-2 py-1 text-xs bg-blue-600 text-blue-100 rounded-full">
                     {equipment.ecuType}
                   </span>
                 </div>
-                <div><span className="font-medium">ACU:</span> 
-                  <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                <div><span className="font-medium text-white">ACU:</span> 
+                  <span className="ml-2 px-2 py-1 text-xs bg-green-600 text-green-100 rounded-full">
                     {equipment.acuType}
                   </span>
                 </div>
-                <div><span className="font-medium">등록일:</span> {equipment.registrationDate}</div>
+                <div><span className="font-medium text-white">등록일:</span> {equipment.registrationDate}</div>
                 {equipment.notes && (
-                  <div><span className="font-medium">메모:</span> {equipment.notes}</div>
+                  <div><span className="font-medium text-white">메모:</span> {equipment.notes}</div>
                 )}
               </div>
             </div>
           ))}
           {filteredEquipments.length === 0 && (
-            <div className="col-span-full text-center py-12 text-gray-500">
+            <div className="col-span-full text-center py-12 text-gray-400">
               등록된 장비가 없습니다.
             </div>
           )}
@@ -737,10 +761,10 @@ export default function EquipmentPage() {
       {/* 상세보기/수정 모달 */}
       {isDetailModalOpen && selectedEquipment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-white">
                   {isEditMode ? '장비 수정' : '장비 상세 정보'}
                 </h2>
                 <div className="flex items-center space-x-4">
@@ -758,7 +782,7 @@ export default function EquipmentPage() {
                       setIsEditMode(false)
                       setSelectedEquipment(null)
                     }}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-300"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -772,7 +796,7 @@ export default function EquipmentPage() {
                 <form onSubmit={handleSaveEdit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         고객명 *
                       </label>
                       <select
@@ -780,7 +804,7 @@ export default function EquipmentPage() {
                         value={editFormData.customerName}
                         onChange={handleEditInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         disabled={isLoadingCustomers}
                       >
                         <option value="">
@@ -793,7 +817,7 @@ export default function EquipmentPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         장비 종류 *
                       </label>
                       <select
@@ -801,7 +825,7 @@ export default function EquipmentPage() {
                         value={editFormData.equipmentType}
                         onChange={handleEditInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">선택하세요</option>
                         {EQUIPMENT_TYPES.map(type => (
@@ -857,9 +881,9 @@ export default function EquipmentPage() {
                           />
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               if (editFormData.customModel?.trim()) {
-                                addNewModel(editFormData.manufacturer, editFormData.customModel.trim())
+                                await addNewModel(editFormData.manufacturer, editFormData.customModel.trim())
                                 setEditFormData(prev => ({ 
                                   ...prev, 
                                   model: editFormData.customModel.trim(),
@@ -1097,13 +1121,13 @@ export default function EquipmentPage() {
       {/* 장비 등록 모달 */}
       {isFormOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">장비 등록</h2>
+                <h2 className="text-2xl font-bold text-white">장비 등록</h2>
                 <button
                   onClick={() => setIsFormOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-300"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1199,9 +1223,9 @@ export default function EquipmentPage() {
                         />
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={async () => {
                             if (formData.customModel?.trim()) {
-                              addNewModel(formData.manufacturer, formData.customModel.trim())
+                              await addNewModel(formData.manufacturer, formData.customModel.trim())
                               setFormData(prev => ({ 
                                 ...prev, 
                                 model: formData.customModel.trim(),
@@ -1374,9 +1398,10 @@ export default function EquipmentPage() {
           </div>
         </div>
       )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </AuthGuard>
   )
 } 

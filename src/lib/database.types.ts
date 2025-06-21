@@ -83,6 +83,29 @@ export interface Database {
           updated_at?: string
         }
       }
+      equipment_models: {
+        Row: {
+          id: number
+          manufacturer: string
+          model: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          manufacturer: string
+          model: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          manufacturer?: string
+          model?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
       work_records: {
         Row: {
           id: number
