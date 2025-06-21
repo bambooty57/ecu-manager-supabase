@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, ECU_MODELS } from '@/constants'
+import { EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, ECU_MODELS, ACU_TYPES } from '@/constants'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getAllEquipment, createEquipment, deleteEquipment, updateEquipment, EquipmentData } from '@/lib/equipment'
 import Navigation from '@/components/Navigation'
@@ -44,7 +44,9 @@ export default function EquipmentPage() {
     serialNumber: '',
     usageHours: 0,
     ecuType: '',
+    customEcuType: '',
     acuType: '',
+    customAcuType: '',
     notes: ''
   })
 
@@ -58,9 +60,15 @@ export default function EquipmentPage() {
     serialNumber: '',
     usageHours: 0,
     ecuType: '',
+    customEcuType: '',
     acuType: '',
+    customAcuType: '',
     notes: ''
   })
+
+  // ECU/ACU 타입 목록 상태 (동적으로 추가 가능)
+  const [ecuModels, setEcuModels] = useState([...ECU_MODELS])
+  const [acuTypes, setAcuTypes] = useState([...ACU_TYPES])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -148,6 +156,20 @@ export default function EquipmentPage() {
     return MANUFACTURER_MODELS[manufacturer] || []
   }
 
+  // 새로운 ECU 타입을 목록에 추가
+  const addNewEcuType = (newType: string) => {
+    if (newType.trim() && !ecuModels.includes(newType.trim())) {
+      setEcuModels(prev => [...prev, newType.trim()])
+    }
+  }
+
+  // 새로운 ACU 타입을 목록에 추가
+  const addNewAcuType = (newType: string) => {
+    if (newType.trim() && !acuTypes.includes(newType.trim())) {
+      setAcuTypes(prev => [...prev, newType.trim()])
+    }
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     
@@ -199,7 +221,9 @@ export default function EquipmentPage() {
       serialNumber: equipment.serialNumber,
       usageHours: equipment.usageHours,
       ecuType: equipment.ecuType,
+      customEcuType: '',
       acuType: equipment.acuType,
+      customAcuType: '',
       notes: equipment.notes || ''
     })
     setIsEditMode(false)
@@ -228,13 +252,17 @@ export default function EquipmentPage() {
       // 모델명 처리: CUSTOM 선택 시 customModel 사용, 아니면 model 사용
       const finalModel = editFormData.model === 'CUSTOM' ? editFormData.customModel : editFormData.model
       
+      // ECU/ACU 타입 처리
+      const finalEcuType = editFormData.ecuType
+      const finalAcuType = editFormData.acuType
+      
               const updateData: Partial<Omit<EquipmentData, 'id' | 'createdAt' | 'updatedAt'>> = {
         customerId: customer.id,
         equipmentType: editFormData.equipmentType,
         manufacturer: editFormData.manufacturer,
         model: finalModel,
         serialNumber: editFormData.serialNumber || undefined,
-        engineType: editFormData.ecuType || undefined,
+        engineType: finalEcuType || undefined,
         horsepower: editFormData.usageHours || undefined,
         notes: editFormData.notes || undefined
       }
@@ -270,13 +298,17 @@ export default function EquipmentPage() {
       // 모델명 처리: CUSTOM 선택 시 customModel 사용, 아니면 model 사용
       const finalModel = formData.model === 'CUSTOM' ? formData.customModel : formData.model
       
+      // ECU/ACU 타입 처리
+      const finalEcuType = formData.ecuType
+      const finalAcuType = formData.acuType
+      
       const equipmentData: Omit<EquipmentData, 'id' | 'createdAt' | 'updatedAt'> = {
         customerId: customer.id,
         equipmentType: formData.equipmentType,
         manufacturer: formData.manufacturer,
         model: finalModel,
         serialNumber: formData.serialNumber || undefined,
-        engineType: formData.ecuType || undefined,
+        engineType: finalEcuType || undefined,
         horsepower: formData.usageHours || undefined,
         notes: formData.notes || undefined
       }
@@ -296,7 +328,9 @@ export default function EquipmentPage() {
           serialNumber: '',
           usageHours: 0,
           ecuType: '',
+          customEcuType: '',
           acuType: '',
+          customAcuType: '',
           notes: ''
         })
         setIsFormOpen(false)
@@ -689,33 +723,31 @@ export default function EquipmentPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        시리얼번호 *
+                        ECU S/N
                       </label>
                       <input
                         type="text"
                         name="serialNumber"
                         value={editFormData.serialNumber}
                         onChange={handleEditInputChange}
-                        required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="시리얼번호를 입력하세요"
+                        placeholder="ECU 시리얼번호를 입력하세요 (선택사항)"
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        사용시간 (시간) *
+                        사용시간 (시간)
                       </label>
                       <input
                         type="number"
                         name="usageHours"
-                        value={editFormData.usageHours}
+                        value={editFormData.usageHours || ''}
                         onChange={handleEditInputChange}
-                        required
                         min="0"
                         step="1"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="사용시간을 입력하세요 (예: 1500)"
+                        placeholder="사용시간을 입력하세요 (선택사항, 예: 1500)"
                       />
                     </div>
 
@@ -730,10 +762,37 @@ export default function EquipmentPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">선택하세요</option>
-                        {ECU_MODELS.map(type => (
+                        {ecuModels.map(type => (
                           <option key={type} value={type}>{type}</option>
                         ))}
                       </select>
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          name="customEcuType"
+                          value={editFormData.customEcuType}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, customEcuType: e.target.value }))}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="새로운 ECU 타입을 입력하여 목록에 추가"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editFormData.customEcuType.trim()) {
+                              addNewEcuType(editFormData.customEcuType.trim())
+                              setEditFormData(prev => ({ 
+                                ...prev, 
+                                ecuType: editFormData.customEcuType.trim(),
+                                customEcuType: ''
+                              }))
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
                     </div>
 
                     <div>
@@ -747,10 +806,37 @@ export default function EquipmentPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">선택하세요</option>
-                        {ECU_MODELS.map(type => (
+                        {acuTypes.map(type => (
                           <option key={type} value={type}>{type}</option>
                         ))}
                       </select>
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          name="customAcuType"
+                          value={editFormData.customAcuType}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, customAcuType: e.target.value }))}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="새로운 ACU 타입을 입력하여 목록에 추가"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editFormData.customAcuType.trim()) {
+                              addNewAcuType(editFormData.customAcuType.trim())
+                              setEditFormData(prev => ({ 
+                                ...prev, 
+                                acuType: editFormData.customAcuType.trim(),
+                                customAcuType: ''
+                              }))
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
                     </div>
 
                     <div className="md:col-span-2">
@@ -973,36 +1059,34 @@ export default function EquipmentPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      시리얼번호 *
+                      ECU S/N
                     </label>
                     <input
                       type="text"
                       name="serialNumber"
                       value={formData.serialNumber}
                       onChange={handleInputChange}
-                      required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="시리얼번호를 입력하세요"
+                      placeholder="ECU 시리얼번호를 입력하세요 (선택사항)"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      사용시간 (시간) *
+                      사용시간 (시간)
                     </label>
                     <input
                       type="number"
                       name="usageHours"
-                      value={formData.usageHours}
+                      value={formData.usageHours || ''}
                       onChange={handleInputChange}
-                      required
                       min="0"
                       step="1"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="사용시간을 입력하세요 (예: 1500)"
+                      placeholder="사용시간을 입력하세요 (선택사항, 예: 1500)"
                     />
                     <p className="mt-1 text-sm text-gray-500">
-                      장비의 총 사용시간을 시간 단위로 입력하세요
+                      장비의 총 사용시간을 시간 단위로 입력하세요 (선택사항)
                     </p>
                   </div>
 
@@ -1017,10 +1101,37 @@ export default function EquipmentPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">선택하세요</option>
-                      {ECU_MODELS.map(type => (
+                      {ecuModels.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
                     </select>
+                    <div className="mt-2 flex space-x-2">
+                      <input
+                        type="text"
+                        name="customEcuType"
+                        value={formData.customEcuType}
+                        onChange={(e) => setFormData(prev => ({ ...prev, customEcuType: e.target.value }))}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="새로운 ECU 타입을 입력하여 목록에 추가"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (formData.customEcuType.trim()) {
+                            addNewEcuType(formData.customEcuType.trim())
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              ecuType: formData.customEcuType.trim(),
+                              customEcuType: ''
+                            }))
+                          }
+                        }}
+                        className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                        title="목록에 추가하고 선택"
+                      >
+                        추가
+                      </button>
+                    </div>
                   </div>
 
                   <div>
@@ -1034,10 +1145,37 @@ export default function EquipmentPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">선택하세요</option>
-                      {ECU_MODELS.map(type => (
+                      {acuTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
                     </select>
+                    <div className="mt-2 flex space-x-2">
+                      <input
+                        type="text"
+                        name="customAcuType"
+                        value={formData.customAcuType}
+                        onChange={(e) => setFormData(prev => ({ ...prev, customAcuType: e.target.value }))}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="새로운 ACU 타입을 입력하여 목록에 추가"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (formData.customAcuType.trim()) {
+                            addNewAcuType(formData.customAcuType.trim())
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              acuType: formData.customAcuType.trim(),
+                              customAcuType: ''
+                            }))
+                          }
+                        }}
+                        className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                        title="목록에 추가하고 선택"
+                      >
+                        추가
+                      </button>
+                    </div>
                   </div>
 
                   <div className="md:col-span-2">
