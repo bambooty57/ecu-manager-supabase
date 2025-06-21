@@ -835,7 +835,7 @@ export default function EquipmentPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         제조사 *
                       </label>
                       <select
@@ -843,7 +843,7 @@ export default function EquipmentPage() {
                         value={editFormData.manufacturer}
                         onChange={handleEditInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">선택하세요</option>
                         {MANUFACTURERS.map(manufacturer => (
@@ -853,7 +853,7 @@ export default function EquipmentPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         모델명 *
                       </label>
                       <select
@@ -861,7 +861,7 @@ export default function EquipmentPage() {
                         value={editFormData.model}
                         onChange={handleEditInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         disabled={!editFormData.manufacturer}
                       >
                         <option value="">모델을 선택하세요</option>
@@ -876,7 +876,7 @@ export default function EquipmentPage() {
                             name="customModel"
                             value={editFormData.customModel || ''}
                             onChange={(e) => setEditFormData(prev => ({ ...prev, customModel: e.target.value }))}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                             placeholder="새로운 모델명을 입력하여 목록에 추가"
                           />
                           <button
@@ -901,7 +901,7 @@ export default function EquipmentPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         기대번호
                       </label>
                       <input
@@ -909,13 +909,13 @@ export default function EquipmentPage() {
                         name="serialNumber"
                         value={editFormData.serialNumber}
                         onChange={handleEditInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         placeholder="기대번호를 입력하세요 (선택사항)"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         사용시간 (시간)
                       </label>
                       <input
@@ -925,20 +925,20 @@ export default function EquipmentPage() {
                         onChange={handleEditInputChange}
                         min="0"
                         step="1"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         placeholder="사용시간을 입력하세요 (선택사항, 예: 1500)"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         ECU 타입
                       </label>
                       <select
                         name="ecuType"
                         value={editFormData.ecuType}
                         onChange={handleEditInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">선택하세요</option>
                         {ecuModels.map(type => (
@@ -951,7 +951,7 @@ export default function EquipmentPage() {
                           name="customEcuType"
                           value={editFormData.customEcuType}
                           onChange={(e) => setEditFormData(prev => ({ ...prev, customEcuType: e.target.value }))}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                           placeholder="새로운 ECU 타입을 입력하여 목록에 추가"
                         />
                         <button
@@ -975,14 +975,14 @@ export default function EquipmentPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         ACU 타입
                       </label>
                       <select
                         name="acuType"
                         value={editFormData.acuType}
                         onChange={handleEditInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">선택하세요</option>
                         {acuTypes.map(type => (
@@ -995,7 +995,7 @@ export default function EquipmentPage() {
                           name="customAcuType"
                           value={editFormData.customAcuType}
                           onChange={(e) => setEditFormData(prev => ({ ...prev, customAcuType: e.target.value }))}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                           placeholder="새로운 ACU 타입을 입력하여 목록에 추가"
                         />
                         <button
@@ -1019,7 +1019,7 @@ export default function EquipmentPage() {
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         메모
                       </label>
                       <textarea
@@ -1027,17 +1027,17 @@ export default function EquipmentPage() {
                         value={editFormData.notes}
                         onChange={handleEditInputChange}
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         placeholder="추가 정보나 특이사항을 입력하세요"
                       />
                     </div>
                   </div>
 
-                  <div className="flex justify-end space-x-4 pt-6 border-t">
+                  <div className="flex justify-end space-x-4 pt-6 border-t border-gray-600">
                     <button
                       type="button"
                       onClick={() => setIsEditMode(false)}
-                      className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                      className="px-4 py-2 text-gray-300 bg-gray-600 rounded-md hover:bg-gray-500 transition-colors"
                     >
                       취소
                     </button>
@@ -1054,60 +1054,60 @@ export default function EquipmentPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">고객명</label>
-                      <div className="text-lg font-semibold text-gray-900">{selectedEquipment.customerName}</div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">고객명</label>
+                      <div className="text-lg font-semibold text-white">{selectedEquipment.customerName}</div>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">장비 종류</label>
-                      <div className="text-gray-900">{selectedEquipment.equipmentType}</div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">장비 종류</label>
+                      <div className="text-white">{selectedEquipment.equipmentType}</div>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">제조사</label>
-                      <div className="text-gray-900">{selectedEquipment.manufacturer}</div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">제조사</label>
+                      <div className="text-white">{selectedEquipment.manufacturer}</div>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">모델명</label>
-                      <div className="text-gray-900">{selectedEquipment.model}</div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">모델명</label>
+                      <div className="text-white">{selectedEquipment.model}</div>
                     </div>
                     
                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">기대번호</label>
-                <div className="text-gray-900 font-mono">{selectedEquipment.serialNumber}</div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">기대번호</label>
+                      <div className="text-white font-mono">{selectedEquipment.serialNumber}</div>
                     </div>
                   </div>
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">사용시간</label>
-                      <div className="text-gray-900">{selectedEquipment.usageHours.toLocaleString()}시간</div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">사용시간</label>
+                      <div className="text-white">{selectedEquipment.usageHours.toLocaleString()}시간</div>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ECU 타입</label>
-                      <span className="inline-block px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
+                      <label className="block text-sm font-medium text-gray-300 mb-1">ECU 타입</label>
+                      <span className="inline-block px-3 py-1 text-sm font-medium bg-blue-600 text-blue-100 rounded-full">
                         {selectedEquipment.ecuType}
                       </span>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ACU 타입</label>
-                      <span className="inline-block px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
+                      <label className="block text-sm font-medium text-gray-300 mb-1">ACU 타입</label>
+                      <span className="inline-block px-3 py-1 text-sm font-medium bg-green-600 text-green-100 rounded-full">
                         {selectedEquipment.acuType}
                       </span>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">등록일</label>
-                      <div className="text-gray-900">{selectedEquipment.registrationDate}</div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">등록일</label>
+                      <div className="text-white">{selectedEquipment.registrationDate}</div>
                     </div>
                     
                     {selectedEquipment.notes && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
-                        <div className="text-gray-900 bg-gray-50 p-3 rounded-md">{selectedEquipment.notes}</div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">메모</label>
+                        <div className="text-white bg-gray-700 p-3 rounded-md">{selectedEquipment.notes}</div>
                       </div>
                     )}
                   </div>
@@ -1138,7 +1138,7 @@ export default function EquipmentPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       고객명 *
                     </label>
                     <select
@@ -1146,7 +1146,7 @@ export default function EquipmentPage() {
                       value={formData.customerName}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       disabled={isLoadingCustomers}
                     >
                       <option value="">
@@ -1159,7 +1159,7 @@ export default function EquipmentPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       장비 종류 *
                     </label>
                     <select
@@ -1167,7 +1167,7 @@ export default function EquipmentPage() {
                       value={formData.equipmentType}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">선택하세요</option>
                       {EQUIPMENT_TYPES.map(type => (
@@ -1177,7 +1177,7 @@ export default function EquipmentPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       제조사 *
                     </label>
                     <select
@@ -1185,7 +1185,7 @@ export default function EquipmentPage() {
                       value={formData.manufacturer}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">선택하세요</option>
                       {MANUFACTURERS.map(manufacturer => (
@@ -1195,7 +1195,7 @@ export default function EquipmentPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       모델명 *
                     </label>
                     <select
@@ -1203,7 +1203,7 @@ export default function EquipmentPage() {
                       value={formData.model}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       disabled={!formData.manufacturer}
                     >
                       <option value="">모델을 선택하세요</option>
@@ -1218,7 +1218,7 @@ export default function EquipmentPage() {
                           name="customModel"
                           value={formData.customModel || ''}
                           onChange={(e) => setFormData(prev => ({ ...prev, customModel: e.target.value }))}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                           placeholder="새로운 모델명을 입력하여 목록에 추가"
                         />
                         <button
@@ -1243,21 +1243,21 @@ export default function EquipmentPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                              기대번호
-                      </label>
-                      <input
-                        type="text"
-                        name="serialNumber"
-                        value={formData.serialNumber}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="기대번호를 입력하세요 (선택사항)"
-                      />
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      기대번호
+                    </label>
+                    <input
+                      type="text"
+                      name="serialNumber"
+                      value={formData.serialNumber}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="기대번호를 입력하세요 (선택사항)"
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       사용시간 (시간)
                     </label>
                     <input
@@ -1267,23 +1267,23 @@ export default function EquipmentPage() {
                       onChange={handleInputChange}
                       min="0"
                       step="1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       placeholder="사용시간을 입력하세요 (선택사항, 예: 1500)"
                     />
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-gray-400">
                       장비의 총 사용시간을 시간 단위로 입력하세요 (선택사항)
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       ECU 타입
                     </label>
                     <select
                       name="ecuType"
                       value={formData.ecuType}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">선택하세요</option>
                       {ecuModels.map(type => (
@@ -1296,7 +1296,7 @@ export default function EquipmentPage() {
                         name="customEcuType"
                         value={formData.customEcuType}
                         onChange={(e) => setFormData(prev => ({ ...prev, customEcuType: e.target.value }))}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         placeholder="새로운 ECU 타입을 입력하여 목록에 추가"
                       />
                       <button
@@ -1320,14 +1320,14 @@ export default function EquipmentPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       ACU 타입
                     </label>
                     <select
                       name="acuType"
                       value={formData.acuType}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">선택하세요</option>
                       {acuTypes.map(type => (
@@ -1340,7 +1340,7 @@ export default function EquipmentPage() {
                         name="customAcuType"
                         value={formData.customAcuType}
                         onChange={(e) => setFormData(prev => ({ ...prev, customAcuType: e.target.value }))}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         placeholder="새로운 ACU 타입을 입력하여 목록에 추가"
                       />
                       <button
@@ -1364,7 +1364,7 @@ export default function EquipmentPage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       메모
                     </label>
                     <textarea
@@ -1372,17 +1372,17 @@ export default function EquipmentPage() {
                       value={formData.notes}
                       onChange={handleInputChange}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       placeholder="추가 정보나 특이사항을 입력하세요"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-6 border-t">
+                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-600">
                   <button
                     type="button"
                     onClick={() => setIsFormOpen(false)}
-                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                    className="px-4 py-2 text-gray-300 bg-gray-600 rounded-md hover:bg-gray-500 transition-colors"
                   >
                     취소
                   </button>
