@@ -707,9 +707,9 @@ export default function HistoryPage() {
                                   
                                   // ECU 작업만 추출 (ECU: 접두사가 있는 것과 일반 작업)
                                   const workParts = record.tuningWork.split(', ')
-                                  const ecuWorks = workParts.filter(work => 
+                                  const ecuWorks = workParts.filter((work: string) => 
                                     work.startsWith('ECU:') || (!work.startsWith('ACU:') && !work.includes('ACU:'))
-                                  ).map(work => work.replace('ECU:', '').trim())
+                                  ).map((work: string) => work.replace('ECU:', '').trim())
                                   
                                   return ecuWorks.length > 0 ? ecuWorks.join(', ') : null
                                 })()}
@@ -727,9 +727,9 @@ export default function HistoryPage() {
                                   
                                   // ACU 작업만 추출
                                   const workParts = record.tuningWork.split(', ')
-                                  const acuWorks = workParts.filter(work => 
+                                  const acuWorks = workParts.filter((work: string) => 
                                     work.startsWith('ACU:')
-                                  ).map(work => work.replace('ACU:', '').trim())
+                                  ).map((work: string) => work.replace('ACU:', '').trim())
                                   
                                   return acuWorks.length > 0 ? acuWorks.join(', ') : null
                                 })()}
