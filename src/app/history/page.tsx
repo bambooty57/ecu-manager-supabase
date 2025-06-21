@@ -714,13 +714,13 @@ export default function HistoryPage() {
                                   return ecuWorks.length > 0 ? ecuWorks.join(', ') : null
                                 })()}
                               </div>
-                              <div className="text-xs text-gray-400">{record.ecuMaker} {record.ecuType}</div>
+                              <div className="text-xs text-gray-400">{record.ecuMaker}</div>
                               <div className="text-xs text-gray-400">{record.connectionMethod}</div>
                             </td>
                             {/* ACU/튜닝 칸 */}
                             <td className="px-3 py-4 whitespace-nowrap">
                               <div className="text-sm text-white">
-                                {record.acuType && <span className="inline-block px-2 py-1 text-xs bg-green-600 text-white rounded">⚙️ {record.acuType}</span>}
+                                {record.acuType && <span className="inline-block mr-2 px-2 py-1 text-xs bg-green-600 text-white rounded">⚙️ {record.acuType}</span>}
                               </div>
                               <div className="text-sm text-gray-300">
                                 {(() => {
@@ -735,7 +735,8 @@ export default function HistoryPage() {
                                   return acuWorks.length > 0 ? acuWorks.join(', ') : null
                                 })()}
                               </div>
-                              <div className="text-xs text-gray-400">{record.acuMaker} {record.acuType}</div>
+                              <div className="text-xs text-gray-400">{record.acuManufacturer} {record.acuModel}</div>
+                              <div className="text-xs text-gray-400">{record.connectionMethod}</div>
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap">
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -953,10 +954,16 @@ export default function HistoryPage() {
                     <span className="text-sm text-gray-500">ECU 모델:</span>
                     <span className="text-sm text-gray-900">{selectedRecord.ecuType}</span>
                   </div>
-                  {selectedRecord.acuType && (
+                  {selectedRecord.acuManufacturer && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">ACU 타입:</span>
-                      <span className="text-sm text-gray-900">{selectedRecord.acuType}</span>
+                      <span className="text-sm text-gray-500">ACU 제조사:</span>
+                      <span className="text-sm text-gray-900">{selectedRecord.acuManufacturer}</span>
+                    </div>
+                  )}
+                  {selectedRecord.acuModel && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">ACU 모델:</span>
+                      <span className="text-sm text-gray-900">{selectedRecord.acuModel}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
