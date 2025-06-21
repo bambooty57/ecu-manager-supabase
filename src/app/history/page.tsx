@@ -37,6 +37,26 @@ export default function HistoryPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [showCustomerModal, setShowCustomerModal] = useState(false)
 
+  // 동적 ECU 모델 목록 상태
+  const [ecuModels, setEcuModels] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ecuModels')
+      return saved ? JSON.parse(saved) : ECU_MODELS
+    }
+    return ECU_MODELS
+  })
+  const [newEcuModel, setNewEcuModel] = useState('')
+
+  // 동적 ACU 타입 목록 상태
+  const [acuTypes, setAcuTypes] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('acuTypes')
+      return saved ? JSON.parse(saved) : ACU_TYPES
+    }
+    return ACU_TYPES
+  })
+  const [newAcuType, setNewAcuType] = useState('')
+
   // 데이터 로드
   useEffect(() => {
     loadAllData()
@@ -108,6 +128,32 @@ export default function HistoryPage() {
   // 제조사별 모델명 목록 가져오기
   const getAvailableModels = (manufacturer: string) => {
     return MANUFACTURER_MODELS[manufacturer] || []
+  }
+
+  // ECU 모델 추가 함수
+  const addNewEcuModel = () => {
+    if (newEcuModel.trim() && !ecuModels.includes(newEcuModel.trim())) {
+      const updatedModels = [...ecuModels, newEcuModel.trim()]
+      setEcuModels(updatedModels)
+      localStorage.setItem('ecuModels', JSON.stringify(updatedModels))
+      
+      // 수정 폼에 새로운 모델 자동 선택
+      setEditFormData((prev: any) => ({ ...prev, ecuModel: newEcuModel.trim() }))
+      setNewEcuModel('')
+    }
+  }
+
+  // ACU 타입 추가 함수
+  const addNewAcuType = () => {
+    if (newAcuType.trim() && !acuTypes.includes(newAcuType.trim())) {
+      const updatedTypes = [...acuTypes, newAcuType.trim()]
+      setAcuTypes(updatedTypes)
+      localStorage.setItem('acuTypes', JSON.stringify(updatedTypes))
+      
+      // 수정 폼에 새로운 타입 자동 선택
+      setEditFormData((prev: any) => ({ ...prev, acuType: newAcuType.trim() }))
+      setNewAcuType('')
+    }
   }
 
   // 필터링된 작업 목록
@@ -516,7 +562,7 @@ export default function HistoryPage() {
               className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">전체</option>
-              {ECU_MODELS.map((model) => (
+              {ecuModels.map((model) => (
                 <option key={model} value={model}>{model}</option>
               ))}
             </select>
@@ -647,7 +693,10 @@ export default function HistoryPage() {
                             <div className="text-xs text-gray-400">{record.manufacturer} {record.model}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{record.ecuType}</div>
+                            <div className="text-sm text-gray-900">
+                              {record.ecuType && <span className="inline-block mr-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">ECU: {record.ecuType}</span>}
+                              {record.acuType && <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded">ACU: {record.acuType}</span>}
+                            </div>
                             <div className="text-sm text-gray-500">
                               {record.tuningWork === '기타' && record.customTuningWork 
                                 ? record.customTuningWork 
@@ -734,10 +783,18 @@ export default function HistoryPage() {
                           <span className="text-sm text-gray-500">모델:</span>
                           <span className="text-sm text-gray-900">{record.model}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-500">ECU:</span>
-                          <span className="text-sm text-gray-900">{record.ecuType}</span>
-                        </div>
+                        {record.ecuType && (
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-500">ECU:</span>
+                            <span className="text-sm text-gray-900">{record.ecuType}</span>
+                          </div>
+                        )}
+                        {record.acuType && (
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-500">ACU:</span>
+                            <span className="text-sm text-gray-900">{record.acuType}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-500">작업:</span>
                           <span className="text-sm text-gray-900">
@@ -863,6 +920,12 @@ export default function HistoryPage() {
                     <span className="text-sm text-gray-500">ECU 모델:</span>
                     <span className="text-sm text-gray-900">{selectedRecord.ecuType}</span>
                   </div>
+                  {selectedRecord.acuType && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">ACU 타입:</span>
+                      <span className="text-sm text-gray-900">{selectedRecord.acuType}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">연결 방법:</span>
                     <span className="text-sm text-gray-900">{selectedRecord.connectionMethod}</span>
@@ -1161,10 +1224,62 @@ export default function HistoryPage() {
                       onChange={handleEditInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      {ECU_MODELS.map(model => (
+                      {ecuModels.map(model => (
                         <option key={model} value={model}>{model}</option>
                       ))}
                     </select>
+                    
+                    {/* ECU 모델 추가 */}
+                    <div className="mt-2 flex space-x-2">
+                      <input
+                        type="text"
+                        value={newEcuModel}
+                        onChange={(e) => setNewEcuModel(e.target.value)}
+                        placeholder="새 ECU 모델 입력"
+                        className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        onKeyPress={(e) => e.key === 'Enter' && addNewEcuModel()}
+                      />
+                      <button
+                        type="button"
+                        onClick={addNewEcuModel}
+                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        추가
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ACU 타입</label>
+                    <select
+                      name="acuType"
+                      value={editFormData.acuType || ''}
+                      onChange={handleEditInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">선택하세요</option>
+                      {acuTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                    
+                    {/* ACU 타입 추가 */}
+                    <div className="mt-2 flex space-x-2">
+                      <input
+                        type="text"
+                        value={newAcuType}
+                        onChange={(e) => setNewAcuType(e.target.value)}
+                        placeholder="새 ACU 타입 입력"
+                        className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        onKeyPress={(e) => e.key === 'Enter' && addNewAcuType()}
+                      />
+                      <button
+                        type="button"
+                        onClick={addNewAcuType}
+                        className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                      >
+                        추가
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">연결 방법</label>

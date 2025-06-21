@@ -15,6 +15,7 @@ export interface EquipmentData {
   serialNumber?: string
   engineType?: string
   horsepower?: number
+  acuType?: string
   notes?: string
   createdAt: string
   updatedAt: string
@@ -31,6 +32,7 @@ const transformEquipmentFromDB = (equipment: Equipment): EquipmentData => ({
   serialNumber: equipment.serial_number || undefined,
   engineType: equipment.engine_type || undefined,
   horsepower: equipment.horsepower || undefined,
+  acuType: equipment.acu_type || undefined,
   notes: equipment.notes || undefined,
   createdAt: equipment.created_at,
   updatedAt: equipment.updated_at
@@ -46,6 +48,7 @@ const transformEquipmentToDB = (equipment: Omit<EquipmentData, 'id' | 'createdAt
   serial_number: equipment.serialNumber || null,
   engine_type: equipment.engineType || null,
   horsepower: equipment.horsepower || null,
+  acu_type: equipment.acuType || null,
   notes: equipment.notes || null
 })
 

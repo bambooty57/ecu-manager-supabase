@@ -13,6 +13,7 @@ export interface WorkRecordData {
   workType: string
   workDescription?: string
   ecuModel?: string
+  acuType?: string
   connectionMethod?: string
   toolsUsed?: string[]
   price?: number
@@ -31,6 +32,7 @@ const transformWorkRecordFromDB = (record: WorkRecord): WorkRecordData => ({
   workType: record.work_type,
   workDescription: record.work_description || undefined,
   ecuModel: record.ecu_model || undefined,
+  acuType: record.acu_type || undefined,
   connectionMethod: record.connection_method || undefined,
   toolsUsed: record.tools_used || undefined,
   price: record.price || undefined,
@@ -48,6 +50,7 @@ const transformWorkRecordToDB = (record: Omit<WorkRecordData, 'id' | 'createdAt'
   work_type: record.workType,
   work_description: record.workDescription || null,
   ecu_model: record.ecuModel || null,
+  acu_type: record.acuType || null,
   connection_method: record.connectionMethod || null,
   tools_used: record.toolsUsed || null,
   price: record.price || null,
@@ -153,6 +156,7 @@ export const getAllWorkRecords = async (): Promise<any[]> => {
       notes: record.work_description, // 호환성을 위해 추가
       ecuModel: record.ecu_model,
       ecuType: record.ecu_model, // 호환성을 위해 추가
+      acuType: record.acu_type,
       connectionMethod: record.connection_method,
       toolsUsed: record.tools_used,
       ecuTool: Array.isArray(record.tools_used) ? record.tools_used.join(', ') : record.tools_used, // 호환성을 위해 추가

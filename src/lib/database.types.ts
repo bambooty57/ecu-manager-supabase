@@ -44,6 +44,7 @@ export interface Database {
           serial_number: string | null
           engine_type: string | null
           horsepower: number | null
+          acu_type: string | null
           notes: string | null
           created_at: string
           updated_at: string
@@ -58,6 +59,7 @@ export interface Database {
           serial_number?: string | null
           engine_type?: string | null
           horsepower?: number | null
+          acu_type?: string | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -72,6 +74,7 @@ export interface Database {
           serial_number?: string | null
           engine_type?: string | null
           horsepower?: number | null
+          acu_type?: string | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -84,6 +87,7 @@ export interface Database {
           equipment_id: number | null
           work_type: string
           ecu_model: string | null
+          acu_type: string | null
           connection_method: string | null
           tools_used: string[] | null
           work_description: string | null
@@ -100,6 +104,7 @@ export interface Database {
           equipment_id?: number | null
           work_type: string
           ecu_model?: string | null
+          acu_type?: string | null
           connection_method?: string | null
           tools_used?: string[] | null
           work_description?: string | null
@@ -116,6 +121,7 @@ export interface Database {
           equipment_id?: number | null
           work_type?: string
           ecu_model?: string | null
+          acu_type?: string | null
           connection_method?: string | null
           tools_used?: string[] | null
           work_description?: string | null

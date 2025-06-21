@@ -30,6 +30,8 @@ export default function WorkPage() {
     ecuMaker?: string
     ecuType: string
     ecuTypeCustom: string
+    acuType: string
+    acuTypeCustom: string
     selectedWorks: string[]
     notes: string
     workDetails: string
@@ -76,6 +78,8 @@ export default function WorkPage() {
     ecuMaker: '',
     ecuType: '',
     ecuTypeCustom: '',
+    acuType: '',
+    acuTypeCustom: '',
     selectedWorks: [] as string[],
     notes: '',
     workDetails: '',
@@ -128,12 +132,30 @@ export default function WorkPage() {
     return [...ECU_MODELS]
   })
 
+  // 동적 ACU 타입 목록 (로컬 스토리지에서 가져오기)
+  const [acuTypes, setAcuTypes] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('acuTypes')
+      return saved ? JSON.parse(saved) : [...ACU_TYPES]
+    }
+    return [...ACU_TYPES]
+  })
+
   // 새로운 ECU 타입을 목록에 추가
   const addNewEcuType = (newType: string) => {
     if (newType.trim() && !ecuModels.includes(newType.trim())) {
       const newList = [...ecuModels, newType.trim()]
       setEcuModels(newList)
       localStorage.setItem('ecuModels', JSON.stringify(newList))
+    }
+  }
+
+  // 새로운 ACU 타입을 목록에 추가
+  const addNewAcuType = (newType: string) => {
+    if (newType.trim() && !acuTypes.includes(newType.trim())) {
+      const newList = [...acuTypes, newType.trim()]
+      setAcuTypes(newList)
+      localStorage.setItem('acuTypes', JSON.stringify(newList))
     }
   }
 
@@ -877,6 +899,7 @@ export default function WorkPage() {
                           <div><span className="font-medium">상태:</span> <span className={`px-2 py-1 rounded-full text-xs ${work.status === '완료' ? 'bg-green-100 text-green-800' : work.status === '진행중' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{work.status}</span></div>
                           {work.ecuMaker && <div><span className="font-medium">ECU 제조사:</span> {work.ecuMaker}</div>}
                           {work.ecuType && <div><span className="font-medium">ECU 모델:</span> {work.ecuType}</div>}
+                {work.acuType && <div><span className="font-medium">ACU 타입:</span> {work.acuType}</div>}
                           {work.ecuTypeCustom && <div><span className="font-medium">추가 정보:</span> {work.ecuTypeCustom}</div>}
                           {work.price && <div><span className="font-medium">금액:</span> {(parseFloat(work.price) / 10000).toFixed(1)}만원</div>}
                         </div>
@@ -1065,8 +1088,52 @@ export default function WorkPage() {
                     </button>
                   </div>
                 </div>
-                
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ACU 타입
+                  </label>
+                  <select
+                    name="acuType"
+                    value={currentRemappingWork.acuType}
+                    onChange={handleRemappingWorkInputChange}
+                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">ACU 타입을 선택하세요</option>
+                    {acuTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="mt-2 flex space-x-2">
+                    <input
+                      type="text"
+                      name="customAcuType"
+                      value={currentRemappingWork.acuTypeCustom}
+                      onChange={(e) => setCurrentRemappingWork(prev => ({ ...prev, acuTypeCustom: e.target.value }))}
+                      className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="새로운 ACU 타입을 입력하여 목록에 추가"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (currentRemappingWork.acuTypeCustom.trim()) {
+                          addNewAcuType(currentRemappingWork.acuTypeCustom.trim())
+                          setCurrentRemappingWork(prev => ({ 
+                            ...prev, 
+                            acuType: currentRemappingWork.acuTypeCustom.trim(),
+                            acuTypeCustom: ''
+                          }))
+                        }
+                      }}
+                      className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                      title="목록에 추가하고 선택"
+                    >
+                      추가
+                    </button>
+                  </div>
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
