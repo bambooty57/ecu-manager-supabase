@@ -23,6 +23,27 @@ export interface FileUpload {
 // 리매핑 작업 입력 타입
 export interface RemappingWorkInput {
   stage: 'stock' | 'stage1' | 'stage2' | 'dpf_off' | 'egr_off' | 'scr_off'
+  // ECU 정보 추가
+  ecu?: {
+    maker: string
+    type: string
+    connectionMethod: string
+    selectedWorks: string[]
+    workDetails: string
+    price: string
+    status: string
+  }
+  // ACU 정보 추가
+  acu?: {
+    manufacturer: string
+    model: string
+    type?: string
+    connectionMethod: string
+    selectedWorks: string[]
+    workDetails: string
+    price: string
+    status: string
+  }
   files: {
     original?: FileUpload
     read?: FileUpload

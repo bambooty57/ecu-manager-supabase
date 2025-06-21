@@ -607,7 +607,7 @@ export default function WorkPage() {
         toolCategory: work.acu.toolCategory,
         connectionMethod: work.acu.connectionMethod,
         manufacturer: work.acu.manufacturer,
-        model: work.acu.model,
+        model: work.acu.model || work.acu.modelCustom,
         modelCustom: work.acu.modelCustom,
         selectedWorks: work.acu.selectedWorks,
         workDetails: work.acu.workDetails,
@@ -952,6 +952,26 @@ export default function WorkPage() {
           status: remappingWork.ecu.status || remappingWork.acu.status,
           remappingWorks: [{
             stage: 'stage1' as const,
+            // ECU 정보 추가
+            ecu: {
+              maker: remappingWork.ecu.maker,
+              type: remappingWork.ecu.type || remappingWork.ecu.typeCustom,
+              connectionMethod: remappingWork.ecu.connectionMethod,
+              selectedWorks: remappingWork.ecu.selectedWorks,
+              workDetails: remappingWork.ecu.workDetails,
+              price: remappingWork.ecu.price,
+              status: remappingWork.ecu.status
+            },
+            // ACU 정보 추가
+            acu: {
+              manufacturer: remappingWork.acu.manufacturer,
+              model: remappingWork.acu.model || remappingWork.acu.modelCustom,
+              connectionMethod: remappingWork.acu.connectionMethod,
+              selectedWorks: remappingWork.acu.selectedWorks,
+              workDetails: remappingWork.acu.workDetails,
+              price: remappingWork.acu.price,
+              status: remappingWork.acu.status
+            },
             files: {
               original: remappingWork.files.originalFiles?.[0] ? { file: remappingWork.files.originalFiles[0], description: remappingWork.files.originalFileDescription || '' } : undefined,
               read: remappingWork.files.stage1File ? { file: remappingWork.files.stage1File, description: remappingWork.files.stage1FileDescription || '' } : undefined,

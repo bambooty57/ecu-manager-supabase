@@ -197,8 +197,7 @@ export default function HistoryPage() {
         const customer = customersData.find(c => c.id === record.customerId)
         const equipment = equipmentsData.find(e => e.id === record.equipmentId)
         
-        // remappingWorks가 배열이고 내용이 있는지 확인
-        const firstWork = record.remappingWorks && record.remappingWorks.length > 0 ? record.remappingWorks[0] : null;
+        console.log('🔍 Processing record:', record.id, record)
         
         // ECU 정보 추출
         let ecuMaker = '';
@@ -215,51 +214,36 @@ export default function HistoryPage() {
         // 파일 정보 추출
         let allFiles: any[] = [];
         
-        if (firstWork) {
-          // 타입 안전성을 위해 any로 캐스팅
-          const work = firstWork as any;
+        // remappingWorks에서 ECU/ACU 정보 추출 시도
+        if (record.remappingWorks && record.remappingWorks.length > 0) {
+          // 첫 번째 remappingWork에서 정보 추출
+          const firstWork = record.remappingWorks[0] as any;
+          console.log('🔍 First remapping work:', firstWork)
           
           // ECU 정보가 있는 경우
-          if (work.ecu) {
-            ecuMaker = work.ecu.maker || '';
-            ecuType = work.ecu.type || work.ecu.typeCustom || '';
-            connectionMethod = work.ecu.connectionMethod || '';
-            
-            // ECU 튜닝 작업들 추출
-            if (work.ecu.tuningWorks) {
-              const ecuWorks = work.ecu.tuningWorks;
-              if (ecuWorks.powerUp) ecuTuningWorks.push('파워업');
-              if (ecuWorks.dpfRemoval) ecuTuningWorks.push('DPF 제거');
-              if (ecuWorks.egrRemoval) ecuTuningWorks.push('EGR 제거');
-              if (ecuWorks.adblueRemoval) ecuTuningWorks.push('AdBlue 제거');
-              if (ecuWorks.speedLimitRemoval) ecuTuningWorks.push('속도제한해제');
-            }
+          if (firstWork.ecu) {
+            console.log('🔧 ECU 정보 발견:', firstWork.ecu)
+            ecuMaker = firstWork.ecu.maker || '';
+            ecuType = firstWork.ecu.type || firstWork.ecu.typeCustom || '';
+            connectionMethod = firstWork.ecu.connectionMethod || '';
+            ecuTuningWorks = firstWork.ecu.selectedWorks || [];
           }
           
           // ACU 정보가 있는 경우
-          if (work.acu) {
-            acuManufacturer = work.acu.manufacturer || '';
-            acuModel = work.acu.model || work.acu.modelCustom || '';
-            acuType = work.acu.type || '';
+          if (firstWork.acu) {
+            console.log('⚙️ ACU 정보 발견:', firstWork.acu)
+            acuManufacturer = firstWork.acu.manufacturer || '';
+            acuModel = firstWork.acu.model || firstWork.acu.modelCustom || '';
+            acuType = firstWork.acu.type || '';
             if (!connectionMethod) {
-              connectionMethod = work.acu.connectionMethod || '';
+              connectionMethod = firstWork.acu.connectionMethod || '';
             }
-            
-            // ACU 튜닝 작업들 추출
-            if (work.acu.tuningWorks) {
-              const acuWorks = work.acu.tuningWorks;
-              if (acuWorks.powerUp) acuTuningWorks.push('파워업');
-              if (acuWorks.dpfRemoval) acuTuningWorks.push('DPF 제거');
-              if (acuWorks.egrRemoval) acuTuningWorks.push('EGR 제거');
-              if (acuWorks.adblueRemoval) acuTuningWorks.push('AdBlue 제거');
-              if (acuWorks.speedLimitRemoval) acuTuningWorks.push('속도제한해제');
-            }
+            acuTuningWorks = firstWork.acu.selectedWorks || [];
           }
           
           // 파일 정보 추출
-          if (work.files) {
-            // files 객체에서 각 카테고리별 파일들을 추출
-            Object.entries(work.files).forEach(([category, fileData]: [string, any]) => {
+          if (firstWork.files) {
+            Object.entries(firstWork.files).forEach(([category, fileData]: [string, any]) => {
               if (fileData && fileData.file) {
                 allFiles.push({
                   name: fileData.file.name || `${category}.bin`,
@@ -275,24 +259,24 @@ export default function HistoryPage() {
           }
           
           // 미디어 파일 추출
-          if (work.media) {
-            if (work.media.before) {
+          if (firstWork.media) {
+            if (firstWork.media.before) {
               allFiles.push({
-                name: work.media.before.name || 'before_media',
-                size: work.media.before.size || 0,
-                type: work.media.before.type || 'image/jpeg',
-                data: work.media.before.data || '',
+                name: firstWork.media.before.name || 'before_media',
+                size: firstWork.media.before.size || 0,
+                type: firstWork.media.before.type || 'image/jpeg',
+                data: firstWork.media.before.data || '',
                 description: '작업 전 미디어',
                 category: 'media',
                 uploadDate: new Date().toISOString()
               });
             }
-            if (work.media.after) {
+            if (firstWork.media.after) {
               allFiles.push({
-                name: work.media.after.name || 'after_media',
-                size: work.media.after.size || 0,
-                type: work.media.after.type || 'image/jpeg',
-                data: work.media.after.data || '',
+                name: firstWork.media.after.name || 'after_media',
+                size: firstWork.media.after.size || 0,
+                type: firstWork.media.after.type || 'image/jpeg',
+                data: firstWork.media.after.data || '',
                 description: '작업 후 미디어',
                 category: 'media',
                 uploadDate: new Date().toISOString()
@@ -309,32 +293,43 @@ export default function HistoryPage() {
         if (!acuManufacturer && recordAny.acuManufacturer) acuManufacturer = recordAny.acuManufacturer;
         if (!acuModel && recordAny.acuModel) acuModel = recordAny.acuModel;
 
-                  return {
-            ...record,
-            customerName: customer?.name || '알 수 없음',
-            equipmentType: equipment?.equipmentType || '알 수 없음',
-            manufacturer: equipment?.manufacturer || '알 수 없음',
-            model: equipment?.model || '알 수 없음',
-            serial: equipment?.serialNumber || '',
-            // ECU 정보
-            ecuMaker: ecuMaker,
-            ecuType: ecuType,
-            connectionMethod: connectionMethod,
-            ecuTuningWorks: ecuTuningWorks,
-            // ACU 정보
-            acuManufacturer: acuManufacturer,
-            acuModel: acuModel,
-            acuType: acuType,
-            acuTuningWorks: acuTuningWorks,
-            // 작업 정보 (기존 호환성을 위해 유지)
-            tuningWork: firstWork?.stage || record.workType,
-            customTuningWork: firstWork?.stage || record.workType,
-            registrationDate: record.workDate,
-            // 가격 정보 (만원 단위로 변환)
-            price: record.totalPrice || 0,
-            // 파일 정보
-            files: allFiles
-          }
+        const enrichedRecord = {
+          ...record,
+          customerName: customer?.name || '알 수 없음',
+          equipmentType: equipment?.equipmentType || '알 수 없음',
+          manufacturer: equipment?.manufacturer || '알 수 없음',
+          model: equipment?.model || '알 수 없음',
+          serial: equipment?.serialNumber || '',
+          // ECU 정보
+          ecuMaker: ecuMaker,
+          ecuType: ecuType,
+          connectionMethod: connectionMethod,
+          ecuTuningWorks: ecuTuningWorks,
+          // ACU 정보
+          acuManufacturer: acuManufacturer,
+          acuModel: acuModel,
+          acuType: acuType,
+          acuTuningWorks: acuTuningWorks,
+          // 작업 정보 (기존 호환성을 위해 유지)
+          tuningWork: record.workType,
+          customTuningWork: record.workType,
+          registrationDate: record.workDate,
+          // 가격 정보 (만원 단위로 변환)
+          price: record.totalPrice || 0,
+          // 파일 정보
+          files: allFiles
+        }
+        
+        console.log('✅ Enriched record:', enrichedRecord.id, {
+          ecuMaker: enrichedRecord.ecuMaker,
+          ecuType: enrichedRecord.ecuType,
+          ecuTuningWorks: enrichedRecord.ecuTuningWorks,
+          acuManufacturer: enrichedRecord.acuManufacturer,
+          acuModel: enrichedRecord.acuModel,
+          acuTuningWorks: enrichedRecord.acuTuningWorks
+        })
+        
+        return enrichedRecord
       })
 
       setWorkRecords(enrichedWorkRecords)
