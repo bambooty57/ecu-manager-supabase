@@ -1405,7 +1405,7 @@ export default function HistoryPage() {
                   // ECU, ACU, 미디어로 대분류
                   const ecuCategories = ['original', 'read', 'modified', 'vr', 'stage1', 'stage2', 'stage3']
                   const acuCategories = ['acuOriginal', 'acuRead', 'acuModified', 'acuStage1', 'acuStage2', 'acuStage3']
-                  const mediaCategories = ['before', 'after', 'media']
+                  const mediaCategories = ['before', 'after', 'media', 'media1', 'media2', 'media3', 'media4', 'media5']
 
                   const ecuFiles = Object.entries(filesByCategory).filter(([category]) => ecuCategories.includes(category))
                   const acuFiles = Object.entries(filesByCategory).filter(([category]) => acuCategories.includes(category))
@@ -1413,22 +1413,27 @@ export default function HistoryPage() {
                   const otherFiles = Object.entries(filesByCategory).filter(([category]) => !ecuCategories.includes(category) && !acuCategories.includes(category) && !mediaCategories.includes(category))
 
                   const categoryNames: { [key: string]: string } = {
-                    original: '📁 원본 파일',
-                    read: '📖 1차 파일', 
-                    modified: '✏️ 2차 파일',
-                    vr: '🔍 3차 파일',
-                    stage1: '📈 1차 튜닝 파일',
-                    stage2: '🚀 2차 튜닝 파일', 
-                    stage3: '🔥 3차 튜닝 파일',
-                    acuOriginal: '📁 원본 파일',
-                    acuRead: '📖 1차 파일',
-                    acuModified: '✏️ 2차 파일',
-                    acuStage1: '📈 1차 튜닝 파일',
-                    acuStage2: '🚀 2차 튜닝 파일',
-                    acuStage3: '🔥 3차 튜닝 파일',
+                    original: '📁 원본',
+                    read: '📖 1차',
+                    modified: '✏️ 2차',
+                    vr: '🔍 3차',
+                    stage1: '📈 1차',
+                    stage2: '🚀 2차', 
+                    stage3: '🔥 3차',
+                    acuOriginal: '📁 원본',
+                    acuRead: '📖 1차',
+                    acuModified: '✏️ 2차',
+                    acuStage1: '📈 1차',
+                    acuStage2: '🚀 2차',
+                    acuStage3: '🔥 3차',
                     before: '📷 작업 전',
                     after: '📷 작업 후',
-                    media: '📷 미디어 파일',
+                    media: '📷 미디어파일1',
+                    media1: '📷 미디어파일1',
+                    media2: '📷 미디어파일2',
+                    media3: '📷 미디어파일3',
+                    media4: '📷 미디어파일4',
+                    media5: '📷 미디어파일5',
                     other: '📁 기타 파일'
                   }
 
@@ -1461,85 +1466,89 @@ export default function HistoryPage() {
                       <div className={`mb-6 p-4 rounded-lg border-2 ${bgColor}`}>
                         <div className="flex justify-between items-center mb-4">
                           <h5 className="text-lg font-bold text-gray-800">{title} ({allFiles.length}개)</h5>
-                          <button
-                            onClick={() => handleCategoryDownload(allFiles, downloadAllLabel)}
-                            className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            <span>📦 {downloadAllLabel} 전체 다운로드</span>
-                          </button>
-                        </div>
-                        {files.map(([category, categoryFiles]: [string, any]) => (
-                    <div key={category} className={`mb-4 p-4 rounded-lg border ${categoryColors[category] || categoryColors.other}`}>
-                      <div className="flex justify-between items-center mb-3">
-                        <h5 className="text-sm font-medium text-gray-800">
-                          {categoryNames[category] || categoryNames.other} ({files.length}개)
-                        </h5>
-                        {files.length > 1 && (
-                          <button
-                            onClick={() => handleCategoryDownload(files, categoryNames[category] || categoryNames.other)}
-                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors"
-                          >
-                            📦 전체 다운로드
-                          </button>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        {files.map((file: any, index: number) => (
-                          <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
-                            <div className="flex items-center space-x-3">
-                              {/* 파일 아이콘 또는 미리보기 */}
-                              {file.type && file.type.startsWith('image/') && file.data ? (
-                                <img
-                                  src={`data:${file.type};base64,${file.data}`}
-                                  alt={file.name}
-                                  className="w-10 h-10 object-cover rounded border"
-                                />
-                              ) : file.type && file.type.startsWith('video/') ? (
-                                <div className="w-10 h-10 bg-red-100 rounded border flex items-center justify-center">
-                                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                  </svg>
-                                </div>
-                              ) : (
-                                <div className="w-10 h-10 bg-gray-100 rounded border flex items-center justify-center">
-                                  <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                  </svg>
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 break-all" title={file.name}>{file.name}</p>
-                                <p className="text-xs text-gray-500">
-                                  {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'N/A'}
-                                  {file.description && ` • ${file.description}`}
-                                </p>
-                                {file.uploadDate && (
-                                  <p className="text-xs text-gray-400">
-                                    업로드: {new Date(file.uploadDate).toLocaleDateString('ko-KR')}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
+                          {allFiles.length > 0 && (
                             <button
-                              onClick={() => handleFileDownload(file)}
-                              className="bg-green-600 text-white text-sm font-medium px-3 py-1 rounded hover:bg-green-700 transition-colors flex items-center space-x-1"
+                              onClick={() => handleCategoryDownload(allFiles, downloadAllLabel)}
+                              className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                               </svg>
-                              <span>다운로드</span>
+                              <span>📦 {downloadAllLabel} 전체 다운로드</span>
                             </button>
-                          </div>
-                        ))}
+                          )}
+                        </div>
+                        <div className="space-y-4">
+                          {files.map(([category, categoryFiles]: [string, any]) => (
+                            <div key={category} className={`p-3 rounded-lg border ${categoryColors[category] || categoryColors.other}`}>
+                              <div className="flex justify-between items-center mb-3">
+                                <h6 className="text-sm font-medium text-gray-800">
+                                  {categoryNames[category] || categoryNames.other} ({categoryFiles.length}개)
+                                </h6>
+                                {categoryFiles.length > 1 && (
+                                  <button
+                                    onClick={() => handleCategoryDownload(categoryFiles, categoryNames[category] || categoryNames.other)}
+                                    className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors"
+                                  >
+                                    📦 전체 다운로드
+                                  </button>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                {categoryFiles.map((file: any, index: number) => (
+                                  <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
+                                    <div className="flex items-center space-x-3">
+                                      {/* 파일 아이콘 또는 미리보기 */}
+                                      {file.type && file.type.startsWith('image/') && file.data ? (
+                                        <img
+                                          src={`data:${file.type};base64,${file.data}`}
+                                          alt={file.name}
+                                          className="w-10 h-10 object-cover rounded border"
+                                        />
+                                      ) : file.type && file.type.startsWith('video/') ? (
+                                        <div className="w-10 h-10 bg-red-100 rounded border flex items-center justify-center">
+                                          <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                          </svg>
+                                        </div>
+                                      ) : (
+                                        <div className="w-10 h-10 bg-gray-100 rounded border flex items-center justify-center">
+                                          <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                          </svg>
+                                        </div>
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 break-all" title={file.name}>{file.name}</p>
+                                        <p className="text-xs text-gray-500">
+                                          {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'N/A'}
+                                          {file.description && ` • ${file.description}`}
+                                        </p>
+                                        {file.uploadDate && (
+                                          <p className="text-xs text-gray-400">
+                                            업로드: {new Date(file.uploadDate).toLocaleDateString('ko-KR')}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => handleFileDownload(file)}
+                                      className="bg-green-600 text-white text-sm font-medium px-3 py-1 rounded hover:bg-green-700 transition-colors flex items-center space-x-1"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                      </svg>
+                                      <span>다운로드</span>
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                         ))}
-                       </div>
-                     )
-                   }
+                    )
+                  }
 
                    return (
                      <div>

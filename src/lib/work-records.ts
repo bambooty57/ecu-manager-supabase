@@ -28,6 +28,7 @@ export interface RemappingWorkInput {
     maker: string
     type: string
     connectionMethod: string
+    toolCategory: string
     selectedWorks: string[]
     workDetails: string
     price: string
@@ -39,6 +40,7 @@ export interface RemappingWorkInput {
     model: string
     type?: string
     connectionMethod: string
+    toolCategory: string
     selectedWorks: string[]
     workDetails: string
     price: string
