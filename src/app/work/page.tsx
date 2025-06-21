@@ -119,6 +119,24 @@ export default function WorkPage() {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   const [filteredCustomers, setFilteredCustomers] = useState<CustomerData[]>([])
 
+  // 동적 ECU 모델 목록 (로컬 스토리지에서 가져오기)
+  const [ecuModels, setEcuModels] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ecuModels')
+      return saved ? JSON.parse(saved) : [...ECU_MODELS]
+    }
+    return [...ECU_MODELS]
+  })
+
+  // 새로운 ECU 타입을 목록에 추가
+  const addNewEcuType = (newType: string) => {
+    if (newType.trim() && !ecuModels.includes(newType.trim())) {
+      const newList = [...ecuModels, newType.trim()]
+      setEcuModels(newList)
+      localStorage.setItem('ecuModels', JSON.stringify(newList))
+    }
+  }
+
   // 고객 데이터 로드
   useEffect(() => {
     loadCustomers()
@@ -1013,27 +1031,42 @@ export default function WorkPage() {
                     className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">ECU 모델을 선택하세요</option>
-                    {ECU_MODELS.map((type) => (
+                    {ecuModels.map((type) => (
                       <option key={type} value={type}>
                         {type}
                       </option>
                     ))}
                   </select>
+                  <div className="mt-2 flex space-x-2">
+                    <input
+                      type="text"
+                      name="customEcuType"
+                      value={currentRemappingWork.ecuTypeCustom}
+                      onChange={(e) => setCurrentRemappingWork(prev => ({ ...prev, ecuTypeCustom: e.target.value }))}
+                      className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="새로운 ECU 모델을 입력하여 목록에 추가"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (currentRemappingWork.ecuTypeCustom.trim()) {
+                          addNewEcuType(currentRemappingWork.ecuTypeCustom.trim())
+                          setCurrentRemappingWork(prev => ({ 
+                            ...prev, 
+                            ecuType: currentRemappingWork.ecuTypeCustom.trim(),
+                            ecuTypeCustom: ''
+                          }))
+                        }
+                      }}
+                      className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                      title="목록에 추가하고 선택"
+                    >
+                      추가
+                    </button>
+                  </div>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    추가 정보
-                  </label>
-                  <input
-                    type="text"
-                    name="ecuTypeCustom"
-                    value={currentRemappingWork.ecuTypeCustom}
-                    onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="추가 ECU 정보나 세부 모델명..."
-                  />
-                </div>
+
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

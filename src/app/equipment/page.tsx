@@ -67,8 +67,25 @@ export default function EquipmentPage() {
   })
 
   // ECU/ACU 타입 목록 상태 (동적으로 추가 가능)
-  const [ecuModels, setEcuModels] = useState<string[]>([...ECU_MODELS])
-  const [acuTypes, setAcuTypes] = useState<string[]>([...ACU_TYPES])
+  const [ecuModels, setEcuModels] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ecuModels')
+      return saved ? JSON.parse(saved) : [...ECU_MODELS]
+    }
+    return [...ECU_MODELS]
+  })
+  const [acuTypes, setAcuTypes] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('acuTypes')
+      return saved ? JSON.parse(saved) : [...ACU_TYPES]
+    }
+    return [...ACU_TYPES]
+  })
+  
+  // 제조사별 모델 목록 상태 (동적으로 추가 가능)
+  const [modelsByManufacturer, setModelsByManufacturer] = useState<Record<string, string[]>>({
+    ...MANUFACTURER_MODELS
+  })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -153,20 +170,40 @@ export default function EquipmentPage() {
 
   // 제조사별 모델명 목록 가져오기
   const getAvailableModels = (manufacturer: string) => {
-    return MANUFACTURER_MODELS[manufacturer] || []
+    return modelsByManufacturer[manufacturer] || []
   }
 
   // 새로운 ECU 타입을 목록에 추가
   const addNewEcuType = (newType: string) => {
     if (newType.trim() && !ecuModels.includes(newType.trim())) {
-      setEcuModels(prev => [...prev, newType.trim()])
+      const newList = [...ecuModels, newType.trim()]
+      setEcuModels(newList)
+      localStorage.setItem('ecuModels', JSON.stringify(newList))
     }
   }
 
   // 새로운 ACU 타입을 목록에 추가
   const addNewAcuType = (newType: string) => {
     if (newType.trim() && !acuTypes.includes(newType.trim())) {
-      setAcuTypes(prev => [...prev, newType.trim()])
+      const newList = [...acuTypes, newType.trim()]
+      setAcuTypes(newList)
+      localStorage.setItem('acuTypes', JSON.stringify(newList))
+    }
+  }
+
+  // 새로운 모델을 제조사별 목록에 추가
+  const addNewModel = (manufacturer: string, newModel: string) => {
+    if (manufacturer && newModel.trim()) {
+      setModelsByManufacturer(prev => {
+        const currentModels = prev[manufacturer] || []
+        if (!currentModels.includes(newModel.trim())) {
+          return {
+            ...prev,
+            [manufacturer]: [...currentModels, newModel.trim()]
+          }
+        }
+        return prev
+      })
     }
   }
 
@@ -249,8 +286,8 @@ export default function EquipmentPage() {
         return
       }
 
-      // 모델명 처리: CUSTOM 선택 시 customModel 사용, 아니면 model 사용
-      const finalModel = editFormData.model === 'CUSTOM' ? editFormData.customModel : editFormData.model
+      // 모델명 처리
+      const finalModel = editFormData.model
       
       // ECU/ACU 타입 처리
       const finalEcuType = editFormData.ecuType
@@ -295,8 +332,8 @@ export default function EquipmentPage() {
         return
       }
 
-      // 모델명 처리: CUSTOM 선택 시 customModel 사용, 아니면 model 사용
-      const finalModel = formData.model === 'CUSTOM' ? formData.customModel : formData.model
+      // 모델명 처리
+      const finalModel = formData.model
       
       // ECU/ACU 타입 처리
       const finalEcuType = formData.ecuType
@@ -683,41 +720,47 @@ export default function EquipmentPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         모델명 *
                       </label>
-                      {editFormData.manufacturer && getAvailableModels(editFormData.manufacturer).length > 0 ? (
-                        <select
-                          name="model"
-                          value={editFormData.model}
-                          onChange={handleEditInputChange}
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">모델을 선택하세요</option>
-                          {getAvailableModels(editFormData.manufacturer).map((model) => (
-                            <option key={model} value={model}>{model}</option>
-                          ))}
-                          <option value="CUSTOM">직접 입력</option>
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          name="model"
-                          value={editFormData.model}
-                          onChange={handleEditInputChange}
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder={editFormData.manufacturer ? "모델명을 직접 입력하세요" : "제조사를 먼저 선택하세요"}
-                          disabled={!editFormData.manufacturer}
-                        />
-                      )}
-                      {editFormData.model === 'CUSTOM' && (
-                        <input
-                          type="text"
-                          name="customModel"
-                          value={editFormData.customModel || ''}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, customModel: e.target.value }))}
-                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="모델명을 직접 입력하세요"
-                        />
+                      <select
+                        name="model"
+                        value={editFormData.model}
+                        onChange={handleEditInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={!editFormData.manufacturer}
+                      >
+                        <option value="">모델을 선택하세요</option>
+                        {editFormData.manufacturer && getAvailableModels(editFormData.manufacturer).map((model) => (
+                          <option key={model} value={model}>{model}</option>
+                        ))}
+                      </select>
+                      {editFormData.manufacturer && (
+                        <div className="mt-2 flex space-x-2">
+                          <input
+                            type="text"
+                            name="customModel"
+                            value={editFormData.customModel || ''}
+                            onChange={(e) => setEditFormData(prev => ({ ...prev, customModel: e.target.value }))}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="새로운 모델명을 입력하여 목록에 추가"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editFormData.customModel?.trim()) {
+                                addNewModel(editFormData.manufacturer, editFormData.customModel.trim())
+                                setEditFormData(prev => ({ 
+                                  ...prev, 
+                                  model: editFormData.customModel.trim(),
+                                  customModel: ''
+                                }))
+                              }
+                            }}
+                            className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                            title="목록에 추가하고 선택"
+                          >
+                            추가
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -1019,41 +1062,47 @@ export default function EquipmentPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       모델명 *
                     </label>
-                    {formData.manufacturer && getAvailableModels(formData.manufacturer).length > 0 ? (
-                      <select
-                        name="model"
-                        value={formData.model}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">모델을 선택하세요</option>
-                        {getAvailableModels(formData.manufacturer).map((model) => (
-                          <option key={model} value={model}>{model}</option>
-                        ))}
-                        <option value="CUSTOM">직접 입력</option>
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        name="model"
-                        value={formData.model}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={formData.manufacturer ? "모델명을 직접 입력하세요" : "제조사를 먼저 선택하세요"}
-                        disabled={!formData.manufacturer}
-                      />
-                    )}
-                    {formData.model === 'CUSTOM' && (
-                      <input
-                        type="text"
-                        name="customModel"
-                        value={formData.customModel || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, customModel: e.target.value }))}
-                        className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="모델명을 직접 입력하세요"
-                      />
+                    <select
+                      name="model"
+                      value={formData.model}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={!formData.manufacturer}
+                    >
+                      <option value="">모델을 선택하세요</option>
+                      {formData.manufacturer && getAvailableModels(formData.manufacturer).map((model) => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
+                    </select>
+                    {formData.manufacturer && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          name="customModel"
+                          value={formData.customModel || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, customModel: e.target.value }))}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="새로운 모델명을 입력하여 목록에 추가"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (formData.customModel?.trim()) {
+                              addNewModel(formData.manufacturer, formData.customModel.trim())
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                model: formData.customModel.trim(),
+                                customModel: ''
+                              }))
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
                     )}
                   </div>
 
