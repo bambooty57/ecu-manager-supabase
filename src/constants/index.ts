@@ -632,12 +632,20 @@ export const PROTOCOLS = [
 
 // 튜닝 작업 카테고리
 export const TUNING_CATEGORIES = [
-  '튜닝 작업'
+  'ECU/튜닝',
+  'ACU/튜닝'
 ] as const
 
 // 카테고리별 튜닝 작업
 export const TUNING_WORKS_BY_CATEGORY = {
-  '튜닝 작업': [
+  'ECU/튜닝': [
+    '파워업',
+    'EGR 제거',
+    'AdBlue 제거',
+    'DPF 제거',
+    '속도제한해제'
+  ],
+  'ACU/튜닝': [
     '파워업',
     'EGR 제거',
     'AdBlue 제거',

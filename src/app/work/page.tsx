@@ -109,7 +109,8 @@ export default function WorkPage() {
 
   // 작업 카테고리별 선택 상태 (현재 편집 중인 작업용)
   const [workSelections, setWorkSelections] = useState<{[category: string]: string[]}>({
-    '튜닝 작업': []
+    'ECU/튜닝': [],
+    'ACU/튜닝': []
   })
 
   // Remapping 작업 편집 모드
@@ -207,15 +208,17 @@ export default function WorkPage() {
   const handleWorkSelection = (category: string, work: string) => {
     setWorkSelections(prev => {
       const categoryWorks = prev[category] || []
-      const isSelected = categoryWorks.includes(work)
+      // ECU/ACU 접두사를 포함한 작업명으로 처리
+      const prefixedWork = category === 'ECU/튜닝' ? `ECU:${work}` : `ACU:${work}`
+      const isSelected = categoryWorks.includes(prefixedWork)
       
       let newCategoryWorks
       if (isSelected) {
         // 선택 해제
-        newCategoryWorks = categoryWorks.filter(w => w !== work)
+        newCategoryWorks = categoryWorks.filter(w => w !== prefixedWork)
       } else {
         // 선택 추가
-        newCategoryWorks = [...categoryWorks, work]
+        newCategoryWorks = [...categoryWorks, prefixedWork]
       }
       
       const newSelections = { ...prev, [category]: newCategoryWorks }
@@ -232,12 +235,16 @@ export default function WorkPage() {
   const handleCategoryToggle = (category: string) => {
     const categoryWorks = TUNING_WORKS_BY_CATEGORY[category as keyof typeof TUNING_WORKS_BY_CATEGORY] || []
     const currentSelections = workSelections[category] || []
-    const isAllSelected = categoryWorks.length > 0 && categoryWorks.every(work => currentSelections.includes(work))
+    // 접두사를 포함한 작업명으로 변환
+    const prefixedWorks = categoryWorks.map(work => 
+      category === 'ECU/튜닝' ? `ECU:${work}` : `ACU:${work}`
+    )
+    const isAllSelected = prefixedWorks.length > 0 && prefixedWorks.every(work => currentSelections.includes(work))
     
     setWorkSelections(prev => {
       const newSelections = {
         ...prev,
-        [category]: isAllSelected ? [] : [...categoryWorks]
+        [category]: isAllSelected ? [] : [...prefixedWorks]
       }
       
       // 현재 Remapping 작업의 선택된 작업 목록 업데이트
@@ -347,7 +354,8 @@ export default function WorkPage() {
     })
 
     setWorkSelections({
-      '튜닝 작업': []
+      'ECU/튜닝': [],
+      'ACU/튜닝': []
     })
   }
 
@@ -369,9 +377,13 @@ export default function WorkPage() {
       files: work.files as any
     })
 
-    // 작업 선택 상태 복원
+    // 작업 선택 상태 복원 - ECU/ACU 작업을 분리하여 복원
+    const ecuWorks = work.selectedWorks.filter(w => w.startsWith('ECU:'))
+    const acuWorks = work.selectedWorks.filter(w => w.startsWith('ACU:'))
+    
     setWorkSelections({
-      '튜닝 작업': work.selectedWorks
+      'ECU/튜닝': ecuWorks,
+      'ACU/튜닝': acuWorks
     })
 
     setIsEditingRemapping(true)
@@ -423,7 +435,8 @@ export default function WorkPage() {
     })
 
     setWorkSelections({
-      '튜닝 작업': []
+      'ECU/튜닝': [],
+      'ACU/튜닝': []
     })
 
     setIsEditingRemapping(false)
@@ -914,11 +927,20 @@ export default function WorkPage() {
                         <div className="mt-3">
                           <span className="font-medium text-gray-700">선택된 작업:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {work.selectedWorks.map((workName, idx) => (
-                              <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {workName}
-                              </span>
-                            ))}
+                            {work.selectedWorks.map((workName, idx) => {
+                              const isECU = workName.startsWith('ECU:')
+                              const isACU = workName.startsWith('ACU:')
+                              const displayName = workName.replace(/^(ECU:|ACU:)/, '')
+                              const bgColor = isECU ? 'bg-blue-100 text-blue-800' : isACU ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                              const prefix = isECU ? '🔧 ECU' : isACU ? '⚙️ ACU' : ''
+                              
+                              return (
+                                <span key={idx} className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${bgColor}`}>
+                                  {prefix && <span className="mr-1">{prefix}:</span>}
+                                  {displayName}
+                                </span>
+                              )
+                            })}
                           </div>
                         </div>
                         {work.workDetails && (
@@ -1203,7 +1225,11 @@ export default function WorkPage() {
                     {TUNING_CATEGORIES.map((category) => {
                       const categoryWorks = TUNING_WORKS_BY_CATEGORY[category as keyof typeof TUNING_WORKS_BY_CATEGORY] || []
                       const selectedInCategory = workSelections[category] || []
-                      const isAllSelected = categoryWorks.length > 0 && categoryWorks.every(work => selectedInCategory.includes(work))
+                      // 접두사를 포함한 작업명으로 비교
+                      const prefixedWorks = categoryWorks.map(work => 
+                        category === 'ECU/튜닝' ? `ECU:${work}` : `ACU:${work}`
+                      )
+                      const isAllSelected = prefixedWorks.length > 0 && prefixedWorks.every(work => selectedInCategory.includes(work))
                       const isPartialSelected = selectedInCategory.length > 0 && !isAllSelected
                       
                       return (
@@ -1230,17 +1256,20 @@ export default function WorkPage() {
                           </div>
                           
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 ml-6">
-                            {categoryWorks.map((work) => (
-                              <label key={work} className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedInCategory.includes(work)}
-                                  onChange={() => handleWorkSelection(category, work)}
-                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                />
-                                <span className="ml-2 text-sm text-gray-700">{work}</span>
-                              </label>
-                            ))}
+                            {categoryWorks.map((work) => {
+                              const prefixedWork = category === 'ECU/튜닝' ? `ECU:${work}` : `ACU:${work}`
+                              return (
+                                <label key={work} className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedInCategory.includes(prefixedWork)}
+                                    onChange={() => handleWorkSelection(category, work)}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                  />
+                                  <span className="ml-2 text-sm text-gray-700">{work}</span>
+                                </label>
+                              )
+                            })}
                           </div>
                         </div>
                       )

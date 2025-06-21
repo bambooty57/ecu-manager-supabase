@@ -937,9 +937,33 @@ export default function HistoryPage() {
                   <div className="space-y-1">
                     <span className="text-sm font-medium text-gray-700">튜닝 작업:</span>
                     <div className="text-sm text-gray-900 whitespace-pre-wrap break-words">
-                      {selectedRecord.tuningWork === '기타' && selectedRecord.customTuningWork 
-                        ? selectedRecord.customTuningWork 
-                        : selectedRecord.tuningWork}
+                      {(() => {
+                        const tuningWork = selectedRecord.tuningWork === '기타' && selectedRecord.customTuningWork 
+                          ? selectedRecord.customTuningWork 
+                          : selectedRecord.tuningWork;
+                        
+                        // 새로운 형식(ECU:/ACU: 접두사가 있는 경우)인지 확인
+                        if (typeof tuningWork === 'string' && (tuningWork.includes('ECU:') || tuningWork.includes('ACU:'))) {
+                          return tuningWork.split(',').map((work: string, index: number) => {
+                            const trimmedWork = work.trim();
+                            const isECU = trimmedWork.startsWith('ECU:');
+                            const isACU = trimmedWork.startsWith('ACU:');
+                            const displayName = trimmedWork.replace(/^(ECU:|ACU:)/, '');
+                            const bgColor = isECU ? 'bg-blue-100 text-blue-800' : isACU ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+                            const prefix = isECU ? '🔧 ECU' : isACU ? '⚙️ ACU' : '';
+                            
+                            return (
+                              <span key={index} className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mr-1 mb-1 ${bgColor}`}>
+                                {prefix && <span className="mr-1">{prefix}:</span>}
+                                {displayName}
+                              </span>
+                            );
+                          });
+                        } else {
+                          // 기존 형식(접두사 없는 경우)
+                          return tuningWork;
+                        }
+                      })()}
                     </div>
                   </div>
                   <div className="flex justify-between">

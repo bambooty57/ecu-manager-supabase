@@ -289,7 +289,7 @@ export default function EquipmentPage() {
       // 모델명 처리
       const finalModel = editFormData.model
       
-      // ECU/ACU 타입 처리
+      // ECU/ACU 타입 처리 - 빈 문자열도 그대로 저장
       const finalEcuType = editFormData.ecuType
       const finalAcuType = editFormData.acuType
       
@@ -301,8 +301,8 @@ export default function EquipmentPage() {
         serialNumber: editFormData.serialNumber || undefined,
         engineType: undefined, // 엔진 타입은 별도 필드
         horsepower: editFormData.usageHours || undefined,
-        ecuType: finalEcuType || undefined,
-        acuType: finalAcuType || undefined,
+        ecuType: finalEcuType || '', // 빈 문자열로 저장
+        acuType: finalAcuType || '', // 빈 문자열로 저장
         notes: editFormData.notes || undefined
       }
 
@@ -337,7 +337,7 @@ export default function EquipmentPage() {
       // 모델명 처리
       const finalModel = formData.model
       
-      // ECU/ACU 타입 처리
+      // ECU/ACU 타입 처리 - 빈 문자열도 그대로 저장
       const finalEcuType = formData.ecuType
       const finalAcuType = formData.acuType
       
@@ -349,8 +349,8 @@ export default function EquipmentPage() {
         serialNumber: formData.serialNumber || undefined,
         engineType: undefined, // 엔진 타입은 별도 필드
         horsepower: formData.usageHours || undefined,
-        ecuType: finalEcuType || undefined,
-        acuType: finalAcuType || undefined,
+        ecuType: finalEcuType || '', // 빈 문자열로 저장
+        acuType: finalAcuType || '', // 빈 문자열로 저장
         notes: formData.notes || undefined
       }
 
