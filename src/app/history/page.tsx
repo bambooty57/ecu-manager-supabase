@@ -58,6 +58,104 @@ export default function HistoryPage() {
   })
   const [newAcuType, setNewAcuType] = useState('')
 
+  // ECU/ACU 타입 관리 상태
+  const [showEcuManagement, setShowEcuManagement] = useState(false)
+  const [showAcuManagement, setShowAcuManagement] = useState(false)
+  const [selectedEcuModels, setSelectedEcuModels] = useState<string[]>([])
+  const [selectedAcuTypes, setSelectedAcuTypes] = useState<string[]>([])
+  const [newEcuModelManagement, setNewEcuModelManagement] = useState('')
+  const [newAcuTypeManagement, setNewAcuTypeManagement] = useState('')
+
+  // ECU 모델 선택/해제
+  const handleEcuModelSelect = (model: string) => {
+    setSelectedEcuModels(prev => 
+      prev.includes(model) 
+        ? prev.filter(m => m !== model)
+        : [...prev, model]
+    )
+  }
+
+  // ACU 타입 선택/해제
+  const handleAcuTypeSelect = (type: string) => {
+    setSelectedAcuTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    )
+  }
+
+  // 선택된 ECU 모델 삭제
+  const deleteSelectedEcuModels = () => {
+    if (selectedEcuModels.length === 0) {
+      alert('삭제할 ECU 모델을 선택해주세요.')
+      return
+    }
+
+    if (confirm(`선택된 ${selectedEcuModels.length}개의 ECU 모델을 삭제하시겠습니까?`)) {
+      const newEcuModels = ecuModels.filter(model => !selectedEcuModels.includes(model))
+      setEcuModels(newEcuModels)
+      localStorage.setItem('ecuModels', JSON.stringify(newEcuModels))
+      setSelectedEcuModels([])
+      alert('선택된 ECU 모델이 삭제되었습니다.')
+    }
+  }
+
+  // 선택된 ACU 타입 삭제
+  const deleteSelectedAcuTypes = () => {
+    if (selectedAcuTypes.length === 0) {
+      alert('삭제할 ACU 타입을 선택해주세요.')
+      return
+    }
+
+    if (confirm(`선택된 ${selectedAcuTypes.length}개의 ACU 타입을 삭제하시겠습니까?`)) {
+      const newAcuTypes = acuTypes.filter(type => !selectedAcuTypes.includes(type))
+      setAcuTypes(newAcuTypes)
+      localStorage.setItem('acuTypes', JSON.stringify(newAcuTypes))
+      setSelectedAcuTypes([])
+      alert('선택된 ACU 타입이 삭제되었습니다.')
+    }
+  }
+
+  // 새로운 ECU 모델 추가 (중복 확인)
+  const handleAddNewEcuModelManagement = () => {
+    const trimmedModel = newEcuModelManagement.trim()
+    if (!trimmedModel) {
+      alert('ECU 모델명을 입력해주세요.')
+      return
+    }
+
+    if (ecuModels.includes(trimmedModel)) {
+      alert('이미 목록에 있는 ECU 모델입니다.')
+      return
+    }
+
+    const newEcuModels = [...ecuModels, trimmedModel]
+    setEcuModels(newEcuModels)
+    localStorage.setItem('ecuModels', JSON.stringify(newEcuModels))
+    setNewEcuModelManagement('')
+    alert('새로운 ECU 모델이 추가되었습니다.')
+  }
+
+  // 새로운 ACU 타입 추가 (중복 확인)
+  const handleAddNewAcuTypeManagement = () => {
+    const trimmedType = newAcuTypeManagement.trim()
+    if (!trimmedType) {
+      alert('ACU 타입명을 입력해주세요.')
+      return
+    }
+
+    if (acuTypes.includes(trimmedType)) {
+      alert('이미 목록에 있는 ACU 타입입니다.')
+      return
+    }
+
+    const newAcuTypes = [...acuTypes, trimmedType]
+    setAcuTypes(newAcuTypes)
+    localStorage.setItem('acuTypes', JSON.stringify(newAcuTypes))
+    setNewAcuTypeManagement('')
+    alert('새로운 ACU 타입이 추가되었습니다.')
+  }
+
   // 데이터 로드
   useEffect(() => {
     loadAllData()

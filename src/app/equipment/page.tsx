@@ -191,6 +191,104 @@ export default function EquipmentPage() {
     }
   }
 
+  // ECU/ACU 타입 관리 상태
+  const [showEcuManagement, setShowEcuManagement] = useState(false)
+  const [showAcuManagement, setShowAcuManagement] = useState(false)
+  const [selectedEcuModels, setSelectedEcuModels] = useState<string[]>([])
+  const [selectedAcuTypes, setSelectedAcuTypes] = useState<string[]>([])
+  const [newEcuModel, setNewEcuModel] = useState('')
+  const [newAcuType, setNewAcuType] = useState('')
+
+  // ECU 모델 선택/해제
+  const handleEcuModelSelect = (model: string) => {
+    setSelectedEcuModels(prev => 
+      prev.includes(model) 
+        ? prev.filter(m => m !== model)
+        : [...prev, model]
+    )
+  }
+
+  // ACU 타입 선택/해제
+  const handleAcuTypeSelect = (type: string) => {
+    setSelectedAcuTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    )
+  }
+
+  // 선택된 ECU 모델 삭제
+  const deleteSelectedEcuModels = () => {
+    if (selectedEcuModels.length === 0) {
+      alert('삭제할 ECU 모델을 선택해주세요.')
+      return
+    }
+
+    if (confirm(`선택된 ${selectedEcuModels.length}개의 ECU 모델을 삭제하시겠습니까?`)) {
+      const newEcuModels = ecuModels.filter(model => !selectedEcuModels.includes(model))
+      setEcuModels(newEcuModels)
+      localStorage.setItem('ecuModels', JSON.stringify(newEcuModels))
+      setSelectedEcuModels([])
+      alert('선택된 ECU 모델이 삭제되었습니다.')
+    }
+  }
+
+  // 선택된 ACU 타입 삭제
+  const deleteSelectedAcuTypes = () => {
+    if (selectedAcuTypes.length === 0) {
+      alert('삭제할 ACU 타입을 선택해주세요.')
+      return
+    }
+
+    if (confirm(`선택된 ${selectedAcuTypes.length}개의 ACU 타입을 삭제하시겠습니까?`)) {
+      const newAcuTypes = acuTypes.filter(type => !selectedAcuTypes.includes(type))
+      setAcuTypes(newAcuTypes)
+      localStorage.setItem('acuTypes', JSON.stringify(newAcuTypes))
+      setSelectedAcuTypes([])
+      alert('선택된 ACU 타입이 삭제되었습니다.')
+    }
+  }
+
+  // 새로운 ECU 모델 추가 (중복 확인)
+  const handleAddNewEcuModel = () => {
+    const trimmedModel = newEcuModel.trim()
+    if (!trimmedModel) {
+      alert('ECU 모델명을 입력해주세요.')
+      return
+    }
+
+    if (ecuModels.includes(trimmedModel)) {
+      alert('이미 목록에 있는 ECU 모델입니다.')
+      return
+    }
+
+    const newEcuModels = [...ecuModels, trimmedModel]
+    setEcuModels(newEcuModels)
+    localStorage.setItem('ecuModels', JSON.stringify(newEcuModels))
+    setNewEcuModel('')
+    alert('새로운 ECU 모델이 추가되었습니다.')
+  }
+
+  // 새로운 ACU 타입 추가 (중복 확인)
+  const handleAddNewAcuType = () => {
+    const trimmedType = newAcuType.trim()
+    if (!trimmedType) {
+      alert('ACU 타입명을 입력해주세요.')
+      return
+    }
+
+    if (acuTypes.includes(trimmedType)) {
+      alert('이미 목록에 있는 ACU 타입입니다.')
+      return
+    }
+
+    const newAcuTypes = [...acuTypes, trimmedType]
+    setAcuTypes(newAcuTypes)
+    localStorage.setItem('acuTypes', JSON.stringify(newAcuTypes))
+    setNewAcuType('')
+    alert('새로운 ACU 타입이 추가되었습니다.')
+  }
+
   // 새로운 모델을 제조사별 목록에 추가
   const addNewModel = (manufacturer: string, newModel: string) => {
     if (manufacturer && newModel.trim()) {
@@ -279,6 +377,9 @@ export default function EquipmentPage() {
     if (!selectedEquipment) return
     
     try {
+      console.log('🔧 장비 수정 시작:', selectedEquipment.id)
+      console.log('📝 수정 폼 데이터:', editFormData)
+      
       // 고객 ID 찾기
       const customer = customers.find(c => c.name === editFormData.customerName)
       if (!customer) {
@@ -293,7 +394,7 @@ export default function EquipmentPage() {
       const finalEcuType = editFormData.ecuType
       const finalAcuType = editFormData.acuType
       
-              const updateData: Partial<Omit<EquipmentData, 'id' | 'createdAt' | 'updatedAt'>> = {
+      const updateData: Partial<Omit<EquipmentData, 'id' | 'createdAt' | 'updatedAt'>> = {
         customerId: customer.id,
         equipmentType: editFormData.equipmentType,
         manufacturer: editFormData.manufacturer,
@@ -305,16 +406,23 @@ export default function EquipmentPage() {
         acuType: finalAcuType || '', // 빈 문자열로 저장
         notes: editFormData.notes || undefined
       }
+      
+      console.log('📤 업데이트 데이터:', updateData)
 
       const updatedEquipment = await updateEquipment(selectedEquipment.id, updateData)
       
+      console.log('✅ 업데이트 결과:', updatedEquipment)
+      
       if (updatedEquipment) {
+        console.log('🎉 장비 수정 성공!')
         // 성공적으로 수정되면 목록 새로고침
         await loadEquipments()
         setIsEditMode(false)
         setIsDetailModalOpen(false)
         setSelectedEquipment(null)
+        alert('장비가 성공적으로 수정되었습니다.')
       } else {
+        console.error('❌ 장비 수정 실패: updateEquipment가 null 반환')
         alert('장비 수정 중 오류가 발생했습니다.')
       }
     } catch (error) {

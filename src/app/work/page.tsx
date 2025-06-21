@@ -224,6 +224,104 @@ export default function WorkPage() {
     }
   }
 
+  // ECU/ACU 타입 관리 상태
+  const [showEcuManagement, setShowEcuManagement] = useState(false)
+  const [showAcuManagement, setShowAcuManagement] = useState(false)
+  const [selectedEcuModels, setSelectedEcuModels] = useState<string[]>([])
+  const [selectedAcuTypes, setSelectedAcuTypes] = useState<string[]>([])
+  const [newEcuModel, setNewEcuModel] = useState('')
+  const [newAcuType, setNewAcuType] = useState('')
+
+  // ECU 모델 선택/해제
+  const handleEcuModelSelect = (model: string) => {
+    setSelectedEcuModels(prev => 
+      prev.includes(model) 
+        ? prev.filter(m => m !== model)
+        : [...prev, model]
+    )
+  }
+
+  // ACU 타입 선택/해제
+  const handleAcuTypeSelect = (type: string) => {
+    setSelectedAcuTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    )
+  }
+
+  // 선택된 ECU 모델 삭제
+  const deleteSelectedEcuModels = () => {
+    if (selectedEcuModels.length === 0) {
+      alert('삭제할 ECU 모델을 선택해주세요.')
+      return
+    }
+
+    if (confirm(`선택된 ${selectedEcuModels.length}개의 ECU 모델을 삭제하시겠습니까?`)) {
+      const newEcuModels = ecuModels.filter(model => !selectedEcuModels.includes(model))
+      setEcuModels(newEcuModels)
+      localStorage.setItem('ecuModels', JSON.stringify(newEcuModels))
+      setSelectedEcuModels([])
+      alert('선택된 ECU 모델이 삭제되었습니다.')
+    }
+  }
+
+  // 선택된 ACU 타입 삭제
+  const deleteSelectedAcuTypes = () => {
+    if (selectedAcuTypes.length === 0) {
+      alert('삭제할 ACU 타입을 선택해주세요.')
+      return
+    }
+
+    if (confirm(`선택된 ${selectedAcuTypes.length}개의 ACU 타입을 삭제하시겠습니까?`)) {
+      const newAcuTypes = acuTypes.filter(type => !selectedAcuTypes.includes(type))
+      setAcuTypes(newAcuTypes)
+      localStorage.setItem('acuTypes', JSON.stringify(newAcuTypes))
+      setSelectedAcuTypes([])
+      alert('선택된 ACU 타입이 삭제되었습니다.')
+    }
+  }
+
+  // 새로운 ECU 모델 추가 (중복 확인)
+  const handleAddNewEcuModel = () => {
+    const trimmedModel = newEcuModel.trim()
+    if (!trimmedModel) {
+      alert('ECU 모델명을 입력해주세요.')
+      return
+    }
+
+    if (ecuModels.includes(trimmedModel)) {
+      alert('이미 목록에 있는 ECU 모델입니다.')
+      return
+    }
+
+    const newEcuModels = [...ecuModels, trimmedModel]
+    setEcuModels(newEcuModels)
+    localStorage.setItem('ecuModels', JSON.stringify(newEcuModels))
+    setNewEcuModel('')
+    alert('새로운 ECU 모델이 추가되었습니다.')
+  }
+
+  // 새로운 ACU 타입 추가 (중복 확인)
+  const handleAddNewAcuType = () => {
+    const trimmedType = newAcuType.trim()
+    if (!trimmedType) {
+      alert('ACU 타입명을 입력해주세요.')
+      return
+    }
+
+    if (acuTypes.includes(trimmedType)) {
+      alert('이미 목록에 있는 ACU 타입입니다.')
+      return
+    }
+
+    const newAcuTypes = [...acuTypes, trimmedType]
+    setAcuTypes(newAcuTypes)
+    localStorage.setItem('acuTypes', JSON.stringify(newAcuTypes))
+    setNewAcuType('')
+    alert('새로운 ACU 타입이 추가되었습니다.')
+  }
+
   // ACU 제조사별 사용 가능한 모델 목록 가져오기
   const getAvailableAcuModels = (manufacturer: string): string[] => {
     return acuModelsByManufacturer[manufacturer] || []
@@ -1412,9 +1510,19 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ECU 모델
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        ECU 모델
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowEcuManagement(true)}
+                        className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                        title="ECU 모델 관리"
+                      >
+                        관리
+                      </button>
+                    </div>
                     <select
                       value={currentRemappingWork.ecu.type}
                       onChange={(e) => handleRemappingWorkInputChange('ecu', 'type', e.target.value)}
@@ -1559,9 +1667,19 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ACU 모델
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        ACU 모델
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowAcuManagement(true)}
+                        className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+                        title="ACU 타입 관리"
+                      >
+                        관리
+                      </button>
+                    </div>
                     <select
                       value={currentRemappingWork.acu.model}
                       onChange={(e) => handleRemappingWorkInputChange('acu', 'model', e.target.value)}
@@ -2261,6 +2379,242 @@ export default function WorkPage() {
           </div>
         </div>
       </main>
+
+      {/* ECU 모델 관리 모달 */}
+      {showEcuManagement && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-[9999]">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-medium text-gray-900">🔧 ECU 모델 관리</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEcuManagement(false)
+                  setSelectedEcuModels([])
+                  setNewEcuModel('')
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="sr-only">닫기</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 새 ECU 모델 추가 */}
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h4 className="text-md font-medium text-blue-800 mb-3">새 ECU 모델 추가</h4>
+              <div className="flex space-x-3">
+                <input
+                  type="text"
+                  value={newEcuModel}
+                  onChange={(e) => setNewEcuModel(e.target.value)}
+                  className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="새 ECU 모델명을 입력하세요"
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddNewEcuModel()}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddNewEcuModel}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  추가
+                </button>
+              </div>
+            </div>
+
+            {/* 선택 삭제 */}
+            <div className="mb-4 flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                총 {ecuModels.length}개 모델 | 선택됨: {selectedEcuModels.length}개
+              </div>
+              <div className="space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedEcuModels.length === ecuModels.length) {
+                      setSelectedEcuModels([])
+                    } else {
+                      setSelectedEcuModels([...ecuModels])
+                    }
+                  }}
+                  className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors"
+                >
+                  {selectedEcuModels.length === ecuModels.length ? '전체 해제' : '전체 선택'}
+                </button>
+                <button
+                  type="button"
+                  onClick={deleteSelectedEcuModels}
+                  disabled={selectedEcuModels.length === 0}
+                  className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  선택 삭제 ({selectedEcuModels.length})
+                </button>
+              </div>
+            </div>
+
+            {/* ECU 모델 목록 */}
+            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
+                {ecuModels.map((model, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center p-2 rounded-lg border transition-colors cursor-pointer ${
+                      selectedEcuModels.includes(model)
+                        ? 'bg-blue-100 border-blue-300'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleEcuModelSelect(model)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedEcuModels.includes(model)}
+                      onChange={() => handleEcuModelSelect(model)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
+                    />
+                    <span className="text-sm text-gray-900 flex-1 truncate" title={model}>
+                      {model}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEcuManagement(false)
+                  setSelectedEcuModels([])
+                  setNewEcuModel('')
+                }}
+                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+              >
+                완료
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ACU 타입 관리 모달 */}
+      {showAcuManagement && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-[9999]">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-medium text-gray-900">⚙️ ACU 타입 관리</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAcuManagement(false)
+                  setSelectedAcuTypes([])
+                  setNewAcuType('')
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="sr-only">닫기</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 새 ACU 타입 추가 */}
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <h4 className="text-md font-medium text-green-800 mb-3">새 ACU 타입 추가</h4>
+              <div className="flex space-x-3">
+                <input
+                  type="text"
+                  value={newAcuType}
+                  onChange={(e) => setNewAcuType(e.target.value)}
+                  className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  placeholder="새 ACU 타입명을 입력하세요"
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddNewAcuType()}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddNewAcuType}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                >
+                  추가
+                </button>
+              </div>
+            </div>
+
+            {/* 선택 삭제 */}
+            <div className="mb-4 flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                총 {acuTypes.length}개 타입 | 선택됨: {selectedAcuTypes.length}개
+              </div>
+              <div className="space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedAcuTypes.length === acuTypes.length) {
+                      setSelectedAcuTypes([])
+                    } else {
+                      setSelectedAcuTypes([...acuTypes])
+                    }
+                  }}
+                  className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors"
+                >
+                  {selectedAcuTypes.length === acuTypes.length ? '전체 해제' : '전체 선택'}
+                </button>
+                <button
+                  type="button"
+                  onClick={deleteSelectedAcuTypes}
+                  disabled={selectedAcuTypes.length === 0}
+                  className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  선택 삭제 ({selectedAcuTypes.length})
+                </button>
+              </div>
+            </div>
+
+            {/* ACU 타입 목록 */}
+            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
+                {acuTypes.map((type, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center p-2 rounded-lg border transition-colors cursor-pointer ${
+                      selectedAcuTypes.includes(type)
+                        ? 'bg-green-100 border-green-300'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleAcuTypeSelect(type)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedAcuTypes.includes(type)}
+                      onChange={() => handleAcuTypeSelect(type)}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-3"
+                    />
+                    <span className="text-sm text-gray-900 flex-1 truncate" title={type}>
+                      {type}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAcuManagement(false)
+                  setSelectedAcuTypes([])
+                  setNewAcuType('')
+                }}
+                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+              >
+                완료
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AuthGuard>
   )
 } 

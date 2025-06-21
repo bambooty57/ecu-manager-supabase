@@ -213,6 +213,8 @@ export const updateEquipment = async (id: number, equipmentData: Partial<Omit<Eq
     if (equipmentData.serialNumber !== undefined) updateData.serial_number = equipmentData.serialNumber || null
     if (equipmentData.engineType !== undefined) updateData.engine_type = equipmentData.engineType || null
     if (equipmentData.horsepower !== undefined) updateData.horsepower = equipmentData.horsepower || null
+    if (equipmentData.ecuType !== undefined) updateData.ecu_type = equipmentData.ecuType || null
+    if (equipmentData.acuType !== undefined) updateData.acu_type = equipmentData.acuType || null
     if (equipmentData.notes !== undefined) updateData.notes = equipmentData.notes || null
     
     updateData.updated_at = new Date().toISOString()
