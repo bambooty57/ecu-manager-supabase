@@ -9,7 +9,7 @@ export interface CustomerData {
   id: number
   name: string
   phone: string
-  zipCode: string
+  zipCode?: string
   roadAddress: string
   jibunAddress: string
   registrationDate: string
@@ -19,11 +19,11 @@ export interface CustomerData {
 const transformCustomerFromDB = (customer: Customer): CustomerData => ({
   id: customer.id,
   name: customer.name,
-  phone: customer.phone,
-  zipCode: customer.zip_code || '',
+  phone: customer.phone || '',
+  zipCode: customer.zip_code || undefined,
   roadAddress: customer.road_address || '',
   jibunAddress: customer.jibun_address || '',
-  registrationDate: new Date(customer.created_at).toISOString().split('T')[0]
+  registrationDate: new Date(customer.created_at || new Date()).toISOString().split('T')[0]
 })
 
 // 프론트엔드 형식을 데이터베이스 형식으로 변환
@@ -36,33 +36,33 @@ const transformCustomerToDB = (customer: Omit<CustomerData, 'id' | 'registration
 })
 
 // 더미 고객 데이터 (환경변수가 placeholder일 때 사용)
-let DUMMY_CUSTOMERS: CustomerData[] = [
+const DUMMY_CUSTOMERS: CustomerData[] = [
   {
     id: 1,
     name: "김농부",
     phone: "010-1234-5678",
-    zipCode: "12345",
+    zipCode: "17564",
     roadAddress: "경기도 안성시 죽산면 중앙로 69",
     jibunAddress: "경기도 안성시 죽산면 죽산리 123",
-    registrationDate: "2024-01-15"
+    registrationDate: "2023-01-15"
   },
   {
     id: 2,
     name: "이농장",
     phone: "010-2345-6789",
-    zipCode: "54321",
+    zipCode: "31776",
     roadAddress: "충청남도 당진시 서부대로 중마트 등대로 1",
-    jibunAddress: "충청남도 당진시 서부면 대로 123",
-    registrationDate: "2024-02-20"
+    jibunAddress: "충청남도 당진시 합덕읍 운산리 456",
+    registrationDate: "2023-02-20"
   },
   {
     id: 3,
     name: "박트랙터",
     phone: "010-3456-7890",
-    zipCode: "67890",
+    zipCode: "54538",
     roadAddress: "전라북도 익산시 함라면 농기계로 456",
-    jibunAddress: "전라북도 익산시 함라면 함라리 456",
-    registrationDate: "2024-03-10"
+    jibunAddress: "전라북도 익산시 함라면 함열리 789",
+    registrationDate: "2023-03-25"
   }
 ]
 

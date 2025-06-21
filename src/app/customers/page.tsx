@@ -2,32 +2,29 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Script from 'next/script'
-import { getAllCustomers, createCustomer, createMultipleCustomers, deleteCustomer, updateCustomer } from '@/lib/customers'
+import { getAllCustomers, createCustomer, createMultipleCustomers, deleteCustomer, updateCustomer, CustomerData } from '@/lib/customers'
 import { testSupabaseConnection } from '@/lib/supabase'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 
-interface Customer {
-  id: number
-  name: string
-  phone: string
-  zipCode: string
-  roadAddress: string
-  jibunAddress: string
-  registrationDate: string
-}
-
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customers, setCustomers] = useState<CustomerData[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [customerForm, setCustomerForm] = useState({
+  
+  const initialFormData: Omit<CustomerData, 'id' | 'registrationDate'> = {
     name: '',
     phone: '',
     zipCode: '',
     roadAddress: '',
-    jibunAddress: ''
-  })
+    jibunAddress: '',
+  };
+  const [formData, setFormData] = useState(initialFormData)
+  
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editFormData, setEditFormData] = useState<Omit<CustomerData, 'id' | 'registrationDate'>>(initialFormData)
   
   // 고객 목록 검색 및 페이지네이션 관련 state
   const [searchTerm, setSearchTerm] = useState('')
@@ -40,18 +37,6 @@ export default function CustomersPage() {
   const [uploadResults, setUploadResults] = useState<{success: number, errors: string[]}>({success: 0, errors: []})
   const [showUploadModal, setShowUploadModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // 상세보기 및 수정 모달 관련 state
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [editFormData, setEditFormData] = useState({
-    name: '',
-    phone: '',
-    zipCode: '',
-    roadAddress: '',
-    jibunAddress: ''
-  })
 
   // 고객 데이터 로드
   useEffect(() => {
@@ -133,76 +118,32 @@ export default function CustomersPage() {
     
     if (name === 'phone') {
       const formatted = formatPhoneNumber(value)
-      setCustomerForm(prev => ({ ...prev, [name]: formatted }))
+      setFormData(prev => ({ ...prev, [name]: formatted }))
     } else {
-      setCustomerForm(prev => ({ ...prev, [name]: value }))
+      setFormData(prev => ({ ...prev, [name]: value }))
     }
   }
 
   // 카카오 주소 검색 함수
-  const handleAddressSearch = () => {
-    // @ts-ignore
-    if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
-      // @ts-ignore
-      new window.daum.Postcode({
-        oncomplete: function(data: any) {
-          console.log('Kakao Address Data:', data); // 디버깅용 로그
-          
-          // 도로명 주소 처리
-          let roadAddr = data.roadAddress || '';
-          let roadExtraAddr = '';
-          
-          // 도로명 주소 참고항목 조합
-          if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
-            roadExtraAddr += data.bname;
-          }
-          if(data.buildingName !== '' && data.apartment === 'Y'){
-            roadExtraAddr += (roadExtraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
-          }
-          if(roadExtraAddr !== ''){
-            roadAddr += ' (' + roadExtraAddr + ')';
-          }
+  const handleDaumPostcode = (data: any) => {
+    let fullAddress = data.address
+    let extraAddress = ''
 
-          // 지번 주소 처리 - 여러 필드를 확인하여 가장 적절한 주소 선택
-          let jibunAddr = data.jibunAddress || data.autoJibunAddress || '';
-          let jibunExtraAddr = '';
-          
-          // 지번주소가 없는 경우 기본 주소 정보로 구성
-          if (!jibunAddr && data.sido && data.sigungu) {
-            jibunAddr = data.sido + ' ' + data.sigungu;
-            if (data.bname) {
-              jibunAddr += ' ' + data.bname;
-            }
-            if (data.buildingName) {
-              jibunAddr += ' ' + data.buildingName;
-            }
-          }
-          
-          // 지번 주소 참고항목 조합
-          if(data.bname !== '' && /[동|로|가]$/g.test(data.bname) && !jibunAddr.includes(data.bname)){
-            jibunExtraAddr += data.bname;
-          }
-          if(data.buildingName !== '' && data.apartment === 'Y' && !jibunAddr.includes(data.buildingName)){
-            jibunExtraAddr += (jibunExtraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
-          }
-          if(jibunExtraAddr !== ''){
-            jibunAddr += ' (' + jibunExtraAddr + ')';
-          }
-
-          console.log('Processed addresses:', { roadAddr, jibunAddr }); // 디버깅용 로그
-
-          // 우편번호, 도로명주소, 지번주소를 각각의 필드에 자동 입력
-          setCustomerForm(prev => ({
-            ...prev,
-            zipCode: data.zonecode || '',
-            roadAddress: roadAddr,
-            jibunAddress: jibunAddr
-          }))
-        }
-      }).open();
-    } else {
-      alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+    if (data.addressType === 'R') {
+      if (data.bname !== '') {
+        extraAddress += data.bname
+      }
+      if (data.buildingName !== '') {
+        extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName)
+      }
+      fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '')
     }
+
+    setFormData(prev => ({
+      ...prev,
+      roadAddress: fullAddress,
+      jibunAddress: data.jibunAddress || '',
+    }))
   }
 
   // 고객 등록 처리
@@ -210,37 +151,25 @@ export default function CustomersPage() {
     e.preventDefault()
     
     // 필수 필드 검증
-    if (!customerForm.name.trim()) {
+    if (!formData.name.trim()) {
       alert('고객명을 입력해주세요.')
       return
     }
     
-    if (!customerForm.phone.trim()) {
+    if (!formData.phone.trim()) {
       alert('전화번호를 입력해주세요.')
       return
     }
     
     try {
-      console.log('🔧 고객 등록 시도:', customerForm)
+      console.log('🔧 고객 등록 시도:', formData)
       
-      const newCustomer = await createCustomer({
-        name: customerForm.name.trim(),
-        phone: customerForm.phone.trim(),
-        zipCode: customerForm.zipCode.trim(),
-        roadAddress: customerForm.roadAddress.trim(),
-        jibunAddress: customerForm.jibunAddress.trim()
-      })
+      const newCustomer = await createCustomer(formData)
 
       if (newCustomer) {
         console.log('✅ 고객 등록 성공:', newCustomer)
         setCustomers(prev => [newCustomer, ...prev])
-        setCustomerForm({
-          name: '',
-          phone: '',
-          zipCode: '',
-          roadAddress: '',
-          jibunAddress: ''
-        })
+        setFormData(initialFormData)
         setIsFormOpen(false)
         alert('고객이 성공적으로 등록되었습니다.')
       } else {
@@ -294,15 +223,9 @@ export default function CustomersPage() {
   }
 
   // 상세보기 모달 열기
-  const handleViewDetail = (customer: Customer) => {
+  const handleViewDetail = (customer: CustomerData) => {
     setSelectedCustomer(customer)
-    setEditFormData({
-      name: customer.name,
-      phone: customer.phone,
-      zipCode: customer.zipCode,
-      roadAddress: customer.roadAddress,
-      jibunAddress: customer.jibunAddress
-    })
+    setEditFormData(customer)
     setIsDetailModalOpen(true)
     setIsEditMode(false)
   }
@@ -331,13 +254,7 @@ export default function CustomersPage() {
     if (!selectedCustomer) return
 
     try {
-      const updatedCustomer = await updateCustomer(selectedCustomer.id, {
-        name: editFormData.name,
-        phone: editFormData.phone,
-        zipCode: editFormData.zipCode,
-        roadAddress: editFormData.roadAddress,
-        jibunAddress: editFormData.jibunAddress
-      })
+      const updatedCustomer = await updateCustomer(selectedCustomer.id, editFormData)
 
       if (updatedCustomer) {
         // 로컬 상태 업데이트
@@ -362,13 +279,7 @@ export default function CustomersPage() {
   const handleCancelEdit = () => {
     if (!selectedCustomer) return
     
-    setEditFormData({
-      name: selectedCustomer.name,
-      phone: selectedCustomer.phone,
-      zipCode: selectedCustomer.zipCode,
-      roadAddress: selectedCustomer.roadAddress,
-      jibunAddress: selectedCustomer.jibunAddress
-    })
+    setEditFormData(initialFormData)
     setIsEditMode(false)
   }
 
@@ -397,52 +308,7 @@ export default function CustomersPage() {
     if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
       // @ts-ignore
       new window.daum.Postcode({
-        oncomplete: function(data: any) {
-          // 도로명 주소 처리
-          let roadAddr = data.roadAddress || '';
-          let roadExtraAddr = '';
-          
-          if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
-            roadExtraAddr += data.bname;
-          }
-          if(data.buildingName !== '' && data.apartment === 'Y'){
-            roadExtraAddr += (roadExtraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
-          }
-          if(roadExtraAddr !== ''){
-            roadAddr += ' (' + roadExtraAddr + ')';
-          }
-
-          // 지번 주소 처리
-          let jibunAddr = data.jibunAddress || data.autoJibunAddress || '';
-          let jibunExtraAddr = '';
-          
-          if (!jibunAddr && data.sido && data.sigungu) {
-            jibunAddr = data.sido + ' ' + data.sigungu;
-            if (data.bname) {
-              jibunAddr += ' ' + data.bname;
-            }
-            if (data.buildingName) {
-              jibunAddr += ' ' + data.buildingName;
-            }
-          }
-          
-          if(data.bname !== '' && /[동|로|가]$/g.test(data.bname) && !jibunAddr.includes(data.bname)){
-            jibunExtraAddr += data.bname;
-          }
-          if(data.buildingName !== '' && data.apartment === 'Y' && !jibunAddr.includes(data.buildingName)){
-            jibunExtraAddr += (jibunExtraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
-          }
-          if(jibunExtraAddr !== ''){
-            jibunAddr += ' (' + jibunExtraAddr + ')';
-          }
-
-          setEditFormData(prev => ({
-            ...prev,
-            zipCode: data.zonecode || '',
-            roadAddress: roadAddr,
-            jibunAddress: jibunAddr
-          }))
-        }
+        oncomplete: handleDaumPostcode
       }).open();
     } else {
       alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
@@ -499,7 +365,7 @@ export default function CustomersPage() {
 
       // 첫 번째 줄은 헤더로 간주하고 건너뛰기
       const dataRows = data.slice(1)
-      const newCustomers: Customer[] = []
+      const newCustomers: CustomerData[] = []
       const errors: string[] = []
 
       dataRows.forEach((row, index) => {
@@ -509,7 +375,7 @@ export default function CustomersPage() {
             return
           }
 
-          const [name, phone, zipCode, roadAddress, jibunAddress] = row.map(cell => 
+          const [name, phone, roadAddress, jibunAddress] = row.map(cell => 
             cell ? String(cell).trim() : ''
           )
           
@@ -524,9 +390,8 @@ export default function CustomersPage() {
           const customerData = {
             name: name,
             phone: formattedPhone,
-            zipCode: zipCode || '',
             roadAddress: roadAddress || '',
-            jibunAddress: jibunAddress || ''
+            jibunAddress: jibunAddress || '',
           }
 
           newCustomers.push(customerData as any)
@@ -797,7 +662,6 @@ export default function CustomersPage() {
                             지번: {customer.jibunAddress}
                           </div>
                         )}
-                        <div className="text-xs text-gray-400 mt-1">우편번호: {customer.zipCode}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         {customer.registrationDate}
@@ -891,7 +755,6 @@ export default function CustomersPage() {
                           지번: {customer.jibunAddress}
                         </div>
                       )}
-                      <div className="text-xs text-gray-500 mt-1">우편번호: {customer.zipCode}</div>
                     </div>
                   </div>
                   <div className="flex items-center">
@@ -980,7 +843,7 @@ export default function CustomersPage() {
                     <input
                       type="text"
                       name="name"
-                      value={customerForm.name}
+                      value={formData.name}
                       onChange={handleInputChange}
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -995,7 +858,7 @@ export default function CustomersPage() {
                     <input
                       type="tel"
                       name="phone"
-                      value={customerForm.phone}
+                      value={formData.phone}
                       onChange={handleInputChange}
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1011,17 +874,17 @@ export default function CustomersPage() {
                       <div className="flex space-x-2">
                         <input
                           type="text"
-                          name="zipCode"
-                          value={customerForm.zipCode}
+                          name="roadAddress"
+                          value={formData.roadAddress}
                           onChange={handleInputChange}
                           required
                           readOnly
-                          className="w-32 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="우편번호"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="도로명 주소"
                         />
                         <button
                           type="button"
-                          onClick={handleAddressSearch}
+                          onClick={handleEditAddressSearch}
                           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                         >
                           주소 검색
@@ -1029,18 +892,8 @@ export default function CustomersPage() {
                       </div>
                       <input
                         type="text"
-                        name="roadAddress"
-                        value={customerForm.roadAddress}
-                        onChange={handleInputChange}
-                        required
-                        readOnly
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="도로명 주소"
-                      />
-                      <input
-                        type="text"
                         name="jibunAddress"
-                        value={customerForm.jibunAddress}
+                        value={formData.jibunAddress}
                         onChange={handleInputChange}
                         readOnly
                         className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1142,13 +995,13 @@ export default function CustomersPage() {
                         <div className="flex space-x-2">
                           <input
                             type="text"
-                            name="zipCode"
-                            value={editFormData.zipCode}
+                            name="roadAddress"
+                            value={editFormData.roadAddress}
                             onChange={handleEditInputChange}
                             required
                             readOnly
-                            className="w-32 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="우편번호"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="도로명 주소"
                           />
                           <button
                             type="button"
@@ -1158,16 +1011,6 @@ export default function CustomersPage() {
                             주소 검색
                           </button>
                         </div>
-                        <input
-                          type="text"
-                          name="roadAddress"
-                          value={editFormData.roadAddress}
-                          onChange={handleEditInputChange}
-                          required
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="도로명 주소"
-                        />
                         <input
                           type="text"
                           name="jibunAddress"
@@ -1218,16 +1061,6 @@ export default function CustomersPage() {
                           <div>
                             <p className="text-lg font-semibold text-gray-900 font-mono">{selectedCustomer.phone}</p>
                             <p className="text-sm text-gray-600">전화번호</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="flex items-center">
-                          <span className="text-2xl mr-3">📮</span>
-                          <div>
-                            <p className="text-lg font-semibold text-gray-900">{selectedCustomer.zipCode}</p>
-                            <p className="text-sm text-gray-600">우편번호</p>
                           </div>
                         </div>
                       </div>

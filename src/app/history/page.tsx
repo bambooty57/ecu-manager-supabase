@@ -197,6 +197,9 @@ export default function HistoryPage() {
         const customer = customersData.find(c => c.id === record.customerId)
         const equipment = equipmentsData.find(e => e.id === record.equipmentId)
         
+        // remappingWorks가 배열이고 내용이 있는지 확인
+        const firstWork = record.remappingWorks && record.remappingWorks.length > 0 ? record.remappingWorks[0] : null;
+
         return {
           ...record,
           customerName: customer?.name || '알 수 없음',
@@ -204,10 +207,12 @@ export default function HistoryPage() {
           manufacturer: equipment?.manufacturer || '알 수 없음',
           model: equipment?.model || '알 수 없음',
           serial: equipment?.serialNumber || '',
-          tuningWork: record.workDescription || '',
-          customTuningWork: record.workDescription || '',
-          ecuType: record.ecuModel || '',
-          connectionMethod: record.connectionMethod || '',
+          // workDescription 대신 remappingWorks의 내용을 기반으로 표시
+          tuningWork: firstWork ? firstWork.stage : record.workType,
+          customTuningWork: firstWork ? firstWork.stage : record.workType,
+          // ecuModel, connectionMethod 등도 remappingWorks에서 가져와야 함 (UI에 따라 추가 구현 필요)
+          ecuType: 'N/A', // 임시 값
+          connectionMethod: 'N/A', // 임시 값
           registrationDate: record.workDate
         }
       })
@@ -436,27 +441,23 @@ export default function HistoryPage() {
 
   // 작업 기록 삭제 핸들러
   const handleDeleteRecord = async (record: any) => {
-    const confirmMessage = `정말로 다음 작업 기록을 삭제하시겠습니까?\n\n고객: ${record.customerName}\n작업일: ${record.workDate}\n작업 내용: ${record.workDescription || record.workType}\n\n⚠️ 이 작업은 되돌릴 수 없습니다.`
-    
-    if (!confirm(confirmMessage)) {
-      return
-    }
+    if (confirm(`'${record.customerName}' 고객의 작업 기록(ID: ${record.id})을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
+      try {
+        await deleteWorkRecord(record.id);
 
-    try {
-      const success = await deleteWorkRecord(record.id)
-      
-      if (success) {
-        // 목록에서 삭제된 항목 제거
-        setWorkRecords(prev => prev.filter(r => r.id !== record.id))
-        alert('작업 기록이 성공적으로 삭제되었습니다.')
-      } else {
-        alert('작업 기록 삭제에 실패했습니다.')
+        // 성공적으로 삭제된 경우 UI 업데이트
+        setWorkRecords(prev => prev.filter(r => r.id !== record.id));
+        alert('작업 기록이 성공적으로 삭제되었습니다.');
+
+        // 모달이 열려있다면 닫기
+        closeModals();
+        
+      } catch (error) {
+        console.error('Failed to delete work record:', error);
+        alert('작업 기록 삭제에 실패했습니다. 콘솔을 확인해주세요.');
       }
-    } catch (error) {
-      console.error('작업 기록 삭제 오류:', error)
-      alert('작업 기록 삭제 중 오류가 발생했습니다.')
     }
-  }
+  };
 
   // 파일 업로드 핸들러
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -817,10 +818,16 @@ export default function HistoryPage() {
                             </td>
                             {/* ECU/튜닝 칸 */}
                             <td className="px-3 py-4 whitespace-nowrap">
-                              <div className="text-sm text-white">
-                                {record.ecuType && <span className="inline-block mr-2 px-2 py-1 text-xs bg-blue-600 text-white rounded">🔧 {record.ecuType}</span>}
+                              {/* 1. 제조사-모델명 (파란 박스) */}
+                              <div className="text-sm text-white mb-1">
+                                {(record.ecuMaker || record.ecuType) && (
+                                  <span className="inline-block mr-2 px-2 py-1 text-xs bg-blue-600 text-white rounded">
+                                    🔧 {record.ecuMaker ? `${record.ecuMaker}-${record.ecuType || 'N/A'}` : record.ecuType}
+                                  </span>
+                                )}
                               </div>
-                              <div className="text-sm text-gray-300">
+                              {/* 2. 튜닝작업내용 */}
+                              <div className="text-sm text-gray-300 mb-1">
                                 {(() => {
                                   if (!record.tuningWork) return null
                                   
@@ -830,11 +837,13 @@ export default function HistoryPage() {
                                     work.startsWith('ECU:') || (!work.startsWith('ACU:') && !work.includes('ACU:'))
                                   ).map((work: string) => work.replace('ECU:', '').trim())
                                   
-                                  return ecuWorks.length > 0 ? ecuWorks.join(', ') : null
+                                  return ecuWorks.length > 0 ? ecuWorks.join(', ') : '작업 없음'
                                 })()}
                               </div>
-                              <div className="text-xs text-gray-400">{record.ecuMaker}</div>
-                              <div className="text-xs text-gray-400">{record.connectionMethod}</div>
+                              {/* 3. 연결방법 */}
+                              <div className="text-xs text-gray-400">
+                                {record.connectionMethod || 'N/A'}
+                              </div>
                             </td>
                             {/* ACU/튜닝 칸 */}
                             <td className="px-3 py-4 whitespace-nowrap">

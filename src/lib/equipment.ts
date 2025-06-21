@@ -7,7 +7,7 @@ type EquipmentUpdate = Database['public']['Tables']['equipment']['Update']
 
 export interface EquipmentData {
   id: number
-  customerId: number
+  customerId: number | null
   equipmentType: string
   manufacturer: string
   model: string
@@ -18,8 +18,8 @@ export interface EquipmentData {
   ecuType?: string
   acuType?: string
   notes?: string
-  createdAt: string
-  updatedAt: string
+  createdAt: string | null
+  updatedAt: string | null
 }
 
 // 데이터베이스 형식을 프론트엔드 형식으로 변환
@@ -36,8 +36,8 @@ const transformEquipmentFromDB = (equipment: Equipment): EquipmentData => ({
   ecuType: equipment.ecu_type || undefined,
   acuType: equipment.acu_type || undefined,
   notes: equipment.notes || undefined,
-  createdAt: equipment.created_at,
-  updatedAt: equipment.updated_at
+  createdAt: equipment.created_at || '',
+  updatedAt: equipment.updated_at || ''
 })
 
 // 프론트엔드 형식을 데이터베이스 형식으로 변환

@@ -4,8 +4,9 @@ export interface EquipmentModel {
   id: number
   manufacturer: string
   model: string
-  created_at: string
-  updated_at: string
+  type: string
+  created_at: string | null
+  updated_at: string | null
 }
 
 // 모든 장비 모델 조회
@@ -30,12 +31,13 @@ export const getAllEquipmentModels = async (): Promise<EquipmentModel[]> => {
 }
 
 // 특정 제조사의 모델 목록 조회
-export const getModelsByManufacturer = async (manufacturer: string): Promise<string[]> => {
+export const getModelsByManufacturer = async (manufacturer: string, type: string): Promise<string[]> => {
   try {
     const { data, error } = await supabase
       .from('equipment_models')
       .select('model')
       .eq('manufacturer', manufacturer)
+      .eq('type', type)
       .order('model', { ascending: true })
 
     if (error) {
@@ -51,11 +53,12 @@ export const getModelsByManufacturer = async (manufacturer: string): Promise<str
 }
 
 // 제조사별 모델 목록을 객체 형태로 조회
-export const getModelsByManufacturerObject = async (): Promise<Record<string, string[]>> => {
+export const getModelsByManufacturerObject = async (type: string): Promise<Record<string, string[]>> => {
   try {
     const { data, error } = await supabase
       .from('equipment_models')
       .select('manufacturer, model')
+      .eq('type', type)
       .order('manufacturer', { ascending: true })
       .order('model', { ascending: true })
 
@@ -81,14 +84,14 @@ export const getModelsByManufacturerObject = async (): Promise<Record<string, st
 }
 
 // 새로운 모델 추가
-export const addEquipmentModel = async (manufacturer: string, model: string): Promise<EquipmentModel | null> => {
+export const addEquipmentModel = async (manufacturer: string, model: string, type: string): Promise<EquipmentModel | null> => {
   try {
     const { data, error } = await supabase
       .from('equipment_models')
       .insert({
         manufacturer: manufacturer.trim(),
         model: model.trim(),
-        updated_at: new Date().toISOString()
+        type: type
       })
       .select()
       .single()
@@ -131,14 +134,14 @@ export const deleteEquipmentModel = async (id: number): Promise<boolean> => {
 }
 
 // 모델 수정
-export const updateEquipmentModel = async (id: number, manufacturer: string, model: string): Promise<EquipmentModel | null> => {
+export const updateEquipmentModel = async (id: number, manufacturer: string, model: string, type: string): Promise<EquipmentModel | null> => {
   try {
     const { data, error } = await supabase
       .from('equipment_models')
       .update({
         manufacturer: manufacturer.trim(),
         model: model.trim(),
-        updated_at: new Date().toISOString()
+        type: type
       })
       .eq('id', id)
       .select()
@@ -157,13 +160,14 @@ export const updateEquipmentModel = async (id: number, manufacturer: string, mod
 }
 
 // 모델 존재 여부 확인
-export const checkModelExists = async (manufacturer: string, model: string): Promise<boolean> => {
+export const checkModelExists = async (manufacturer: string, model: string, type: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
       .from('equipment_models')
       .select('id')
       .eq('manufacturer', manufacturer.trim())
       .eq('model', model.trim())
+      .eq('type', type.trim())
       .maybeSingle()
 
     if (error) {

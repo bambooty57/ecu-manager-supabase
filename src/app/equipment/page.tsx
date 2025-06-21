@@ -98,15 +98,32 @@ export default function EquipmentPage() {
   // 모델 목록 로드
   const loadModels = async () => {
     try {
-      console.log('🔄 Loading models from database...')
-      const models = await getModelsByManufacturerObject()
-      console.log('✅ Models loaded:', models)
-      setModelsByManufacturer(models)
-      console.log('📊 Models state updated')
+      console.log('🔄 Loading models from database...');
+      const [ecuModels, acuModels] = await Promise.all([
+        getModelsByManufacturerObject('ECU'),
+        getModelsByManufacturerObject('ACU')
+      ]);
+      
+      console.log('✅ ECU Models loaded:', ecuModels);
+      console.log('✅ ACU Models loaded:', acuModels);
+
+      // 두 모델 객체를 병합합니다. 동일한 제조사가 양쪽에 있는 경우를 대비하여 신중하게 병합합니다.
+      const combinedModels = { ...ecuModels };
+      for (const manufacturer in acuModels) {
+        if (combinedModels[manufacturer]) {
+          // 중복되지 않는 모델만 추가합니다.
+          combinedModels[manufacturer] = [...new Set([...combinedModels[manufacturer], ...acuModels[manufacturer]])];
+        } else {
+          combinedModels[manufacturer] = acuModels[manufacturer];
+        }
+      }
+
+      setModelsByManufacturer(combinedModels);
+      console.log('📊 Combined models state updated:', combinedModels);
     } catch (error) {
-      console.error('❌ Failed to load models:', error)
+      console.error('❌ Failed to load models:', error);
     }
-  }
+  };
 
   // 페이지 포커스 시 고객 목록 새로고침
   useEffect(() => {
@@ -161,7 +178,7 @@ export default function EquipmentPage() {
           usageHours: equipment.horsepower || 0, // horsepower를 usageHours로 임시 매핑
           ecuType: equipment.ecuType || '',
           acuType: equipment.acuType || '', // ACU 타입 필드 사용
-          registrationDate: new Date(equipment.createdAt).toISOString().split('T')[0],
+          registrationDate: equipment.createdAt ? new Date(equipment.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           notes: equipment.notes
         }
       })
@@ -308,21 +325,31 @@ export default function EquipmentPage() {
 
   // 새로운 모델을 데이터베이스에 추가
   const addNewModel = async (manufacturer: string, newModel: string) => {
-    if (manufacturer && newModel.trim()) {
+    if (newModel.trim() && manufacturer) {
       try {
-        const result = await addEquipmentModel(manufacturer, newModel.trim())
-        if (result) {
-          // 성공적으로 추가되면 모델 목록 새로고침
-          await loadModels()
-          console.log('새로운 모델이 추가되었습니다:', manufacturer, newModel.trim())
+        console.log(`✨ Adding new model: ${manufacturer} - ${newModel}`);
+        // 'ECU'를 기본 타입으로 추가하거나, UI에서 타입을 선택할 수 있도록 수정해야 합니다.
+        // 여기서는 임시로 'ECU'를 사용합니다.
+        const addedModel = await addEquipmentModel(manufacturer, newModel, 'ECU');
+        if (addedModel) {
+          console.log('✅ Model added successfully to DB:', addedModel);
+          // 상태를 즉시 업데이트하여 UI에 반영
+          setModelsByManufacturer(prev => {
+            const newModels = { ...prev };
+            if (!newModels[manufacturer]) {
+              newModels[manufacturer] = [];
+            }
+            newModels[manufacturer].push(newModel);
+            return newModels;
+          });
         } else {
-          console.log('이미 존재하는 모델입니다:', manufacturer, newModel.trim())
+          console.log('ℹ️ Model already exists or failed to add.');
         }
       } catch (error) {
-        console.error('모델 추가 중 오류 발생:', error)
+        console.error('❌ Failed to add new model to DB:', error);
       }
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
