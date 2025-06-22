@@ -3,17 +3,31 @@ import { getAllWorkRecords, WorkRecordData } from './work-records'
 
 // Base64 데이터를 File 객체로 변환
 export const base64ToFile = (base64Data: string, fileName: string, mimeType: string): File => {
-  const byteCharacters = atob(base64Data)
-  const byteNumbers = new Array(byteCharacters.length)
-  
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i)
+  try {
+    // base64 데이터에서 data: prefix 제거
+    const cleanBase64 = base64Data.replace(/^data:[^;]+;base64,/, '')
+    
+    console.log(`🔄 Base64 → File 변환: ${fileName}`)
+    console.log(`📊 Base64 길이: ${cleanBase64.length} 문자`)
+    
+    const byteCharacters = atob(cleanBase64)
+    const byteNumbers = new Array(byteCharacters.length)
+    
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i)
+    }
+    
+    const byteArray = new Uint8Array(byteNumbers)
+    const blob = new Blob([byteArray], { type: mimeType })
+    const file = new File([blob], fileName, { type: mimeType })
+    
+    console.log(`✅ 파일 변환 완료: ${file.size} bytes`)
+    
+    return file
+  } catch (error) {
+    console.error('❌ Base64 → File 변환 실패:', error)
+    throw new Error(`Base64 변환 실패: ${fileName}`)
   }
-  
-  const byteArray = new Uint8Array(byteNumbers)
-  const blob = new Blob([byteArray], { type: mimeType })
-  
-  return new File([blob], fileName, { type: mimeType })
 }
 
 // 단일 파일 마이그레이션
@@ -23,6 +37,16 @@ export const migrateFileToStorage = async (
   category: string
 ): Promise<{ storagePath: string, storageUrl: string, bucketName: string } | null> => {
   try {
+    console.log(`🔍 파일 데이터 구조 확인:`, {
+      hasData: !!fileData.data,
+      hasName: !!fileData.name,
+      hasType: !!fileData.type,
+      dataType: typeof fileData.data,
+      dataLength: fileData.data?.length || 0,
+      fileName: fileData.name,
+      fileType: fileData.type
+    })
+    
     if (!fileData.data || !fileData.name) {
       console.log('❌ 파일 데이터가 없습니다:', fileData)
       return null
@@ -38,24 +62,25 @@ export const migrateFileToStorage = async (
     // Storage에 업로드
     const uploadResult = await uploadFileToStorage(file, bucketName, uniqueFileName)
     
-    // TODO: 파일 메타데이터 DB 저장 (file_metadata 테이블 생성 후 활성화)
-    // const { error: metadataError } = await supabase
-    //   .from('file_metadata')
-    //   .insert({
-    //     work_record_id: workRecordId,
-    //     file_name: file.name,
-    //     file_size: file.size,
-    //     file_type: file.type,
-    //     category: category,
-    //     storage_path: uploadResult.path,
-    //     storage_url: uploadResult.url,
-    //     bucket_name: bucketName,
-    //     description: fileData.description || ''
-    //   })
+    // 파일 메타데이터 DB 저장
+    const { error: metadataError } = await supabase
+      .from('file_metadata')
+      .insert({
+        work_record_id: workRecordId,
+        file_name: file.name,
+        file_size: file.size,
+        file_type: file.type,
+        category: category,
+        storage_path: uploadResult.path,
+        storage_url: uploadResult.url,
+        bucket_name: bucketName,
+        description: fileData.description || ''
+      })
 
-    // if (metadataError) {
-    //   console.error('파일 메타데이터 저장 오류:', metadataError)
-    // }
+    if (metadataError) {
+      console.error('파일 메타데이터 저장 오류:', metadataError)
+      throw metadataError
+    }
 
     console.log(`✅ 파일 마이그레이션 완료: ${file.name} → ${bucketName}/${uniqueFileName}`)
     
@@ -229,17 +254,18 @@ export const checkMigrationStatus = async (): Promise<{
       .from('work_records')
       .select('*', { count: 'exact', head: true })
 
-    // TODO: 마이그레이션된 기록 수 확인 (file_metadata 테이블 생성 후 활성화)
-    // const { count: migratedRecords } = await supabase
-    //   .from('file_metadata')
-    //   .select('work_record_id', { count: 'exact', head: true })
-
-    // const uniqueMigratedRecords = await supabase
-    //   .from('file_metadata')
-    //   .select('work_record_id')
+    // 마이그레이션된 기록 수 확인
+    const { data: migratedData, error: migratedError } = await supabase
+      .from('file_metadata')
+      .select('work_record_id')
     
-    const migratedRecords = 0 // 임시값
-    // .then(({ data }) => new Set(data?.map(item => item.work_record_id) || []).size)
+    if (migratedError) {
+      console.error('마이그레이션 데이터 조회 오류:', migratedError)
+    }
+    
+    // 고유한 work_record_id 개수 계산
+    const uniqueWorkRecordIds = new Set(migratedData?.map(item => item.work_record_id) || [])
+    const migratedRecords = uniqueWorkRecordIds.size
 
     const pendingRecords = (totalRecords || 0) - migratedRecords
     const migrationProgress = totalRecords ? (migratedRecords / totalRecords) * 100 : 0

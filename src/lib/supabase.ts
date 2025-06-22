@@ -71,6 +71,9 @@ export default supabase
 // 파일 업로드 (최적화된 버전)
 export const uploadFileToStorage = async (file: File, bucketName: string, fileName: string): Promise<{ path: string, url: string }> => {
   try {
+    console.log(`📤 파일 업로드 시작: ${file.name} → ${bucketName}/${fileName}`)
+    console.log(`📊 파일 크기: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+    
     const { data, error } = await supabase.storage
       .from(bucketName)
       .upload(fileName, file, {
@@ -79,7 +82,10 @@ export const uploadFileToStorage = async (file: File, bucketName: string, fileNa
       })
 
     if (error) {
-      console.error('파일 업로드 오류:', error)
+      console.error('❌ 파일 업로드 오류:', {
+        message: error.message,
+        error: error
+      })
       throw error
     }
 
@@ -88,12 +94,15 @@ export const uploadFileToStorage = async (file: File, bucketName: string, fileNa
       .from(bucketName)
       .getPublicUrl(data.path)
 
+    console.log(`✅ 파일 업로드 성공: ${data.path}`)
+    console.log(`🔗 공개 URL: ${publicUrl}`)
+
     return {
       path: data.path,
       url: publicUrl
     }
   } catch (error) {
-    console.error('파일 업로드 실패:', error)
+    console.error('❌ 파일 업로드 실패:', error)
     throw error
   }
 }
