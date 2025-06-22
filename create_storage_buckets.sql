@@ -1,5 +1,5 @@
 -- Supabase Storage 버킷 생성 및 정책 설정
--- ECU 관리 시스템에서 사용할 파일 스토리지 구성
+-- TracForce에서 사용할 파일 스토리지 구성
 
 -- 1. 작업 파일용 버킷 (ECU/ACU 파일들)
 INSERT INTO storage.buckets (id, name, public)

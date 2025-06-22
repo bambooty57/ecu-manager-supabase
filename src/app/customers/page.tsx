@@ -231,8 +231,6 @@ export default function CustomersPage() {
     }
   }
 
-
-
   // 고객 등록 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -913,24 +911,24 @@ export default function CustomersPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentCustomers.map((customer, index) => (
-              <div key={customer.id} className="card-modern rounded-xl p-6 animate-fadeIn" style={{animationDelay: `${index * 0.1}s`}}>
+              <div key={customer.id} className="bg-gray-800 border border-gray-700 rounded-xl p-6 animate-fadeIn" style={{animationDelay: `${index * 0.1}s`}}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center">
                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
                       {customer.name.charAt(0)}
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">{customer.name}</h3>
+                    <h3 className="text-lg font-semibold text-white">{customer.name}</h3>
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleViewDetail(customer)}
-                      className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200 cursor-pointer text-sm font-medium"
+                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-2 py-1 rounded transition-all duration-200 cursor-pointer text-sm font-medium"
                     >
                       상세보기
                     </button>
                     <button
                       onClick={() => handleDelete(customer.id)}
-                      className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded transition-all duration-200 cursor-pointer"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-900 p-1 rounded transition-all duration-200 cursor-pointer"
                       title="삭제"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -942,16 +940,16 @@ export default function CustomersPage() {
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center">
                     <span className="text-lg mr-2">📞</span>
-                    <span className="font-medium text-gray-600 mr-2">전화번호:</span>
-                    <span className="font-mono">{customer.phone}</span>
+                    <span className="font-medium text-gray-400 mr-2">전화번호:</span>
+                    <span className="font-mono text-white">{customer.phone}</span>
                   </div>
                   <div className="flex items-start">
                     <span className="text-lg mr-2 mt-0.5">📍</span>
                     <div>
                       <div>
-                        <span className="font-medium text-gray-600">주소:</span> 
+                        <span className="font-medium text-gray-400">주소:</span> 
                         <span 
-                          className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer ml-1"
+                          className="text-blue-400 hover:text-blue-300 hover:underline cursor-pointer ml-1"
                           onClick={(e) => handleViewOnMap(e, customer.roadAddress)}
                           title="카카오맵에서 보기"
                         >
@@ -960,7 +958,7 @@ export default function CustomersPage() {
                       </div>
                       {customer.jibunAddress && (
                         <div 
-                          className="text-xs text-gray-500 hover:text-gray-700 hover:underline cursor-pointer mt-1"
+                          className="text-xs text-gray-500 hover:text-gray-400 hover:underline cursor-pointer mt-1"
                           onClick={(e) => handleViewOnMap(e, customer.jibunAddress)}
                           title="카카오맵에서 보기"
                         >
@@ -971,14 +969,14 @@ export default function CustomersPage() {
                   </div>
                   <div className="flex items-center">
                     <span className="text-lg mr-2">📅</span>
-                    <span className="font-medium text-gray-600 mr-2">등록일:</span>
-                    <span>{customer.registrationDate}</span>
+                    <span className="font-medium text-gray-400 mr-2">등록일:</span>
+                    <span className="text-white">{customer.registrationDate}</span>
                   </div>
                 </div>
               </div>
             ))}
             {currentCustomers.length === 0 && (
-              <div className="col-span-full text-center py-12 text-gray-500">
+              <div className="col-span-full text-center py-12 text-gray-400">
                 <div className="text-6xl mb-4">👥</div>
                 <p className="text-lg">등록된 고객이 없습니다.</p>
                 <p className="text-sm mt-2">새 고객을 등록해보세요!</p>
@@ -989,12 +987,12 @@ export default function CustomersPage() {
 
         {/* 페이지네이션 */}
         {totalPages > 1 && (
-          <div className="card-modern rounded-xl p-4">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
             <div className="flex justify-center items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-600 bg-white/50 border border-gray-300 rounded-lg hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               >
                 <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1009,7 +1007,7 @@ export default function CustomersPage() {
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
                     currentPage === page
                       ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105'
-                      : 'text-gray-600 bg-white/50 hover:bg-white/80 hover:scale-105'
+                      : 'text-gray-300 bg-gray-700 border border-gray-600 hover:bg-gray-600 hover:scale-105'
                   }`}
                 >
                   {page}
@@ -1019,7 +1017,7 @@ export default function CustomersPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm font-medium text-gray-600 bg-white/50 border border-gray-300 rounded-lg hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               >
                 다음
                 <svg className="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1033,13 +1031,13 @@ export default function CustomersPage() {
         {/* 고객 등록 모달 */}
         {isFormOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">고객 등록</h2>
+                  <h2 className="text-2xl font-bold text-white">고객 등록</h2>
                   <button
                     onClick={() => setIsFormOpen(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-300"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1049,7 +1047,7 @@ export default function CustomersPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       고객명 *
                     </label>
                     <input
@@ -1058,13 +1056,13 @@ export default function CustomersPage() {
                       value={formData.name}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                       placeholder="고객명을 입력하세요"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       전화번호 *
                     </label>
                     <input
@@ -1073,13 +1071,13 @@ export default function CustomersPage() {
                       value={formData.phone}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                       placeholder="전화번호를 입력하세요 (자동 포맷팅)"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       주소 *
                     </label>
                     <div className="space-y-3">
@@ -1090,7 +1088,7 @@ export default function CustomersPage() {
                           value={formData.zipCode}
                           onChange={handleInputChange}
                           readOnly
-                          className="w-32 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-32 px-3 py-2 bg-gray-600 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                           placeholder="우편번호"
                         />
                         <button
@@ -1108,7 +1106,7 @@ export default function CustomersPage() {
                         onChange={handleInputChange}
                         required
                         readOnly
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                         placeholder="도로명 주소"
                       />
                       <input
@@ -1117,17 +1115,17 @@ export default function CustomersPage() {
                         value={formData.jibunAddress}
                         onChange={handleInputChange}
                         readOnly
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                         placeholder="지번 주소"
                       />
                     </div>
                   </div>
 
-                  <div className="flex justify-end space-x-4 pt-6 border-t">
+                  <div className="flex justify-end space-x-4 pt-6 border-t border-gray-700">
                     <button
                       type="button"
                       onClick={() => setIsFormOpen(false)}
-                      className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                      className="px-4 py-2 text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors"
                     >
                       취소
                     </button>
@@ -1147,10 +1145,10 @@ export default function CustomersPage() {
         {/* 고객 상세보기 모달 */}
         {isDetailModalOpen && selectedCustomer && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-2xl font-bold text-white">
                     {isEditMode ? '고객 정보 수정' : '고객 상세 정보'}
                   </h2>
                   <div className="flex items-center space-x-2">
@@ -1164,7 +1162,7 @@ export default function CustomersPage() {
                     )}
                     <button
                       onClick={closeModal}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-300"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1178,7 +1176,7 @@ export default function CustomersPage() {
                   <form onSubmit={handleSaveEdit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
                           고객명 *
                         </label>
                         <input
@@ -1187,13 +1185,13 @@ export default function CustomersPage() {
                           value={editFormData.name}
                           onChange={handleEditInputChange}
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                           placeholder="고객명을 입력하세요"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
                           전화번호 *
                         </label>
                         <input
@@ -1202,14 +1200,14 @@ export default function CustomersPage() {
                           value={editFormData.phone}
                           onChange={handleEditInputChange}
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                           placeholder="전화번호를 입력하세요"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         주소 *
                       </label>
                       <div className="space-y-3">
@@ -1220,7 +1218,7 @@ export default function CustomersPage() {
                             value={editFormData.zipCode}
                             onChange={handleEditInputChange}
                             readOnly
-                            className="w-32 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-32 px-3 py-2 bg-gray-600 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                             placeholder="우편번호"
                           />
                           <button
@@ -1238,7 +1236,7 @@ export default function CustomersPage() {
                           onChange={handleEditInputChange}
                           required
                           readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                           placeholder="도로명 주소"
                         />
                         <input
@@ -1247,17 +1245,17 @@ export default function CustomersPage() {
                           value={editFormData.jibunAddress}
                           onChange={handleEditInputChange}
                           readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                           placeholder="지번 주소"
                         />
                       </div>
                     </div>
 
-                    <div className="flex justify-end space-x-4 pt-6 border-t">
+                    <div className="flex justify-end space-x-4 pt-6 border-t border-gray-700">
                       <button
                         type="button"
                         onClick={handleCancelEdit}
-                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                        className="px-4 py-2 text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors"
                       >
                         취소
                       </button>
@@ -1273,45 +1271,45 @@ export default function CustomersPage() {
                   /* 상세보기 모드 */
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="bg-gray-700 p-4 rounded-lg border border-gray-600">
                         <div className="flex items-center mb-3">
                           <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
                             {selectedCustomer.name.charAt(0)}
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">{selectedCustomer.name}</h3>
-                            <p className="text-sm text-gray-600">고객명</p>
+                            <h3 className="text-lg font-semibold text-white">{selectedCustomer.name}</h3>
+                            <p className="text-sm text-gray-400">고객명</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="bg-gray-700 p-4 rounded-lg border border-gray-600">
                         <div className="flex items-center">
-                          <span className="text-2xl mr-3">📞</span>
+                          <span className="text-2xl mr-2">📞</span>
                           <div>
-                            <p className="text-lg font-semibold text-gray-900 font-mono">{selectedCustomer.phone}</p>
-                            <p className="text-sm text-gray-600">전화번호</p>
+                            <p className="text-lg font-semibold text-white font-mono">{selectedCustomer.phone}</p>
+                            <p className="text-sm text-gray-400">전화번호</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="bg-gray-700 p-4 rounded-lg border border-gray-600">
                         <div className="flex items-center">
-                          <span className="text-2xl mr-3">📅</span>
+                          <span className="text-2xl mr-2">📅</span>
                           <div>
-                            <p className="text-lg font-semibold text-gray-900">{selectedCustomer.registrationDate}</p>
-                            <p className="text-sm text-gray-600">등록일</p>
+                            <p className="text-lg font-semibold text-white">{selectedCustomer.registrationDate}</p>
+                            <p className="text-sm text-gray-400">등록일</p>
                           </div>
                         </div>
                       </div>
 
                       {selectedCustomer.zipCode && (
-                        <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="bg-gray-700 p-4 rounded-lg border border-gray-600">
                           <div className="flex items-center">
-                            <span className="text-2xl mr-3">📮</span>
+                            <span className="text-2xl mr-2">📮</span>
                             <div>
-                              <p className="text-lg font-semibold text-gray-900 font-mono">{selectedCustomer.zipCode}</p>
-                              <p className="text-sm text-gray-600">우편번호</p>
+                              <p className="text-lg font-semibold text-white font-mono">{selectedCustomer.zipCode}</p>
+                              <p className="text-sm text-gray-400">우편번호</p>
                             </div>
                           </div>
                         </div>
@@ -1319,13 +1317,13 @@ export default function CustomersPage() {
                     </div>
 
                     <div className="space-y-4">
-                      <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-700">
                         <div className="flex items-start">
                           <span className="text-2xl mr-3">🏠</span>
                           <div className="flex-1">
-                            <h4 className="text-lg font-semibold text-gray-900 mb-2">도로명 주소</h4>
+                            <h4 className="text-lg font-semibold text-white mb-2">도로명 주소</h4>
                             <p 
-                              className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                              className="text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
                               onClick={(e) => handleViewOnMap(e, selectedCustomer.roadAddress)}
                               title="카카오맵에서 보기"
                             >
@@ -1336,13 +1334,13 @@ export default function CustomersPage() {
                       </div>
 
                       {selectedCustomer.jibunAddress && (
-                        <div className="bg-green-50 p-4 rounded-lg">
+                        <div className="bg-green-900/30 p-4 rounded-lg border border-green-700">
                           <div className="flex items-start">
                             <span className="text-2xl mr-3">📍</span>
                             <div className="flex-1">
-                              <h4 className="text-lg font-semibold text-gray-900 mb-2">지번 주소</h4>
+                              <h4 className="text-lg font-semibold text-white mb-2">지번 주소</h4>
                               <p 
-                                className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                className="text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
                                 onClick={(e) => handleViewOnMap(e, selectedCustomer.jibunAddress)}
                                 title="카카오맵에서 보기"
                               >
@@ -1363,13 +1361,13 @@ export default function CustomersPage() {
         {/* 엑셀 업로드 결과 모달 */}
         {showUploadModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">업로드 결과</h2>
+                  <h2 className="text-2xl font-bold text-white">업로드 결과</h2>
                   <button
                     onClick={() => setShowUploadModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-300"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1379,12 +1377,12 @@ export default function CustomersPage() {
 
                 <div className="space-y-4">
                   {/* 성공 결과 */}
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="bg-green-900/30 border border-green-700 rounded-lg p-4">
                     <div className="flex items-center">
-                      <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      <h3 className="text-lg font-medium text-green-800">
+                      <h3 className="text-lg font-medium text-green-300">
                         성공적으로 등록된 고객: {uploadResults.success}명
                       </h3>
                     </div>
@@ -1392,17 +1390,17 @@ export default function CustomersPage() {
 
                   {/* 오류 결과 */}
                   {uploadResults.errors.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="bg-red-900/30 border border-red-700 rounded-lg p-4">
                       <div className="flex items-start">
-                        <svg className="w-5 h-5 text-red-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-red-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div className="flex-1">
-                          <h3 className="text-lg font-medium text-red-800 mb-2">
+                          <h3 className="text-lg font-medium text-red-300 mb-2">
                             오류 발생: {uploadResults.errors.length}건
                           </h3>
                           <div className="max-h-40 overflow-y-auto">
-                            <ul className="text-sm text-red-700 space-y-1">
+                            <ul className="text-sm text-red-300 space-y-1">
                               {uploadResults.errors.map((error, index) => (
                                 <li key={index} className="flex items-start">
                                   <span className="mr-2">•</span>
@@ -1417,31 +1415,31 @@ export default function CustomersPage() {
                   )}
 
                   {/* 안내 메시지 */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4">
                     <div className="flex items-start">
-                      <svg className="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-blue-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                                             <div className="text-sm text-blue-700">
-                         <p className="font-medium mb-1">업로드 파일 형식 안내:</p>
-                         <ul className="space-y-1">
-                           <li>• CSV, XLS, XLSX 파일 형식을 지원합니다</li>
-                           <li>• 첫 번째 줄은 헤더로 처리됩니다</li>
-                           <li>• 컬럼 순서: 이름, 전화번호, 우편번호, 도로명주소, 지번주소</li>
-                           <li>• 이름과 전화번호는 필수 항목입니다</li>
-                           <li>• 우편번호, 도로명주소, 지번주소는 선택 항목입니다</li>
-                           <li>• 중복된 고객(이름+전화번호)은 자동으로 제외됩니다</li>
-                           <li>• 엑셀 파일의 경우 첫 번째 시트만 처리됩니다</li>
-                         </ul>
-                       </div>
+                      <div className="text-sm text-blue-300">
+                        <p className="font-medium mb-1">업로드 파일 형식 안내:</p>
+                        <ul className="space-y-1">
+                          <li>• CSV, XLS, XLSX 파일 형식을 지원합니다</li>
+                          <li>• 첫 번째 줄은 헤더로 처리됩니다</li>
+                          <li>• 컬럼 순서: 이름, 전화번호, 우편번호, 도로명주소, 지번주소</li>
+                          <li>• 이름과 전화번호는 필수 항목입니다</li>
+                          <li>• 우편번호, 도로명주소, 지번주소는 선택 항목입니다</li>
+                          <li>• 중복된 고객(이름+전화번호)은 자동으로 제외됩니다</li>
+                          <li>• 엑셀 파일의 경우 첫 번째 시트만 처리됩니다</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-6 border-t">
+                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-700">
                   <button
                     onClick={downloadSampleFile}
-                    className="px-4 py-2 text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
+                    className="px-4 py-2 text-green-300 bg-green-900/30 border border-green-700 rounded-md hover:bg-green-900/50 transition-colors"
                   >
                     📄 샘플 파일 다운로드
                   </button>

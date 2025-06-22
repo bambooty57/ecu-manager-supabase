@@ -33,7 +33,7 @@ export default function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-xl font-bold text-gray-900">ECU 관리 시스템</h1>
+              <h1 className="text-xl font-bold text-gray-900">TracForce</h1>
             </div>
             <div className="hidden md:ml-10 md:flex md:space-x-8">
               {navigation.map((item) => (

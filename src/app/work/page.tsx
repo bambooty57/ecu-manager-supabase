@@ -943,15 +943,15 @@ export default function WorkPage() {
               
               {/* 고객 자동완성 드롭다운 */}
               {showCustomerDropdown && (
-                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-10 mt-1 w-full bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
                   {isLoadingCustomers ? (
-                    <div className="px-4 py-3 text-gray-500 text-center">
+                    <div className="px-4 py-3 text-gray-300 text-center">
                       고객 데이터 로딩 중...
                     </div>
                   ) : filteredCustomers.length > 0 ? (
                     <>
                       {formData.customerName.trim() === '' && (
-                        <div className="px-4 py-2 bg-gray-50 text-sm text-gray-600 border-b border-gray-200">
+                        <div className="px-4 py-2 bg-gray-600 text-sm text-gray-300 border-b border-gray-500">
                           전체 고객 목록 ({filteredCustomers.length}명)
                         </div>
                       )}
@@ -959,16 +959,16 @@ export default function WorkPage() {
                         <div
                           key={customer.id}
                           onClick={() => handleCustomerSelect(customer)}
-                          className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          className="px-4 py-3 hover:bg-gray-600 cursor-pointer border-b border-gray-600 last:border-b-0"
                         >
-                          <div className="font-medium text-gray-900">{customer.name}</div>
-                          <div className="text-sm text-gray-500">{customer.phone}</div>
+                          <div className="font-medium text-white">{customer.name}</div>
+                          <div className="text-sm text-gray-300">{customer.phone}</div>
                           <div className="text-xs text-gray-400">{customer.roadAddress}</div>
                         </div>
                       ))}
                     </>
                   ) : (
-                    <div className="px-4 py-3 text-gray-500 text-center">
+                    <div className="px-4 py-3 text-gray-300 text-center">
                       {formData.customerName.trim() === '' ? '고객 데이터를 불러오지 못했습니다.' : '검색 결과가 없습니다.'}
                     </div>
                   )}
@@ -977,8 +977,8 @@ export default function WorkPage() {
 
 
               {formData.customerId && (
-                <div className="mt-2 p-3 bg-blue-50 rounded-md">
-                  <p className="text-sm text-blue-700">
+                <div className="mt-2 p-3 bg-blue-900/20 border border-blue-700 rounded-md">
+                  <p className="text-sm text-blue-300">
                     📍 {customers.find(c => c.id.toString() === formData.customerId)?.roadAddress}
                   </p>
                 </div>
@@ -986,14 +986,14 @@ export default function WorkPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 장비 선택 *
               </label>
               <select
                 name="equipmentId"
                 value={formData.equipmentId}
                 onChange={handleInputChange}
-                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 required
                 disabled={!formData.customerId}
               >
@@ -1007,8 +1007,8 @@ export default function WorkPage() {
                 ))}
               </select>
               {formData.equipmentId && (
-                <div className="mt-2 p-3 bg-green-50 rounded-md">
-                  <p className="text-sm text-green-700">
+                <div className="mt-2 p-3 bg-green-900/20 border border-green-700 rounded-md">
+                  <p className="text-sm text-green-300">
                     🚜 기대번호: {availableEquipment.find(e => e.id.toString() === formData.equipmentId)?.serialNumber}
                   </p>
                 </div>
@@ -1016,7 +1016,7 @@ export default function WorkPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 작업 날짜 *
               </label>
               <input
@@ -1024,7 +1024,7 @@ export default function WorkPage() {
                 name="workDate"
                 value={formData.workDate}
                 onChange={handleInputChange}
-                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
@@ -1032,15 +1032,15 @@ export default function WorkPage() {
 
           {/* 등록된 Remapping 작업 목록 */}
           {remappingWorks.length > 0 && (
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">등록된 Remapping 작업 ({remappingWorks.length}개)</h3>
+            <div className="border-t border-gray-600 pt-6">
+              <h3 className="text-lg font-medium text-white mb-4">등록된 Remapping 작업 ({remappingWorks.length}개)</h3>
               <div className="space-y-4">
                 {remappingWorks.map((work, index) => (
-                  <div key={work.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div key={work.id} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">Remapping #{index + 1}</h4>
-                        <div className="mt-2 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <h4 className="font-medium text-white">Remapping #{index + 1}</h4>
+                        <div className="mt-2 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-300">
                           <div><span className="font-medium">ECU 타입:</span> {work.ecuType}</div>
                           <div><span className="font-medium">장비:</span> {work.ecuToolCategory}</div>
                           <div><span className="font-medium">연결:</span> {work.connectionMethod}</div>
@@ -1055,7 +1055,7 @@ export default function WorkPage() {
                           {work.price && <div><span className="font-medium">금액:</span> {(parseFloat(work.price) / 10000).toFixed(1)}만원</div>}
                         </div>
                         <div className="mt-3">
-                          <span className="font-medium text-gray-700">선택된 작업:</span>
+                          <span className="font-medium text-gray-200">선택된 작업:</span>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                             {/* ECU 작업 */}
                             <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
@@ -1184,14 +1184,14 @@ export default function WorkPage() {
             <div className="bg-gray-700 border border-gray-600 rounded-lg p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     ECU 장비 카테고리 *
                   </label>
                   <select
                     name="ecuToolCategory"
                     value={currentRemappingWork.ecuToolCategory}
                     onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">장비 카테고리를 선택하세요</option>
                     {ECU_TOOL_CATEGORIES.map((category) => (
@@ -1203,14 +1203,14 @@ export default function WorkPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     연결 방법 *
                   </label>
                   <select
                     name="connectionMethod"
                     value={currentRemappingWork.connectionMethod}
                     onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">연결 방법을 선택하세요</option>
                     {CONNECTION_METHODS.map((method) => (
@@ -1222,14 +1222,14 @@ export default function WorkPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     ECU 제조사
                   </label>
                   <select
                     name="ecuMaker"
                     value={currentRemappingWork.ecuMaker || ''}
                     onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">ECU 제조사를 선택하세요</option>
                     {ECU_MAKERS.map((maker) => (
@@ -1241,14 +1241,14 @@ export default function WorkPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     ECU 모델
                   </label>
                   <select
                     name="ecuType"
                     value={currentRemappingWork.ecuType}
                     onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">ECU 모델을 선택하세요</option>
                     {ecuModels.map((type) => (
@@ -1263,7 +1263,7 @@ export default function WorkPage() {
                       name="customEcuType"
                       value={currentRemappingWork.ecuTypeCustom}
                       onChange={(e) => setCurrentRemappingWork(prev => ({ ...prev, ecuTypeCustom: e.target.value }))}
-                      className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
                       placeholder="새로운 ECU 모델을 입력하여 목록에 추가"
                     />
                     <button
@@ -1287,14 +1287,14 @@ export default function WorkPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     ACU 제조사
                   </label>
                   <select
                     name="acuManufacturer"
                     value={currentRemappingWork.acuManufacturer}
                     onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">ACU 제조사를 선택하세요</option>
                     {ACU_MANUFACTURERS.map((manufacturer) => (
@@ -1306,14 +1306,14 @@ export default function WorkPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     ACU 모델
                   </label>
                   <select
                     name="acuModel"
                     value={currentRemappingWork.acuModel}
                     onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     disabled={!currentRemappingWork.acuManufacturer}
                   >
                     <option value="">
@@ -1331,7 +1331,7 @@ export default function WorkPage() {
                       name="customAcuModel"
                       value={currentRemappingWork.acuModelCustom}
                       onChange={(e) => setCurrentRemappingWork(prev => ({ ...prev, acuModelCustom: e.target.value }))}
-                      className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
                       placeholder="새로운 ACU 모델을 입력하여 목록에 추가"
                       disabled={!currentRemappingWork.acuManufacturer}
                     />
@@ -1357,14 +1357,14 @@ export default function WorkPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     작업 상태 *
                   </label>
                   <select
                     name="status"
                     value={currentRemappingWork.status}
                     onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     {WORK_STATUS.map((status) => (
                       <option key={status} value={status}>
@@ -1375,7 +1375,7 @@ export default function WorkPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     작업 금액 (만원)
                   </label>
                   <input
@@ -1383,7 +1383,7 @@ export default function WorkPage() {
                     name="price"
                     value={currentRemappingWork.price ? (parseFloat(currentRemappingWork.price) / 10000).toString() : ''}
                     onChange={handleRemappingWorkInputChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
                     placeholder="35 (35만원)"
                     min="0"
                     step="0.1"
@@ -1391,19 +1391,19 @@ export default function WorkPage() {
                 </div>
 
                 <div className="md:col-span-2 lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-4">
+                  <label className="block text-sm font-medium text-gray-300 mb-4">
                     튜닝 작업 선택 * (다중 선택 가능)
                   </label>
                   
                   {/* 선택된 작업 요약 */}
                   {currentRemappingWork.selectedWorks.length > 0 && (
-                    <div className="mb-4 p-3 bg-white rounded-lg border border-blue-200">
-                      <div className="text-sm font-medium text-blue-900 mb-2">
+                    <div className="mb-4 p-3 bg-gray-600 rounded-lg border border-blue-500">
+                      <div className="text-sm font-medium text-blue-300 mb-2">
                         선택된 작업 ({currentRemappingWork.selectedWorks.length}개):
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {currentRemappingWork.selectedWorks.map((work, index) => (
-                          <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/50 text-blue-200">
                             {work}
                           </span>
                         ))}
@@ -1424,7 +1424,7 @@ export default function WorkPage() {
                       const isPartialSelected = selectedInCategory.length > 0 && !isAllSelected
                       
                       return (
-                        <div key={category} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div key={category} className="bg-gray-600 border border-gray-500 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center">
                               <input
@@ -1435,13 +1435,13 @@ export default function WorkPage() {
                                   if (el) el.indeterminate = isPartialSelected
                                 }}
                                 onChange={() => handleCategoryToggle(category)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-400 rounded"
                               />
-                              <label htmlFor={`category-${category}`} className="ml-2 text-sm font-medium text-gray-900">
+                              <label htmlFor={`category-${category}`} className="ml-2 text-sm font-medium text-white">
                                 {category}
                               </label>
                             </div>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-300">
                               {selectedInCategory.length}/{categoryWorks.length} 선택됨
                             </span>
                           </div>
@@ -1455,9 +1455,9 @@ export default function WorkPage() {
                                     type="checkbox"
                                     checked={selectedInCategory.includes(prefixedWork)}
                                     onChange={() => handleWorkSelection(category, work)}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-400 rounded"
                                   />
-                                  <span className="ml-2 text-sm text-gray-700">{work}</span>
+                                  <span className="ml-2 text-sm text-gray-200">{work}</span>
                                 </label>
                               )
                             })}
@@ -1469,7 +1469,7 @@ export default function WorkPage() {
                 </div>
 
                 <div className="md:col-span-2 lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     작업 상세 정보
                   </label>
                   <textarea
@@ -1477,13 +1477,13 @@ export default function WorkPage() {
                     value={currentRemappingWork.workDetails}
                     onChange={handleRemappingWorkInputChange}
                     rows={3}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
                     placeholder="작업 내용, 특이사항, 주의사항 등을 상세히 입력하세요..."
                   />
                 </div>
 
                 <div className="md:col-span-2 lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     작업 메모
                   </label>
                   <textarea
@@ -1491,19 +1491,19 @@ export default function WorkPage() {
                     value={currentRemappingWork.notes}
                     onChange={handleRemappingWorkInputChange}
                     rows={2}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
                     placeholder="이 Remapping 작업에 대한 간단한 메모를 입력하세요..."
                   />
                 </div>
               </div>
 
               {/* 파일 첨부 섹션 */}
-              <div className="mt-8 border-t border-gray-200 pt-6">
-                <h4 className="text-md font-medium text-gray-900 mb-4">파일 첨부</h4>
+              <div className="mt-8 border-t border-gray-500 pt-6">
+                <h4 className="text-md font-medium text-white mb-4">파일 첨부</h4>
                 <div className="space-y-6">
                   {/* 원본 ECU 파일 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       원본 ECU 폴더
                     </label>
                     <div className="flex items-center space-x-3 mb-2">
@@ -1520,12 +1520,12 @@ export default function WorkPage() {
                       />
                       <label
                         htmlFor="original-folder"
-                        className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                        className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-500 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-gray-600 transition-colors"
                       >
-                        <svg className="w-6 h-6 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-gray-300 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-gray-300">
                           {currentRemappingWork.files.originalFiles && currentRemappingWork.files.originalFiles.length > 0 
                             ? `📁 ${currentRemappingWork.files.originalFiles.length}개 파일 선택됨` 
                             : '📁 원본 폴더 선택'}
@@ -1537,17 +1537,17 @@ export default function WorkPage() {
                       value={currentRemappingWork.files.originalFileDescription || ''}
                       onChange={(e) => handleFileDescriptionChange('originalFileDescription', e.target.value)}
                       placeholder="폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
                     />
                     {/* 선택된 파일 목록 표시 */}
-                    {currentRemappingWork.files.originalFiles && currentRemappingWork.files.originalFiles.length > 0 && (
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                        <div className="text-sm font-medium text-gray-700 mb-2">선택된 파일:</div>
-                        <div className="max-h-32 overflow-y-auto">
-                          {currentRemappingWork.files.originalFiles.map((file, index) => (
-                            <div key={index} className="text-xs text-gray-600 py-1 flex items-center">
-                              <span className="mr-2">📄</span>
-                              <span className="truncate">{file.name}</span>
+                                          {currentRemappingWork.files.originalFiles && currentRemappingWork.files.originalFiles.length > 0 && (
+                        <div className="mt-2 p-3 bg-gray-600 rounded-lg">
+                          <div className="text-sm font-medium text-gray-200 mb-2">선택된 파일:</div>
+                          <div className="max-h-32 overflow-y-auto">
+                            {currentRemappingWork.files.originalFiles.map((file, index) => (
+                              <div key={index} className="text-xs text-gray-300 py-1 flex items-center">
+                                <span className="mr-2">📄</span>
+                                <span className="truncate">{file.name}</span>
                               <span className="ml-auto text-gray-400">
                                 ({(file.size / 1024).toFixed(1)} KB)
                               </span>

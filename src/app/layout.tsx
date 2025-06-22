@@ -6,7 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ECU 튜닝 파일 관리 시스템",
+  title: "TracForce - 튜닝 파일 관리 시스템",
   description: "농기계 ECU 튜닝 파일을 체계적으로 관리하는 시스템",
 };
 

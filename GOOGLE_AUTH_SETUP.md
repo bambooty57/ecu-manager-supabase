@@ -24,7 +24,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 3. APIs & Services > Credentials 메뉴로 이동
 4. "Create Credentials" > "OAuth 2.0 Client IDs" 선택
 5. Application type: "Web application" 선택
-6. Name: "ECU Manager" 입력
+6. Name: "TracForce" 입력
 
 ### 승인된 리디렉션 URI 설정
 다음 URI들을 추가하세요:

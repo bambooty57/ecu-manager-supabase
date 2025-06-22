@@ -1600,12 +1600,12 @@ export default function HistoryPage() {
         return showDetailModal && selectedRecord
       })() && (
         <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-[9999]">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto p-5 border border-gray-700 w-11/12 max-w-4xl shadow-lg rounded-md bg-gray-800">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">작업 상세 정보</h3>
+              <h3 className="text-lg font-medium text-white">작업 상세 정보</h3>
               <button
                 onClick={closeModals}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-300"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1616,52 +1616,52 @@ export default function HistoryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* 기본 정보 */}
               <div className="space-y-4">
-                <h4 className="text-md font-medium text-gray-900 border-b pb-2">기본 정보</h4>
+                <h4 className="text-md font-medium text-white border-b border-gray-600 pb-2">기본 정보</h4>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">작업일:</span>
-                    <span className="text-sm text-gray-900">{selectedRecord.workDate}</span>
+                    <span className="text-sm text-gray-400">작업일:</span>
+                    <span className="text-sm text-white">{selectedRecord.workDate}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">고객명:</span>
+                    <span className="text-sm text-gray-400">고객명:</span>
                     <button
                       onClick={() => handleViewCustomer(selectedRecord.customerId)}
-                      className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline font-medium"
                     >
                       {selectedRecord.customerName}
                     </button>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">장비 종류:</span>
-                    <span className="text-sm text-gray-900">{selectedRecord.equipmentType}</span>
+                    <span className="text-sm text-gray-400">장비 종류:</span>
+                    <span className="text-sm text-white">{selectedRecord.equipmentType}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">제조사:</span>
-                    <span className="text-sm text-gray-900">{selectedRecord.manufacturer}</span>
+                    <span className="text-sm text-gray-400">제조사:</span>
+                    <span className="text-sm text-white">{selectedRecord.manufacturer}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">모델:</span>
-                    <span className="text-sm text-gray-900">{selectedRecord.model}</span>
+                    <span className="text-sm text-gray-400">모델:</span>
+                    <span className="text-sm text-white">{selectedRecord.model}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">상태:</span>
+                    <span className="text-sm text-gray-400">상태:</span>
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       selectedRecord.status === '완료' 
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-green-900 text-green-300'
                         : selectedRecord.status === '진행중'
-                        ? 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-yellow-900 text-yellow-300'
                         : selectedRecord.status === '예약'
-                        ? 'bg-blue-100 text-blue-800'
+                        ? 'bg-blue-900 text-blue-300'
                         : selectedRecord.status === 'AS'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-red-100 text-red-800'
+                        ? 'bg-orange-900 text-orange-300'
+                        : 'bg-red-900 text-red-300'
                     }`}>
                       {selectedRecord.status}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">작업 금액:</span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm text-gray-400">작업 금액:</span>
+                    <span className="text-sm font-medium text-white">
                       {selectedRecord.totalPrice && selectedRecord.totalPrice > 0 
                         ? `${selectedRecord.totalPrice.toLocaleString()}만원` 
                         : '미입력'}
@@ -1672,31 +1672,31 @@ export default function HistoryPage() {
 
               {/* ECU 작업 정보 */}
               <div className="space-y-4">
-                <h4 className="text-md font-medium text-blue-700 border-b border-blue-200 pb-2">🔧 ECU 작업 정보</h4>
-                <div className="space-y-3 bg-blue-50 p-3 rounded-lg">
+                <h4 className="text-md font-medium text-blue-400 border-b border-blue-600 pb-2">🔧 ECU 작업 정보</h4>
+                <div className="space-y-3 bg-blue-900/20 border border-blue-700 p-3 rounded-lg">
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">ECU 제조사:</span>
-                    <span className="text-sm text-gray-900 font-medium">{selectedRecord.ecuMaker || 'N/A'}</span>
+                    <span className="text-sm text-gray-400">ECU 제조사:</span>
+                    <span className="text-sm text-white font-medium">{selectedRecord.ecuMaker || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">ECU 모델:</span>
-                    <span className="text-sm text-gray-900 font-medium">{selectedRecord.ecuType || 'N/A'}</span>
+                    <span className="text-sm text-gray-400">ECU 모델:</span>
+                    <span className="text-sm text-white font-medium">{selectedRecord.ecuType || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">연결 방법:</span>
-                    <span className="text-sm text-gray-900 font-medium">{selectedRecord.connectionMethod || 'N/A'}</span>
+                    <span className="text-sm text-gray-400">연결 방법:</span>
+                    <span className="text-sm text-white font-medium">{selectedRecord.connectionMethod || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">사용 도구:</span>
-                    <span className="text-sm text-gray-900 font-medium">{selectedRecord.ecuTool || 'N/A'}</span>
+                    <span className="text-sm text-gray-400">사용 도구:</span>
+                    <span className="text-sm text-white font-medium">{selectedRecord.ecuTool || 'N/A'}</span>
                   </div>
                   <div className="space-y-1">
                     <span className="text-sm font-medium text-gray-700">ECU 튜닝 작업:</span>
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-white">
                       {selectedRecord.ecuTuningWorks && selectedRecord.ecuTuningWorks.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {selectedRecord.ecuTuningWorks.map((work: string, index: number) => (
-                            <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-800 text-blue-200">
                               {work}
                             </span>
                           ))}
@@ -1714,33 +1714,33 @@ export default function HistoryPage() {
             {(selectedRecord.acuManufacturer || selectedRecord.acuModel || (selectedRecord.acuTuningWorks && selectedRecord.acuTuningWorks.length > 0)) && (
               <div className="mt-6">
                 <div className="space-y-4">
-                  <h4 className="text-md font-medium text-green-700 border-b border-green-200 pb-2">⚙️ ACU 작업 정보</h4>
-                  <div className="space-y-3 bg-green-50 p-3 rounded-lg">
+                  <h4 className="text-md font-medium text-green-400 border-b border-green-600 pb-2">⚙️ ACU 작업 정보</h4>
+                  <div className="space-y-3 bg-green-900/20 border border-green-700 p-3 rounded-lg">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">ACU 제조사:</span>
-                        <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuManufacturer || 'N/A'}</span>
+                        <span className="text-sm text-gray-400">ACU 제조사:</span>
+                        <span className="text-sm text-white font-medium">{selectedRecord.acuManufacturer || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">ACU 모델:</span>
-                        <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuModel || 'N/A'}</span>
+                        <span className="text-sm text-gray-400">ACU 모델:</span>
+                        <span className="text-sm text-white font-medium">{selectedRecord.acuModel || 'N/A'}</span>
                       </div>
-                                             <div className="flex justify-between">
-                         <span className="text-sm text-gray-600">연결 방법:</span>
-                         <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuConnectionMethod || 'N/A'}</span>
-                       </div>
-                       <div className="flex justify-between">
-                         <span className="text-sm text-gray-600">사용 도구:</span>
-                         <span className="text-sm text-gray-900 font-medium">{selectedRecord.acuTool || 'N/A'}</span>
-                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-400">연결 방법:</span>
+                        <span className="text-sm text-white font-medium">{selectedRecord.acuConnectionMethod || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-400">사용 도구:</span>
+                        <span className="text-sm text-white font-medium">{selectedRecord.acuTool || 'N/A'}</span>
+                      </div>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-sm font-medium text-gray-700">ACU 튜닝 작업:</span>
-                      <div className="text-sm text-gray-900">
+                      <span className="text-sm font-medium text-gray-300">ACU 튜닝 작업:</span>
+                      <div className="text-sm text-white">
                         {selectedRecord.acuTuningWorks && selectedRecord.acuTuningWorks.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {selectedRecord.acuTuningWorks.map((work: string, index: number) => (
-                              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-800 text-green-200">
                                 {work}
                               </span>
                             ))}
@@ -1758,9 +1758,9 @@ export default function HistoryPage() {
             {/* 메모 */}
             {selectedRecord.notes && (
               <div className="mt-6">
-                <h4 className="text-md font-medium text-gray-900 border-b pb-2 mb-3">작업 메모</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-700">{selectedRecord.notes}</p>
+                <h4 className="text-md font-medium text-white border-b border-gray-600 pb-2 mb-3">작업 메모</h4>
+                <div className="bg-gray-700 border border-gray-600 p-4 rounded-lg">
+                  <p className="text-sm text-gray-300">{selectedRecord.notes}</p>
                 </div>
               </div>
             )}
@@ -1768,8 +1768,8 @@ export default function HistoryPage() {
             {/* 파일 다운로드 섹션 */}
             {selectedRecord.files && selectedRecord.files.length > 0 && (
               <div className="mt-6">
-                <div className="flex justify-between items-center border-b pb-2 mb-3">
-                  <h4 className="text-md font-medium text-gray-900">첨부 파일</h4>
+                <div className="flex justify-between items-center border-b border-gray-600 pb-2 mb-3">
+                  <h4 className="text-md font-medium text-white">첨부 파일</h4>
                   <button
                     onClick={() => handleCategoryDownload(selectedRecord.files, `${selectedRecord.customerName}_${selectedRecord.workDate}_전체파일`)}
                     className="bg-purple-600 text-white text-sm px-3 py-1 rounded hover:bg-purple-700 transition-colors flex items-center space-x-1"
@@ -1839,41 +1839,41 @@ export default function HistoryPage() {
                   }
 
                   const categoryColors: { [key: string]: string } = {
-                    originalFiles: 'bg-gray-50 border-gray-200',
-                    stage1File: 'bg-green-50 border-green-200',
-                    stage2File: 'bg-yellow-50 border-yellow-200',
-                    stage3File: 'bg-red-50 border-red-200',
-                    original: 'bg-gray-50 border-gray-200',
-                    read: 'bg-blue-50 border-blue-200',
-                    modified: 'bg-orange-50 border-orange-200',
-                    vr: 'bg-violet-50 border-violet-200',
-                    stage1: 'bg-green-50 border-green-200',
-                    stage2: 'bg-yellow-50 border-yellow-200',
-                    stage3: 'bg-red-50 border-red-200',
-                    acuOriginalFiles: 'bg-teal-50 border-teal-200',
-                    acuStage1File: 'bg-emerald-50 border-emerald-200',
-                    acuStage2File: 'bg-sky-50 border-sky-200',
-                    acuStage3File: 'bg-indigo-50 border-indigo-200',
-                    acuOriginal: 'bg-teal-50 border-teal-200',
-                    acuRead: 'bg-cyan-50 border-cyan-200',
-                    acuModified: 'bg-emerald-50 border-emerald-200',
-                    acuStage1: 'bg-sky-50 border-sky-200',
-                    acuStage2: 'bg-indigo-50 border-indigo-200',
-                    acuStage3: 'bg-purple-50 border-purple-200',
-                    mediaFile1: 'bg-pink-50 border-pink-200',
-                    mediaFile2: 'bg-rose-50 border-rose-200',
-                    mediaFile3: 'bg-fuchsia-50 border-fuchsia-200',
-                    mediaFile4: 'bg-violet-50 border-violet-200',
-                    mediaFile5: 'bg-purple-50 border-purple-200',
-                    before: 'bg-pink-50 border-pink-200',
-                    after: 'bg-rose-50 border-rose-200',
-                    media: 'bg-fuchsia-50 border-fuchsia-200',
-                    media1: 'bg-pink-50 border-pink-200',
-                    media2: 'bg-rose-50 border-rose-200',
-                    media3: 'bg-fuchsia-50 border-fuchsia-200',
-                    media4: 'bg-violet-50 border-violet-200',
-                    media5: 'bg-purple-50 border-purple-200',
-                    other: 'bg-slate-50 border-slate-200'
+                    originalFiles: 'bg-gray-800 border-gray-600',
+                    stage1File: 'bg-green-900 border-green-700',
+                    stage2File: 'bg-yellow-900 border-yellow-700',
+                    stage3File: 'bg-red-900 border-red-700',
+                    original: 'bg-gray-800 border-gray-600',
+                    read: 'bg-blue-900 border-blue-700',
+                    modified: 'bg-orange-900 border-orange-700',
+                    vr: 'bg-violet-900 border-violet-700',
+                    stage1: 'bg-green-900 border-green-700',
+                    stage2: 'bg-yellow-900 border-yellow-700',
+                    stage3: 'bg-red-900 border-red-700',
+                    acuOriginalFiles: 'bg-teal-900 border-teal-700',
+                    acuStage1File: 'bg-emerald-900 border-emerald-700',
+                    acuStage2File: 'bg-sky-900 border-sky-700',
+                    acuStage3File: 'bg-indigo-900 border-indigo-700',
+                    acuOriginal: 'bg-teal-900 border-teal-700',
+                    acuRead: 'bg-cyan-900 border-cyan-700',
+                    acuModified: 'bg-emerald-900 border-emerald-700',
+                    acuStage1: 'bg-sky-900 border-sky-700',
+                    acuStage2: 'bg-indigo-900 border-indigo-700',
+                    acuStage3: 'bg-purple-900 border-purple-700',
+                    mediaFile1: 'bg-pink-900 border-pink-700',
+                    mediaFile2: 'bg-rose-900 border-rose-700',
+                    mediaFile3: 'bg-fuchsia-900 border-fuchsia-700',
+                    mediaFile4: 'bg-violet-900 border-violet-700',
+                    mediaFile5: 'bg-purple-900 border-purple-700',
+                    before: 'bg-pink-900 border-pink-700',
+                    after: 'bg-rose-900 border-rose-700',
+                    media: 'bg-fuchsia-900 border-fuchsia-700',
+                    media1: 'bg-pink-900 border-pink-700',
+                    media2: 'bg-rose-900 border-rose-700',
+                    media3: 'bg-fuchsia-900 border-fuchsia-700',
+                    media4: 'bg-violet-900 border-violet-700',
+                    media5: 'bg-purple-900 border-purple-700',
+                    other: 'bg-slate-800 border-slate-600'
                   }
 
                   const renderFileGroup = (title: string, files: [string, any][], bgColor: string, downloadAllLabel: string, downloadHandler?: (files: any[]) => void) => {
@@ -1884,7 +1884,7 @@ export default function HistoryPage() {
                     return (
                       <div className={`mb-6 p-4 rounded-lg border-2 ${bgColor}`}>
                         <div className="flex justify-between items-center mb-4">
-                          <h5 className="text-lg font-bold text-gray-800">{title} ({allFiles.length}개)</h5>
+                          <h5 className="text-lg font-bold text-white">{title} ({allFiles.length}개)</h5>
                           {allFiles.length > 0 && (
                             <button
                               onClick={() => downloadHandler ? downloadHandler(allFiles) : handleCategoryDownload(allFiles, downloadAllLabel)}
@@ -1901,7 +1901,7 @@ export default function HistoryPage() {
                           {files.map(([category, categoryFiles]: [string, any]) => (
                             <div key={category} className={`p-3 rounded-lg border ${categoryColors[category] || categoryColors.other}`}>
                               <div className="flex justify-between items-center mb-3">
-                                <h6 className="text-sm font-medium text-gray-800">
+                                <h6 className="text-sm font-medium text-white">
                                   {categoryNames[category] || categoryNames.other} ({categoryFiles.length}개)
                                 </h6>
                                 {categoryFiles.length > 1 && (
@@ -1915,36 +1915,36 @@ export default function HistoryPage() {
                               </div>
                               <div className="space-y-2">
                                 {categoryFiles.map((file: any, index: number) => (
-                                  <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
+                                  <div key={index} className="flex items-center justify-between bg-gray-700 border border-gray-600 p-3 rounded">
                                     <div className="flex items-center space-x-3">
                                       {/* 파일 아이콘 또는 미리보기 */}
                                       {file.type && file.type.startsWith('image/') && file.data ? (
                                         <img
                                           src={`data:${file.type};base64,${file.data}`}
                                           alt={file.name}
-                                          className="w-10 h-10 object-cover rounded border"
+                                          className="w-10 h-10 object-cover rounded border border-gray-500"
                                         />
                                       ) : file.type && file.type.startsWith('video/') ? (
-                                        <div className="w-10 h-10 bg-red-100 rounded border flex items-center justify-center">
-                                          <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="w-10 h-10 bg-red-800 rounded border border-gray-500 flex items-center justify-center">
+                                          <svg className="w-6 h-6 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                           </svg>
                                         </div>
                                       ) : (
-                                        <div className="w-10 h-10 bg-gray-100 rounded border flex items-center justify-center">
-                                          <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="w-10 h-10 bg-gray-600 rounded border border-gray-500 flex items-center justify-center">
+                                          <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                           </svg>
                                         </div>
                                       )}
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 break-all" title={file.name}>{file.name}</p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-sm font-medium text-white break-all" title={file.name}>{file.name}</p>
+                                        <p className="text-xs text-gray-400">
                                           {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'N/A'}
                                           {file.description && ` • ${file.description}`}
                                         </p>
                                         {file.uploadDate && (
-                                          <p className="text-xs text-gray-400">
+                                          <p className="text-xs text-gray-500">
                                             업로드: {new Date(file.uploadDate).toLocaleDateString('ko-KR')}
                                           </p>
                                         )}
@@ -2010,10 +2010,10 @@ export default function HistoryPage() {
 
                    return (
                      <div>
-                       {renderFileGroup('🔧 ECU 파일', ecuFiles, 'bg-blue-50 border-blue-300', 'ECU', handleEcuFilesDownload)}
-                       {renderFileGroup('⚙️ ACU 파일', acuFiles, 'bg-green-50 border-green-300', 'ACU', handleAcuFilesDownload)}
-                       {renderFileGroup('📷 미디어 파일', mediaFiles, 'bg-purple-50 border-purple-300', '미디어', handleMediaFilesDownload)}
-                       {renderFileGroup('📁 기타 파일', otherFiles, 'bg-gray-50 border-gray-300', '기타')}
+                       {renderFileGroup('🔧 ECU 파일', ecuFiles, 'bg-blue-900/20 border-blue-600', 'ECU', handleEcuFilesDownload)}
+                       {renderFileGroup('⚙️ ACU 파일', acuFiles, 'bg-green-900/20 border-green-600', 'ACU', handleAcuFilesDownload)}
+                       {renderFileGroup('📷 미디어 파일', mediaFiles, 'bg-purple-900/20 border-purple-600', '미디어', handleMediaFilesDownload)}
+                       {renderFileGroup('📁 기타 파일', otherFiles, 'bg-gray-800 border-gray-600', '기타')}
                      </div>
                    )
                 })()}
@@ -2047,7 +2047,7 @@ export default function HistoryPage() {
               </div>
               <button
                 onClick={closeModals}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 hover:shadow-md transform hover:scale-105 transition-all duration-200 cursor-pointer"
+                className="px-4 py-2 bg-gray-600 text-gray-300 rounded-md hover:bg-gray-500 hover:shadow-md transform hover:scale-105 transition-all duration-200 cursor-pointer"
               >
                 닫기
               </button>

@@ -83,7 +83,7 @@ export default function Home() {
               {/* 헤더 섹션 */}
               <div className="text-center">
                 <h1 className="text-4xl font-bold text-white mb-4">
-                  ECU 관리 시스템
+                  TracForce
                 </h1>
                 <p className="text-xl text-gray-300">
                   농기계 및 건설기계 ECU 전문 튜닝 관리 시스템
