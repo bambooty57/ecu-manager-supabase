@@ -41,6 +41,7 @@ export default function EquipmentPage() {
     customerName: '',
     equipmentType: '',
     manufacturer: '',
+    customManufacturer: '',
     model: '',
     customModel: '',
     serialNumber: '',
@@ -57,6 +58,7 @@ export default function EquipmentPage() {
     customerName: '',
     equipmentType: '',
     manufacturer: '',
+    customManufacturer: '',
     model: '',
     customModel: '',
     serialNumber: '',
@@ -66,6 +68,15 @@ export default function EquipmentPage() {
     acuType: '',
     customAcuType: '',
     notes: ''
+  })
+
+  // 제조사 목록 상태 (동적으로 추가 가능)
+  const [manufacturers, setManufacturers] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('manufacturers')
+      return saved ? JSON.parse(saved) : [...MANUFACTURERS]
+    }
+    return [...MANUFACTURERS]
   })
 
   // ECU/ACU 타입 목록 상태 (동적으로 추가 가능)
@@ -206,6 +217,16 @@ export default function EquipmentPage() {
     const models = modelsByManufacturer[manufacturer] || []
     console.log('🎯 Models for', manufacturer, ':', models)
     return models
+  }
+
+  // 새로운 제조사를 목록에 추가
+  const addNewManufacturer = (newManufacturer: string) => {
+    if (newManufacturer.trim() && !manufacturers.includes(newManufacturer.trim())) {
+      const newList = [...manufacturers, newManufacturer.trim()]
+      setManufacturers(newList)
+      localStorage.setItem('manufacturers', JSON.stringify(newList))
+      console.log('✅ 새로운 제조사 추가:', newManufacturer.trim())
+    }
   }
 
   // 새로운 ECU 타입을 목록에 추가
@@ -398,6 +419,7 @@ export default function EquipmentPage() {
       customerName: equipment.customerName,
       equipmentType: equipment.equipmentType,
       manufacturer: equipment.manufacturer,
+      customManufacturer: '',
       model: equipment.model,
       customModel: '',
       serialNumber: equipment.serialNumber,
@@ -519,6 +541,7 @@ export default function EquipmentPage() {
           customerName: '',
           equipmentType: '',
           manufacturer: '',
+          customManufacturer: '',
           model: '',
           customModel: '',
           serialNumber: '',
@@ -641,7 +664,7 @@ export default function EquipmentPage() {
               className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">모든 제조사</option>
-              {MANUFACTURERS.map(manufacturer => (
+              {manufacturers.map(manufacturer => (
                 <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
               ))}
             </select>
@@ -834,76 +857,90 @@ export default function EquipmentPage() {
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         고객명 *
                       </label>
-                      <select
+                      <CustomDropdown
                         name="customerName"
                         value={editFormData.customerName}
-                        onChange={handleEditInputChange}
-                        required
-                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        onChange={(value) => setEditFormData(prev => ({ ...prev, customerName: value }))}
+                        options={customers.map(customer => ({ value: customer.name, label: customer.name }))}
+                        placeholder={isLoadingCustomers ? '고객 목록 로딩 중...' : '고객을 선택하세요'}
                         disabled={isLoadingCustomers}
-                      >
-                        <option value="">
-                          {isLoadingCustomers ? '고객 목록 로딩 중...' : '고객을 선택하세요'}
-                        </option>
-                        {customers.map(customer => (
-                          <option key={customer.id} value={customer.name}>{customer.name}</option>
-                        ))}
-                      </select>
+                        required={true}
+                        maxHeight="250px"
+                      />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         장비 종류 *
                       </label>
-                      <select
+                      <CustomDropdown
                         name="equipmentType"
                         value={editFormData.equipmentType}
-                        onChange={handleEditInputChange}
-                        required
-                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">선택하세요</option>
-                        {EQUIPMENT_TYPES.map(type => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
+                        onChange={(value) => setEditFormData(prev => ({ ...prev, equipmentType: value }))}
+                        options={EQUIPMENT_TYPES.map(type => ({ value: type, label: type }))}
+                        placeholder="장비 종류를 선택하세요"
+                        required={true}
+                        maxHeight="250px"
+                      />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         제조사 *
                       </label>
-                      <select
+                      <CustomDropdown
                         name="manufacturer"
                         value={editFormData.manufacturer}
-                        onChange={handleEditInputChange}
-                        required
-                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">선택하세요</option>
-                        {MANUFACTURERS.map(manufacturer => (
-                          <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
-                        ))}
-                      </select>
+                        onChange={(value) => setEditFormData(prev => ({ ...prev, manufacturer: value, model: '' }))}
+                        options={manufacturers.map(manufacturer => ({ value: manufacturer, label: manufacturer }))}
+                        placeholder="제조사를 선택하세요"
+                        required={true}
+                        maxHeight="250px"
+                      />
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          name="customManufacturer"
+                          value={editFormData.customManufacturer || ''}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, customManufacturer: e.target.value }))}
+                          className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="새로운 제조사명을 입력하여 목록에 추가"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editFormData.customManufacturer?.trim()) {
+                              addNewManufacturer(editFormData.customManufacturer.trim())
+                              setEditFormData(prev => ({ 
+                                ...prev, 
+                                manufacturer: editFormData.customManufacturer.trim(),
+                                customManufacturer: '',
+                                model: '' // 제조사 변경 시 모델 초기화
+                              }))
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         모델명 *
                       </label>
-                      <select
+                      <CustomDropdown
                         name="model"
                         value={editFormData.model}
-                        onChange={handleEditInputChange}
-                        required
-                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        onChange={(value) => setEditFormData(prev => ({ ...prev, model: value }))}
+                        options={editFormData.manufacturer ? getAvailableModels(editFormData.manufacturer).map(model => ({ value: model, label: model })) : []}
+                        placeholder="모델을 선택하세요"
                         disabled={!editFormData.manufacturer}
-                      >
-                        <option value="">모델을 선택하세요</option>
-                        {editFormData.manufacturer && getAvailableModels(editFormData.manufacturer).map((model) => (
-                          <option key={model} value={model}>{model}</option>
-                        ))}
-                      </select>
+                        required={true}
+                        maxHeight="250px"
+                      />
                       {editFormData.manufacturer && (
                         <div className="mt-2 flex space-x-2">
                           <input
@@ -1170,57 +1207,74 @@ export default function EquipmentPage() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       고객명 *
                     </label>
-                    <select
+                    <CustomDropdown
                       name="customerName"
                       value={formData.customerName}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      onChange={(value) => setFormData(prev => ({ ...prev, customerName: value }))}
+                      options={customers.map(customer => ({ value: customer.name, label: customer.name }))}
+                      placeholder={isLoadingCustomers ? '고객 목록 로딩 중...' : '고객을 선택하세요'}
                       disabled={isLoadingCustomers}
-                    >
-                      <option value="">
-                        {isLoadingCustomers ? '고객 목록 로딩 중...' : '고객을 선택하세요'}
-                      </option>
-                      {customers.map(customer => (
-                        <option key={customer.id} value={customer.name}>{customer.name}</option>
-                      ))}
-                    </select>
+                      required={true}
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       장비 종류 *
                     </label>
-                    <select
+                    <CustomDropdown
                       name="equipmentType"
                       value={formData.equipmentType}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">선택하세요</option>
-                      {EQUIPMENT_TYPES.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
+                      onChange={(value) => setFormData(prev => ({ ...prev, equipmentType: value }))}
+                      options={EQUIPMENT_TYPES.map(type => ({ value: type, label: type }))}
+                      placeholder="장비 종류를 선택하세요"
+                      required={true}
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       제조사 *
                     </label>
-                    <select
+                    <CustomDropdown
                       name="manufacturer"
                       value={formData.manufacturer}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">선택하세요</option>
-                      {MANUFACTURERS.map(manufacturer => (
-                        <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
-                      ))}
-                    </select>
+                      onChange={(value) => setFormData(prev => ({ ...prev, manufacturer: value, model: '' }))}
+                      options={manufacturers.map(manufacturer => ({ value: manufacturer, label: manufacturer }))}
+                      placeholder="제조사를 선택하세요"
+                      required={true}
+                      maxHeight="250px"
+                    />
+                    <div className="mt-2 flex space-x-2">
+                      <input
+                        type="text"
+                        name="customManufacturer"
+                        value={formData.customManufacturer || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, customManufacturer: e.target.value }))}
+                        className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="새로운 제조사명을 입력하여 목록에 추가"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (formData.customManufacturer?.trim()) {
+                            addNewManufacturer(formData.customManufacturer.trim())
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              manufacturer: formData.customManufacturer.trim(),
+                              customManufacturer: '',
+                              model: '' // 제조사 변경 시 모델 초기화
+                            }))
+                          }
+                        }}
+                        className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                        title="목록에 추가하고 선택"
+                      >
+                        추가
+                      </button>
+                    </div>
                   </div>
 
                   <div>

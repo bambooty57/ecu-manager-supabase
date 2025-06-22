@@ -6,6 +6,7 @@ import { ACU_TYPES, ACU_MANUFACTURERS, ACU_MODELS_BY_MANUFACTURER, ECU_MODELS, E
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getEquipmentByCustomerId, EquipmentData } from '@/lib/equipment'
 import { createWorkRecord, WorkRecordData } from '@/lib/work-records'
+import { getEquipmentCategoryNames, createEquipmentCategory } from '@/lib/equipment-categories'
 import { cacheManager, CacheKeys, CacheTTL } from '@/lib/cache-manager'
 import { generateOptimizedImageUrl, generateCacheHeaders } from '@/lib/cdn-utils'
 import Navigation from '@/components/Navigation'
@@ -31,6 +32,7 @@ export default function WorkPage() {
     // ECU 정보
     ecu: {
       toolCategory: string
+      toolCategoryCustom?: string
       connectionMethod: string
       maker: string
       type: string
@@ -43,6 +45,7 @@ export default function WorkPage() {
     // ACU 정보
     acu: {
       toolCategory: string
+      toolCategoryCustom?: string
       connectionMethod: string
       manufacturer: string
       model: string
@@ -99,6 +102,7 @@ export default function WorkPage() {
   const [currentRemappingWork, setCurrentRemappingWork] = useState({
     ecu: {
       toolCategory: '',
+      toolCategoryCustom: '',
       connectionMethod: '',
       maker: '',
       type: '',
@@ -110,6 +114,7 @@ export default function WorkPage() {
     },
     acu: {
       toolCategory: '',
+      toolCategoryCustom: '',
       connectionMethod: '',
       manufacturer: '',
       model: '',
@@ -194,12 +199,51 @@ export default function WorkPage() {
     return { ...ACU_MODELS_BY_MANUFACTURER }
   })
 
+  // 동적 ECU 장비 카테고리 목록 (데이터베이스에서 가져오기)
+  const [ecuCategories, setEcuCategories] = useState<string[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+
   // 새로운 ECU 타입을 목록에 추가
   const addNewEcuType = (newType: string) => {
     if (newType.trim() && !ecuModels.includes(newType.trim())) {
       const newList = [...ecuModels, newType.trim()]
       setEcuModels(newList)
       localStorage.setItem('ecuModels', JSON.stringify(newList))
+    }
+  }
+
+  // 장비 카테고리 로드
+  const loadEquipmentCategories = async () => {
+    try {
+      setIsLoadingCategories(true)
+      const categories = await getEquipmentCategoryNames('BOTH')
+      setEcuCategories(categories)
+    } catch (error) {
+      console.error('장비 카테고리 로드 오류:', error)
+      // 오류 시 기본 카테고리 사용
+      setEcuCategories([...ECU_TOOL_CATEGORIES])
+    } finally {
+      setIsLoadingCategories(false)
+    }
+  }
+
+  // 새로운 ECU 카테고리를 데이터베이스에 추가
+  const addNewEcuCategory = async (newCategory: string) => {
+    try {
+      if (!newCategory.trim() || ecuCategories.includes(newCategory.trim())) {
+        return
+      }
+
+      await createEquipmentCategory({
+        name: newCategory.trim(),
+        type: 'BOTH'
+      })
+
+      // 카테고리 목록 새로고침
+      await loadEquipmentCategories()
+    } catch (error) {
+      console.error('카테고리 추가 오류:', error)
+      alert(error instanceof Error ? error.message : '카테고리 추가 중 오류가 발생했습니다.')
     }
   }
 
@@ -330,9 +374,10 @@ export default function WorkPage() {
     return acuModelsByManufacturer[manufacturer] || []
   }
 
-  // 고객 데이터 로드
+  // 고객 데이터 및 카테고리 로드
   useEffect(() => {
     loadCustomers()
+    loadEquipmentCategories()
   }, [])
 
   // 페이지 포커스 시 고객 목록 새로고침
@@ -549,6 +594,7 @@ export default function WorkPage() {
     setCurrentRemappingWork({
       ecu: {
         toolCategory: '',
+        toolCategoryCustom: '',
         connectionMethod: '',
         maker: '',
         type: '',
@@ -560,6 +606,7 @@ export default function WorkPage() {
       },
       acu: {
         toolCategory: '',
+        toolCategoryCustom: '',
         connectionMethod: '',
         manufacturer: '',
         model: '',
@@ -611,6 +658,7 @@ export default function WorkPage() {
     setCurrentRemappingWork({
       ecu: {
         toolCategory: work.ecu.toolCategory,
+        toolCategoryCustom: work.ecu.toolCategoryCustom || '',
         connectionMethod: work.ecu.connectionMethod,
         maker: work.ecu.maker,
         type: work.ecu.type,
@@ -622,6 +670,7 @@ export default function WorkPage() {
       },
       acu: {
         toolCategory: work.acu.toolCategory,
+        toolCategoryCustom: work.acu.toolCategoryCustom || '',
         connectionMethod: work.acu.connectionMethod,
         manufacturer: work.acu.manufacturer,
         model: work.acu.model || work.acu.modelCustom,
@@ -657,6 +706,7 @@ export default function WorkPage() {
     setCurrentRemappingWork({
       ecu: {
         toolCategory: '',
+        toolCategoryCustom: '',
         connectionMethod: '',
         maker: '',
         type: '',
@@ -668,6 +718,7 @@ export default function WorkPage() {
       },
       acu: {
         toolCategory: '',
+        toolCategoryCustom: '',
         connectionMethod: '',
         manufacturer: '',
         model: '',
@@ -1070,6 +1121,7 @@ export default function WorkPage() {
     setCurrentRemappingWork({
       ecu: {
         toolCategory: '',
+        toolCategoryCustom: '',
         connectionMethod: '',
         maker: '',
         type: '',
@@ -1081,6 +1133,7 @@ export default function WorkPage() {
       },
       acu: {
         toolCategory: '',
+        toolCategoryCustom: '',
         connectionMethod: '',
         manufacturer: '',
         model: '',
@@ -1612,10 +1665,38 @@ export default function WorkPage() {
                     <CustomDropdown
                       value={currentRemappingWork.ecu.toolCategory}
                       onChange={(value) => handleRemappingWorkInputChange('ecu', 'toolCategory', value)}
-                      options={ECU_TOOL_CATEGORIES.map(category => ({ value: category, label: category }))}
+                      options={ecuCategories.map(category => ({ value: category, label: category }))}
                       placeholder="장비 카테고리를 선택하세요"
                       maxHeight="250px"
                     />
+                    
+                    {/* 직접입력 선택 시 새 카테고리 추가 필드 */}
+                    {currentRemappingWork.ecu.toolCategory === '직접입력' && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          value={currentRemappingWork.ecu.toolCategoryCustom || ''}
+                          onChange={(e) => handleRemappingWorkInputChange('ecu', 'toolCategoryCustom', e.target.value)}
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="새로운 ECU 카테고리를 입력하세요"
+                        />
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const customCategory = currentRemappingWork.ecu.toolCategoryCustom?.trim()
+                            if (customCategory) {
+                              await addNewEcuCategory(customCategory)
+                              handleRemappingWorkInputChange('ecu', 'toolCategory', customCategory)
+                              handleRemappingWorkInputChange('ecu', 'toolCategoryCustom', '')
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="카테고리 목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1745,10 +1826,38 @@ export default function WorkPage() {
                     <CustomDropdown
                       value={currentRemappingWork.acu.toolCategory}
                       onChange={(value) => handleRemappingWorkInputChange('acu', 'toolCategory', value)}
-                      options={ECU_TOOL_CATEGORIES.map(category => ({ value: category, label: category }))}
+                      options={ecuCategories.map(category => ({ value: category, label: category }))}
                       placeholder="장비 카테고리를 선택하세요"
                       maxHeight="250px"
                     />
+                    
+                    {/* 직접입력 선택 시 새 카테고리 추가 필드 */}
+                    {currentRemappingWork.acu.toolCategory === '직접입력' && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          value={currentRemappingWork.acu.toolCategoryCustom || ''}
+                          onChange={(e) => handleRemappingWorkInputChange('acu', 'toolCategoryCustom', e.target.value)}
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          placeholder="새로운 ACU 카테고리를 입력하세요"
+                        />
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const customCategory = currentRemappingWork.acu.toolCategoryCustom?.trim()
+                            if (customCategory) {
+                              await addNewEcuCategory(customCategory)
+                              handleRemappingWorkInputChange('acu', 'toolCategory', customCategory)
+                              handleRemappingWorkInputChange('acu', 'toolCategoryCustom', '')
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="카테고리 목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
