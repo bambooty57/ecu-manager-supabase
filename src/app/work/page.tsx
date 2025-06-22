@@ -6,6 +6,7 @@ import { ACU_TYPES, ACU_MANUFACTURERS, ACU_MODELS_BY_MANUFACTURER, ECU_MODELS, E
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getEquipmentByCustomerId, EquipmentData } from '@/lib/equipment'
 import { createWorkRecord, WorkRecordData } from '@/lib/work-records'
+import { getEquipmentCategoriesByType, createEquipmentCategory, EquipmentCategory } from '@/lib/equipment-categories'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 
@@ -171,6 +172,10 @@ export default function WorkPage() {
     return { ...ACU_MODELS_BY_MANUFACTURER }
   })
 
+  // ECU 장비 카테고리 상태 (Supabase에서 관리)
+  const [ecuCategories, setEcuCategories] = useState<EquipmentCategory[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+
   // 새로운 ECU 타입을 목록에 추가
   const addNewEcuType = (newType: string) => {
     if (newType.trim() && !ecuModels.includes(newType.trim())) {
@@ -204,12 +209,44 @@ export default function WorkPage() {
     }
   }
 
-  // 새로운 ECU 카테고리를 목록에 추가
-  const addNewEcuCategory = (newCategory: string) => {
-    if (newCategory.trim() && !ECU_TOOL_CATEGORIES.includes(newCategory.trim() as any)) {
-      // 상수 배열에 직접 추가 (실제 앱에서는 데이터베이스나 로컬 스토리지 사용)
-      ;(ECU_TOOL_CATEGORIES as any).push(newCategory.trim())
-      alert('새로운 카테고리가 추가되었습니다.')
+  // ECU 카테고리 로드
+  const loadEcuCategories = async () => {
+    setIsLoadingCategories(true)
+    try {
+      const categories = await getEquipmentCategoriesByType('ECU')
+      setEcuCategories(categories)
+    } catch (error) {
+      console.error('ECU 카테고리 로딩 실패:', error)
+    } finally {
+      setIsLoadingCategories(false)
+    }
+  }
+
+  // 새로운 ECU 카테고리를 Supabase에 추가
+  const addNewEcuCategory = async (newCategory: string) => {
+    const trimmedCategory = newCategory.trim()
+    if (!trimmedCategory) return
+
+    try {
+      // Supabase에 새 카테고리 추가
+      const newCategoryData = await createEquipmentCategory({
+        name: trimmedCategory,
+        type: 'ECU'
+      })
+      
+      // 로컬 상태 업데이트
+      setEcuCategories(prev => [...prev, newCategoryData])
+      
+      // 추가된 카테고리를 자동으로 선택
+      setCurrentRemappingWork(prev => ({ ...prev, ecuToolCategory: trimmedCategory }))
+      alert(`새로운 카테고리 "${trimmedCategory}"가 추가되었습니다.`)
+    } catch (error: any) {
+      if (error.message.includes('이미 존재하는')) {
+        alert('이미 존재하는 카테고리입니다.')
+      } else {
+        console.error('카테고리 추가 실패:', error)
+        alert('카테고리 추가에 실패했습니다.')
+      }
     }
   }
 
@@ -218,9 +255,10 @@ export default function WorkPage() {
     return acuModelsByManufacturer[manufacturer] || []
   }
 
-  // 고객 데이터 로드
+  // 초기 데이터 로드
   useEffect(() => {
     loadCustomers()
+    loadEcuCategories()
   }, [])
 
   // 페이지 포커스 시 고객 목록 새로고침
@@ -1207,11 +1245,14 @@ export default function WorkPage() {
                     value={currentRemappingWork.ecuToolCategory}
                     onChange={handleRemappingWorkInputChange}
                     className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    disabled={isLoadingCategories}
                   >
-                    <option value="">장비 카테고리를 선택하세요</option>
-                    {ECU_TOOL_CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
+                    <option value="">
+                      {isLoadingCategories ? '카테고리 로딩 중...' : '장비 카테고리를 선택하세요'}
+                    </option>
+                    {ecuCategories.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
                       </option>
                     ))}
                     <option value="직접입력">직접입력</option>
