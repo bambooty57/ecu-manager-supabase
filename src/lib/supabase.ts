@@ -155,7 +155,10 @@ export const generateUniqueFileName = (originalName: string, workRecordId?: numb
     : `${timestamp}_${randomString}_${baseName}.${extension}`
 }
 
-// 파일 타입별 버킷 결정 (파일명 기반)
+// 파일 타입별 버킷 결정 (파일명 기반) - 포괄적 파일 형식 지원
+// work-media: 이미지, 비디오, 오디오 파일
+// work-files: ECU/ACU 파일, 압축 파일
+// work-documents: 문서 파일, 기타 파일
 export const getBucketForFileType = (fileName: string): string => {
   if (!fileName || typeof fileName !== 'string') {
     console.warn('⚠️ getBucketForFileType: 유효하지 않은 파일명:', fileName)
@@ -171,18 +174,58 @@ export const getBucketForFileType = (fileName: string): string => {
 
   console.log(`📁 getBucketForFileType: ${fileName} → 확장자: ${ext}`)
   
-  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'svg']
-  const videoExts = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm']
-  const ecuExts = ['mmf', 'bin', 'hex', 'map', 'ecu', 'acu', 'cal']
+  // 이미지 파일 확장자 (더 포괄적으로 확장)
+  const imageExts = [
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'svg', 'tiff', 'tif', 
+    'ico', 'heic', 'heif', 'raw', 'cr2', 'nef', 'dng', 'arw', 'orf', 'rw2'
+  ]
   
-  if (imageExts.includes(ext) || videoExts.includes(ext)) {
-    console.log(`📁 → work-media (미디어 파일)`)
+  // 비디오 파일 확장자 (더 포괄적으로 확장)
+  const videoExts = [
+    'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v', 'mpg', 'mpeg', 
+    'mts', 'm2ts', 'ts', '3gp', 'asf', 'rm', 'rmvb', 'vob', 'ogv', 'dv'
+  ]
+  
+  // 오디오 파일 확장자 (새로 추가)
+  const audioExts = [
+    'mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'opus', 'aiff', 'au', 
+    'ra', 'mka', 'dts', 'ac3', 'amr', 'awb'
+  ]
+  
+  // ECU/ACU 관련 파일 확장자 (더 포괄적으로 확장)
+  const ecuExts = [
+    'mmf', 'bin', 'hex', 'map', 'ecu', 'acu', 'cal', 'ori', 'mod', 'tuned', 
+    'stage1', 'stage2', 'stage3', 'vr', 'read', 'original', 'backup', 'flash',
+    'eprom', 'eeprom', 'dump', 'chip', 'tune', 'remap', 'file', 'data'
+  ]
+  
+  // 문서 파일 확장자 (새로 추가)
+  const documentExts = [
+    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'odt', 
+    'ods', 'odp', 'pages', 'numbers', 'key', 'csv', 'tsv'
+  ]
+  
+  // 압축 파일 확장자 (새로 추가)
+  const archiveExts = [
+    'zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'lzma', 'cab', 'iso', 
+    'dmg', 'pkg', 'deb', 'rpm'
+  ]
+  
+  // 버킷 분류 로직 (우선순위 순서)
+  if (imageExts.includes(ext) || videoExts.includes(ext) || audioExts.includes(ext)) {
+    console.log(`📁 → work-media (미디어 파일: ${ext})`)
     return 'work-media'
-  } else if (ecuExts.includes(ext) || fileName.toLowerCase().includes('ecu') || fileName.toLowerCase().includes('acu')) {
-    console.log(`📁 → work-files (ECU/ACU 파일)`)
+  } else if (ecuExts.includes(ext) || fileName.toLowerCase().includes('ecu') || fileName.toLowerCase().includes('acu') || fileName.toLowerCase().includes('remap') || fileName.toLowerCase().includes('tune')) {
+    console.log(`📁 → work-files (ECU/ACU 파일: ${ext})`)
+    return 'work-files'
+  } else if (documentExts.includes(ext)) {
+    console.log(`📁 → work-documents (문서 파일: ${ext})`)
+    return 'work-documents'
+  } else if (archiveExts.includes(ext)) {
+    console.log(`📁 → work-files (압축 파일: ${ext})`)
     return 'work-files'
   } else {
-    console.log(`📁 → work-documents (문서 파일)`)
+    console.log(`📁 → work-documents (기타 파일: ${ext})`)
     return 'work-documents'
   }
 } 
