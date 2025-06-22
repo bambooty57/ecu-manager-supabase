@@ -454,17 +454,23 @@ export default function CustomersPage() {
             fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '')
           }
 
+          // 지번주소 추출 (Daum API 정확한 필드명)
+          // autoJibunAddress: 지번주소 (법정동 기준)
+          // jibunAddress: 지번주소 (행정동 기준)  
+          const jibunAddr = data.autoJibunAddress || data.jibunAddress || ''
+          
           // 도로명주소와 지번주소 모두 설정
           setFormData(prev => ({
             ...prev,
             zipCode: data.zonecode || '',
             roadAddress: fullAddress,
-            jibunAddress: data.jibunAddress || '',
+            jibunAddress: jibunAddr,
           }))
           
           console.log('✅ 주소 설정 완료:', {
             roadAddress: fullAddress,
-            jibunAddress: data.jibunAddress || ''
+            jibunAddress: jibunAddr,
+            allData: data // 디버깅용
           })
         }
       }).open();
@@ -495,17 +501,23 @@ export default function CustomersPage() {
             fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '')
           }
 
+          // 지번주소 추출 (Daum API 정확한 필드명)
+          // autoJibunAddress: 지번주소 (법정동 기준)
+          // jibunAddress: 지번주소 (행정동 기준)  
+          const jibunAddr = data.autoJibunAddress || data.jibunAddress || ''
+
           // 수정 폼 데이터 업데이트
           setEditFormData(prev => ({
             ...prev,
             zipCode: data.zonecode || '',
             roadAddress: fullAddress,
-            jibunAddress: data.jibunAddress || '',
+            jibunAddress: jibunAddr,
           }))
           
           console.log('✅ 수정용 주소 설정 완료:', {
             roadAddress: fullAddress,
-            jibunAddress: data.jibunAddress || ''
+            jibunAddress: jibunAddr,
+            allData: data // 디버깅용
           })
         }
       }).open();
@@ -574,7 +586,7 @@ export default function CustomersPage() {
             return
           }
 
-          const [name, phone, roadAddress, jibunAddress] = row.map(cell => 
+          const [name, phone, zipCode, roadAddress, jibunAddress] = row.map(cell => 
             cell ? String(cell).trim() : ''
           )
           
@@ -589,6 +601,7 @@ export default function CustomersPage() {
           const customerData = {
             name: name,
             phone: formattedPhone,
+            zipCode: zipCode || '',
             roadAddress: roadAddress || '',
             jibunAddress: jibunAddress || '',
           }
