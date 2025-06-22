@@ -45,17 +45,33 @@ export default function CustomersPage() {
 
   // 페이지 포커스 시 고객 목록 새로고침 (모달이 열려있지 않을 때만)
   useEffect(() => {
+    let focusTimeout: NodeJS.Timeout
+
     const handleFocus = () => {
-      // 모달이 열려있을 때는 새로고침하지 않음
-      if (!isFormOpen && !isDetailModalOpen) {
-        loadCustomers()
-      }
+      // 짧은 지연을 두어 모달 상태가 안정화된 후 체크
+      focusTimeout = setTimeout(() => {
+        // 모달이 열려있거나 로딩 중일 때는 새로고침하지 않음
+        if (!isFormOpen && !isDetailModalOpen && !isLoading) {
+          console.log('🔄 페이지 포커스로 인한 고객 목록 새로고침')
+          loadCustomers()
+        } else {
+          console.log('🚫 모달 열림 또는 로딩 중으로 새로고침 건너뜀:', { isFormOpen, isDetailModalOpen, isLoading })
+        }
+      }, 100) // 100ms 지연
     }
 
     const handleVisibilityChange = () => {
-      // 모달이 열려있을 때는 새로고침하지 않음
-      if (!document.hidden && !isFormOpen && !isDetailModalOpen) {
-        loadCustomers()
+      // 페이지가 다시 보일 때만 처리
+      if (!document.hidden) {
+        focusTimeout = setTimeout(() => {
+          // 모달이 열려있거나 로딩 중일 때는 새로고침하지 않음
+          if (!isFormOpen && !isDetailModalOpen && !isLoading) {
+            console.log('🔄 페이지 가시성 변경으로 인한 고객 목록 새로고침')
+            loadCustomers()
+          } else {
+            console.log('🚫 모달 열림 또는 로딩 중으로 새로고침 건너뜀:', { isFormOpen, isDetailModalOpen, isLoading })
+          }
+        }, 100) // 100ms 지연
       }
     }
 
@@ -65,8 +81,45 @@ export default function CustomersPage() {
     return () => {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (focusTimeout) {
+        clearTimeout(focusTimeout)
+      }
     }
-  }, [isFormOpen, isDetailModalOpen]) // 의존성 배열에 모달 상태 추가
+  }, [isFormOpen, isDetailModalOpen, isLoading]) // isLoading도 의존성에 추가
+
+  // 모달이 열린 상태에서 페이지 이탈 방지
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isFormOpen || isDetailModalOpen) {
+        e.preventDefault()
+        e.returnValue = '작성 중인 내용이 있습니다. 정말로 페이지를 떠나시겠습니까?'
+        return e.returnValue
+      }
+    }
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (isFormOpen || isDetailModalOpen) {
+        e.preventDefault()
+        const confirmLeave = confirm('작성 중인 내용이 있습니다. 정말로 페이지를 떠나시겠습니까?')
+        if (!confirmLeave) {
+          // 브라우저 히스토리를 다시 현재 페이지로 복원
+          window.history.pushState(null, '', window.location.href)
+        } else {
+          // 사용자가 확인한 경우 모달 닫기
+          setIsFormOpen(false)
+          setIsDetailModalOpen(false)
+        }
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [isFormOpen, isDetailModalOpen])
 
   const loadCustomers = async () => {
     setIsLoading(true)
