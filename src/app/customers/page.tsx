@@ -12,6 +12,9 @@ export default function CustomersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   
+  // 모달 상태 보호를 위한 ref
+  const modalStateRef = useRef({ isFormOpen: false, isDetailModalOpen: false })
+  
   const initialFormData: Omit<CustomerData, 'id' | 'registrationDate'> = {
     name: '',
     phone: '',
@@ -38,6 +41,11 @@ export default function CustomersPage() {
   const [showUploadModal, setShowUploadModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // 모달 상태 ref 동기화
+  useEffect(() => {
+    modalStateRef.current = { isFormOpen, isDetailModalOpen }
+  }, [isFormOpen, isDetailModalOpen])
+
   // 고객 데이터 로드
   useEffect(() => {
     loadCustomers()
@@ -45,47 +53,61 @@ export default function CustomersPage() {
 
   // 페이지 포커스 시 고객 목록 새로고침 (모달이 열려있지 않을 때만)
   useEffect(() => {
+    // 모달이 열려있을 때는 아예 이벤트 리스너를 등록하지 않음
+    if (isFormOpen || isDetailModalOpen) {
+      console.log('🔒 모달 열림 상태 - 포커스 이벤트 리스너 비활성화')
+      return
+    }
+
     let focusTimeout: NodeJS.Timeout
 
-    const handleFocus = () => {
-      // 짧은 지연을 두어 모달 상태가 안정화된 후 체크
+          const handleFocus = () => {
+        // ref를 사용한 최신 모달 상태 체크 (안전장치)
+        if (modalStateRef.current.isFormOpen || modalStateRef.current.isDetailModalOpen || isLoading) {
+          console.log('🚫 포커스 이벤트 발생했지만 모달 열림으로 무시 (ref 체크)')
+          return
+        }
+      
       focusTimeout = setTimeout(() => {
-        // 모달이 열려있거나 로딩 중일 때는 새로고침하지 않음
+        // 마지막 체크
         if (!isFormOpen && !isDetailModalOpen && !isLoading) {
           console.log('🔄 페이지 포커스로 인한 고객 목록 새로고침')
           loadCustomers()
-        } else {
-          console.log('🚫 모달 열림 또는 로딩 중으로 새로고침 건너뜀:', { isFormOpen, isDetailModalOpen, isLoading })
         }
-      }, 100) // 100ms 지연
+      }, 50) // 지연 시간 단축
     }
 
-    const handleVisibilityChange = () => {
-      // 페이지가 다시 보일 때만 처리
+          const handleVisibilityChange = () => {
+        // ref를 사용한 최신 모달 상태 체크 (안전장치)
+        if (modalStateRef.current.isFormOpen || modalStateRef.current.isDetailModalOpen || isLoading) {
+          console.log('🚫 가시성 변경 이벤트 발생했지만 모달 열림으로 무시 (ref 체크)')
+          return
+        }
+
       if (!document.hidden) {
         focusTimeout = setTimeout(() => {
-          // 모달이 열려있거나 로딩 중일 때는 새로고침하지 않음
+          // 마지막 체크
           if (!isFormOpen && !isDetailModalOpen && !isLoading) {
             console.log('🔄 페이지 가시성 변경으로 인한 고객 목록 새로고침')
             loadCustomers()
-          } else {
-            console.log('🚫 모달 열림 또는 로딩 중으로 새로고침 건너뜀:', { isFormOpen, isDetailModalOpen, isLoading })
           }
-        }, 100) // 100ms 지연
+        }, 50) // 지연 시간 단축
       }
     }
 
+    console.log('✅ 포커스 이벤트 리스너 등록 - 모달 닫힘 상태')
     window.addEventListener('focus', handleFocus)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
+      console.log('🧹 포커스 이벤트 리스너 정리')
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       if (focusTimeout) {
         clearTimeout(focusTimeout)
       }
     }
-  }, [isFormOpen, isDetailModalOpen, isLoading]) // isLoading도 의존성에 추가
+  }, [isFormOpen, isDetailModalOpen, isLoading]) // 모달 상태 변경 시마다 재등록
 
   // 모달이 열린 상태에서 페이지 이탈 방지
   useEffect(() => {
@@ -122,21 +144,49 @@ export default function CustomersPage() {
   }, [isFormOpen, isDetailModalOpen])
 
   const loadCustomers = async () => {
+    // 모달이 열려있을 때는 데이터 로딩 자체를 차단
+    if (isFormOpen || isDetailModalOpen) {
+      console.log('🔒 모달 열림 상태로 인한 고객 데이터 로딩 차단')
+      return
+    }
+
     setIsLoading(true)
     try {
+      // 로딩 중에도 모달 상태 재확인
+      if (isFormOpen || isDetailModalOpen) {
+        console.log('🔒 로딩 중 모달 열림 감지 - 로딩 중단')
+        return
+      }
+
       // 연결 테스트 먼저 실행
       const isConnected = await testSupabaseConnection()
       if (!isConnected) {
         console.warn('⚠️ Supabase 연결에 문제가 있습니다. 더미 데이터를 사용할 수 있습니다.')
       }
       
+      // 데이터 로드 전 마지막 모달 상태 확인
+      if (isFormOpen || isDetailModalOpen) {
+        console.log('🔒 데이터 로드 직전 모달 열림 감지 - 로딩 중단')
+        return
+      }
+
       const data = await getAllCustomers()
+      
+      // 데이터 설정 전 최종 확인
+      if (isFormOpen || isDetailModalOpen) {
+        console.log('🔒 데이터 설정 직전 모달 열림 감지 - 데이터 설정 생략')
+        return
+      }
+
       setCustomers(data)
       console.log('✅ 고객 데이터 로드 완료:', data.length, '명')
     } catch (error) {
       console.error('❌ 고객 데이터 로드 실패:', error)
     } finally {
-      setIsLoading(false)
+      // 모달이 열려있을 때는 로딩 상태도 변경하지 않음
+      if (!isFormOpen && !isDetailModalOpen) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -181,27 +231,7 @@ export default function CustomersPage() {
     }
   }
 
-  // 카카오 주소 검색 함수
-  const handleDaumPostcode = (data: any) => {
-    let fullAddress = data.address
-    let extraAddress = ''
 
-    if (data.addressType === 'R') {
-      if (data.bname !== '') {
-        extraAddress += data.bname
-      }
-      if (data.buildingName !== '') {
-        extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName)
-      }
-      fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '')
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      roadAddress: fullAddress,
-      jibunAddress: data.jibunAddress || '',
-    }))
-  }
 
   // 고객 등록 처리
   const handleSubmit = async (e: React.FormEvent) => {
@@ -402,13 +432,82 @@ export default function CustomersPage() {
     }
   }
 
-  // 수정용 주소 검색 함수
+  // 고객등록용 주소 검색 함수
+  const handleAddressSearch = () => {
+    // @ts-ignore
+    if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
+      // @ts-ignore
+      new window.daum.Postcode({
+        oncomplete: (data: any) => {
+          console.log('🔍 주소검색 결과:', data)
+          
+          let fullAddress = data.address
+          let extraAddress = ''
+
+          if (data.addressType === 'R') {
+            if (data.bname !== '') {
+              extraAddress += data.bname
+            }
+            if (data.buildingName !== '') {
+              extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName)
+            }
+            fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '')
+          }
+
+          // 도로명주소와 지번주소 모두 설정
+          setFormData(prev => ({
+            ...prev,
+            zipCode: data.zonecode || '',
+            roadAddress: fullAddress,
+            jibunAddress: data.jibunAddress || '',
+          }))
+          
+          console.log('✅ 주소 설정 완료:', {
+            roadAddress: fullAddress,
+            jibunAddress: data.jibunAddress || ''
+          })
+        }
+      }).open();
+    } else {
+      alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+    }
+  }
+
+  // 수정용 주소 검색 함수  
   const handleEditAddressSearch = () => {
     // @ts-ignore
     if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
       // @ts-ignore
       new window.daum.Postcode({
-        oncomplete: handleDaumPostcode
+        oncomplete: (data: any) => {
+          console.log('🔍 수정용 주소검색 결과:', data)
+          
+          let fullAddress = data.address
+          let extraAddress = ''
+
+          if (data.addressType === 'R') {
+            if (data.bname !== '') {
+              extraAddress += data.bname
+            }
+            if (data.buildingName !== '') {
+              extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName)
+            }
+            fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '')
+          }
+
+          // 수정 폼 데이터 업데이트
+          setEditFormData(prev => ({
+            ...prev,
+            zipCode: data.zonecode || '',
+            roadAddress: fullAddress,
+            jibunAddress: data.jibunAddress || '',
+          }))
+          
+          console.log('✅ 수정용 주소 설정 완료:', {
+            roadAddress: fullAddress,
+            jibunAddress: data.jibunAddress || ''
+          })
+        }
       }).open();
     } else {
       alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
@@ -974,22 +1073,31 @@ export default function CustomersPage() {
                       <div className="flex space-x-2">
                         <input
                           type="text"
-                          name="roadAddress"
-                          value={formData.roadAddress}
+                          name="zipCode"
+                          value={formData.zipCode}
                           onChange={handleInputChange}
-                          required
                           readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="도로명 주소"
+                          className="w-32 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="우편번호"
                         />
                         <button
                           type="button"
-                          onClick={handleEditAddressSearch}
+                          onClick={handleAddressSearch}
                           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                         >
                           주소 검색
                         </button>
                       </div>
+                      <input
+                        type="text"
+                        name="roadAddress"
+                        value={formData.roadAddress}
+                        onChange={handleInputChange}
+                        required
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="도로명 주소"
+                      />
                       <input
                         type="text"
                         name="jibunAddress"
@@ -1095,13 +1203,12 @@ export default function CustomersPage() {
                         <div className="flex space-x-2">
                           <input
                             type="text"
-                            name="roadAddress"
-                            value={editFormData.roadAddress}
+                            name="zipCode"
+                            value={editFormData.zipCode}
                             onChange={handleEditInputChange}
-                            required
                             readOnly
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="도로명 주소"
+                            className="w-32 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="우편번호"
                           />
                           <button
                             type="button"
@@ -1111,6 +1218,16 @@ export default function CustomersPage() {
                             주소 검색
                           </button>
                         </div>
+                        <input
+                          type="text"
+                          name="roadAddress"
+                          value={editFormData.roadAddress}
+                          onChange={handleEditInputChange}
+                          required
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="도로명 주소"
+                        />
                         <input
                           type="text"
                           name="jibunAddress"
@@ -1174,6 +1291,18 @@ export default function CustomersPage() {
                           </div>
                         </div>
                       </div>
+
+                      {selectedCustomer.zipCode && (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <div className="flex items-center">
+                            <span className="text-2xl mr-3">📮</span>
+                            <div>
+                              <p className="text-lg font-semibold text-gray-900 font-mono">{selectedCustomer.zipCode}</p>
+                              <p className="text-sm text-gray-600">우편번호</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-4">
