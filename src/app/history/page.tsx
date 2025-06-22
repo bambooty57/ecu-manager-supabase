@@ -1921,7 +1921,7 @@ export default function HistoryPage() {
                     <span className="text-sm text-white font-medium">{selectedRecord.ecuTool || 'N/A'}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-sm font-medium text-gray-700">ECU 튜닝 작업:</span>
+                    <span className="text-sm font-medium text-blue-300">ECU 튜닝 작업:</span>
                     <div className="text-sm text-white">
                       {selectedRecord.ecuTuningWorks && selectedRecord.ecuTuningWorks.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
