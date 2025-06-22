@@ -846,22 +846,35 @@ export default function HistoryPage() {
     let acuTuningWorks: string[] = [];
     let allFiles: any[] = [];
     
-    // tools_used에서 카테고리 정보 추출 시도
+    // tools_used에서 카테고리 정보 추출 시도 (우선순위)
     if (record.toolsUsed && Array.isArray(record.toolsUsed)) {
       record.toolsUsed.forEach(tool => {
         if (typeof tool === 'string') {
-          // "KESS", "FLEX" 등의 카테고리 정보 찾기
-          if (tool.toUpperCase().includes('KESS') && !ecuCategory) {
+          const toolUpper = tool.toUpperCase();
+          // ECU 카테고리 추출
+          if (toolUpper.includes('KESS') && !ecuCategory) {
             ecuCategory = 'KESS';
-          } else if (tool.toUpperCase().includes('FLEX') && !ecuCategory) {
+          } else if (toolUpper.includes('FLEX') && !ecuCategory) {
             ecuCategory = 'FLEX';
-          } else if (tool.toUpperCase().includes('KTAG') && !ecuCategory) {
+          } else if (toolUpper.includes('KTAG') && !ecuCategory) {
             ecuCategory = 'KTAG';
-          } else if (tool.toUpperCase().includes('FGTECH') && !ecuCategory) {
+          } else if (toolUpper.includes('FGTECH') && !ecuCategory) {
             ecuCategory = 'FGTECH';
+          }
+          
+          // 연결방법 추출
+          if (toolUpper.includes('OBD') && !ecuConnectionMethod) {
+            ecuConnectionMethod = 'OBD';
+          } else if (toolUpper.includes('BENCH') && !ecuConnectionMethod) {
+            ecuConnectionMethod = 'BENCH';
           }
         }
       });
+      
+      // ACU 카테고리는 일반적으로 FLEX
+      if (record.acuManufacturer && !acuCategory) {
+        acuCategory = 'FLEX';
+      }
     }
 
     // ECU 제조사/모델에 따른 일반적인 장비 카테고리 추정
