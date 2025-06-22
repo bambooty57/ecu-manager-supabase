@@ -1037,99 +1037,66 @@ export default function HistoryPage() {
     if (record.remappingWorks && record.remappingWorks.length > 0) {
       const firstWork = record.remappingWorks[0] as any;
       
+      // 상세 디버깅: firstWork 전체 구조 확인
+      console.log('🔍 firstWork 전체 구조:', JSON.stringify(firstWork, null, 2));
+      
       // ECU 정보 추출 (기존 데이터가 없거나 N/A인 경우만 보완)
-      if (firstWork.ecu) {
-        if (!ecuMaker || ecuMaker === 'N/A') {
-          ecuMaker = firstWork.ecu.maker || firstWork.ecu.manufacturer || ecuMaker;
-        }
-        if (!ecuType || ecuType === 'N/A') {
-          ecuType = firstWork.ecu.type || firstWork.ecu.typeCustom || firstWork.ecu.model || ecuType;
-        }
-        if (!ecuConnectionMethod || ecuConnectionMethod === 'N/A') {
-          ecuConnectionMethod = firstWork.ecu.connectionMethod || ecuConnectionMethod;
-        }
+      // firstWork 최상위 레벨에서 직접 추출
+      if (!ecuMaker || ecuMaker === 'N/A') {
+        ecuMaker = firstWork.ecuMaker || ecuMaker;
+      }
+      if (!ecuType || ecuType === 'N/A') {
+        ecuType = firstWork.ecuType || firstWork.ecuTypeCustom || ecuType;
+      }
+      if (!ecuConnectionMethod || ecuConnectionMethod === 'N/A') {
+        ecuConnectionMethod = firstWork.connectionMethod || ecuConnectionMethod;
+      }
+      
+      // ECU 카테고리 추출
+      if (!ecuCategory || ecuCategory === 'N/A') {
+        ecuCategory = firstWork.ecuToolCategory || firstWork.ecuToolCategoryCustom || ecuCategory;
       }
       
       // ECU 도구 정보 구성
-      if (firstWork.ecu) {
-        // toolCategory 정보를 다양한 경로에서 찾기
-        ecuCategory = firstWork.ecu.toolCategory || 
-                      firstWork.ecu.category || 
-                      firstWork.ecu.tool?.category ||
-                      firstWork.ecu.selectedTool?.category ||
-                      '';
-        
-        if (!ecuConnectionMethod) {
-          ecuConnectionMethod = firstWork.ecu.connectionMethod || 
-                               firstWork.ecu.connection ||
-                               firstWork.ecu.tool?.connectionMethod ||
-                               '';
-        }
-        
-        console.log('🔍 ECU 카테고리 추출:', {
-          toolCategory: firstWork.ecu.toolCategory,
-          category: firstWork.ecu.category,
-          tool: firstWork.ecu.tool,
-          selectedTool: firstWork.ecu.selectedTool,
-          extracted: ecuCategory
-        });
-        
-        const ecuToolParts = [
-          ecuCategory,
-          ecuConnectionMethod,
-          ecuMaker,
-          ecuType
-        ].filter(Boolean);
-        ecuTool = ecuToolParts.length > 0 ? ecuToolParts.join(' / ') : '';
-        ecuTuningWorks = firstWork.ecu.selectedWorks || [];
-      }
+      const ecuToolParts = [
+        ecuCategory,
+        ecuConnectionMethod
+      ].filter(Boolean);
+      ecuTool = ecuToolParts.length > 0 ? ecuToolParts.join(' - ') : 'N/A';
+      
+      // 튜닝 작업 내역 추출
+      ecuTuningWorks = firstWork.selectedWorks ? 
+        firstWork.selectedWorks.filter((work: string) => work.startsWith('ECU:')) : [];
       
       // ACU 정보 추출 (기존 데이터가 없거나 N/A인 경우만 보완)
-      if (firstWork.acu) {
-        if (!acuManufacturer || acuManufacturer === 'N/A') {
-          acuManufacturer = firstWork.acu.manufacturer || acuManufacturer;
-        }
-        if (!acuModel || acuModel === 'N/A') {
-          acuModel = firstWork.acu.model || firstWork.acu.modelCustom || acuModel;
-        }
-        if (!acuConnectionMethod || acuConnectionMethod === 'N/A') {
-          acuConnectionMethod = firstWork.acu.connectionMethod || acuConnectionMethod;
-        }
+      // firstWork 최상위 레벨에서 직접 추출
+      if (!acuManufacturer || acuManufacturer === 'N/A') {
+        acuManufacturer = firstWork.acuManufacturer || acuManufacturer;
+      }
+      if (!acuModel || acuModel === 'N/A') {
+        acuModel = firstWork.acuModel || firstWork.acuModelCustom || acuModel;
+      }
+      if (!acuConnectionMethod || acuConnectionMethod === 'N/A') {
+        acuConnectionMethod = firstWork.connectionMethod || acuConnectionMethod;
       }
       
-      // ACU 도구 정보 구성
-      if (firstWork.acu) {
-        // toolCategory 정보를 다양한 경로에서 찾기
-        acuCategory = firstWork.acu.toolCategory || 
-                      firstWork.acu.category || 
-                      firstWork.acu.tool?.category ||
-                      firstWork.acu.selectedTool?.category ||
-                      '';
-        
-        if (!acuConnectionMethod) {
-          acuConnectionMethod = firstWork.acu.connectionMethod || 
-                               firstWork.acu.connection ||
-                               firstWork.acu.tool?.connectionMethod ||
-                               '';
-        }
-        
-        console.log('🔍 ACU 카테고리 추출:', {
-          toolCategory: firstWork.acu.toolCategory,
-          category: firstWork.acu.category,
-          tool: firstWork.acu.tool,
-          selectedTool: firstWork.acu.selectedTool,
-          extracted: acuCategory
-        });
-        
-        const acuToolParts = [
-          acuCategory,
-          acuConnectionMethod,
-          acuManufacturer,
-          acuModel
-        ].filter(Boolean);
-        acuTool = acuToolParts.length > 0 ? acuToolParts.join(' / ') : '';
-        acuTuningWorks = firstWork.acu.selectedWorks || [];
+      // ACU 도구 정보 구성 (ACU는 일반적으로 FLEX 사용)
+      if (!acuCategory && acuManufacturer) {
+        acuCategory = 'FLEX'; // ACU는 주로 FLEX로 작업
       }
+      if (!acuConnectionMethod && acuManufacturer) {
+        acuConnectionMethod = 'BENCH'; // ACU는 대부분 BENCH 연결
+      }
+      
+      const acuToolParts = [
+        acuCategory,
+        acuConnectionMethod
+      ].filter(Boolean);
+      acuTool = acuToolParts.length > 0 ? acuToolParts.join(' - ') : 'N/A';
+      
+      // ACU 튜닝 작업 내역 추출
+      acuTuningWorks = firstWork.selectedWorks ? 
+        firstWork.selectedWorks.filter((work: string) => work.startsWith('ACU:')) : [];
       
       // 파일 정보 추출
       if (firstWork.files) {
