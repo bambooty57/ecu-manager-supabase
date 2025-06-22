@@ -1250,11 +1250,13 @@ export default function WorkPage() {
                     <option value="">
                       {isLoadingCategories ? '카테고리 로딩 중...' : '장비 카테고리를 선택하세요'}
                     </option>
-                    {ecuCategories.map((category) => (
-                      <option key={category.id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))}
+                    {ecuCategories
+                      .filter(category => category.name !== '직접입력')
+                      .map((category) => (
+                        <option key={category.id} value={category.name}>
+                          {category.name}
+                        </option>
+                      ))}
                     <option value="직접입력">직접입력</option>
                   </select>
                   
@@ -1649,8 +1651,8 @@ export default function WorkPage() {
                   {/* Stage 파일들 */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* 1차 튜닝 */}
-                    <div className="border border-green-200 rounded-lg p-4 bg-green-50">
-                      <label className="block text-sm font-medium text-green-800 mb-2">
+                    <div className="border border-green-600 rounded-lg p-4 bg-gray-800">
+                      <label className="block text-sm font-medium text-green-300 mb-2">
                         📈 1차 튜닝
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
@@ -1665,9 +1667,9 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="stage1-file"
-                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-100 transition-colors text-xs w-full"
+                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-600 rounded-lg cursor-pointer hover:border-green-400 hover:bg-gray-700 transition-colors text-xs w-full"
                         >
-                          <span className="text-green-700">
+                          <span className="text-green-300">
                             {currentRemappingWork.files.stage1File 
                               ? `📄 ${(currentRemappingWork.files.stage1File as File).name} (${((currentRemappingWork.files.stage1File as File).size / 1024).toFixed(1)} KB)` 
                               : '📄 1차 튜닝 파일 선택'}
@@ -1679,13 +1681,13 @@ export default function WorkPage() {
                         value={currentRemappingWork.files.stage1FileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('stage1FileDescription', e.target.value)}
                         placeholder="1차 튜닝 설명을 입력하세요"
-                        className="w-full border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-xs"
+                        className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-xs placeholder-gray-400"
                       />
                     </div>
 
                     {/* 2차 튜닝 */}
-                    <div className="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
-                      <label className="block text-sm font-medium text-yellow-800 mb-2">
+                    <div className="border border-yellow-600 rounded-lg p-4 bg-gray-800">
+                      <label className="block text-sm font-medium text-yellow-300 mb-2">
                         🚀 2차 튜닝
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
@@ -1700,9 +1702,9 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="stage2-file"
-                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-yellow-300 rounded-lg cursor-pointer hover:border-yellow-500 hover:bg-yellow-100 transition-colors text-xs w-full"
+                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-yellow-600 rounded-lg cursor-pointer hover:border-yellow-400 hover:bg-gray-700 transition-colors text-xs w-full"
                         >
-                          <span className="text-yellow-800">
+                          <span className="text-yellow-300">
                             {currentRemappingWork.files.stage2File 
                               ? `⚡ ${(currentRemappingWork.files.stage2File as File).name} (${((currentRemappingWork.files.stage2File as File).size / 1024).toFixed(1)} KB)` 
                               : '⚡ 2차 튜닝 파일 선택'}
@@ -1714,13 +1716,13 @@ export default function WorkPage() {
                         value={currentRemappingWork.files.stage2FileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('stage2FileDescription', e.target.value)}
                         placeholder="2차 튜닝 설명을 입력하세요"
-                        className="w-full border-yellow-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-xs"
+                        className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-xs placeholder-gray-400"
                       />
                     </div>
 
                     {/* 3차 튜닝 */}
-                    <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-                      <label className="block text-sm font-medium text-red-800 mb-2">
+                    <div className="border border-red-600 rounded-lg p-4 bg-gray-800">
+                      <label className="block text-sm font-medium text-red-300 mb-2">
                         🔥 3차 튜닝
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
@@ -1735,9 +1737,9 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="stage3-file"
-                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-red-300 rounded-lg cursor-pointer hover:border-red-500 hover:bg-red-100 transition-colors text-xs w-full"
+                          className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-red-600 rounded-lg cursor-pointer hover:border-red-400 hover:bg-gray-700 transition-colors text-xs w-full"
                         >
-                          <span className="text-red-800">
+                          <span className="text-red-300">
                             {currentRemappingWork.files.stage3File 
                               ? `🔥 ${(currentRemappingWork.files.stage3File as File).name} (${((currentRemappingWork.files.stage3File as File).size / 1024).toFixed(1)} KB)` 
                               : '🔥 3차 튜닝 파일 선택'}
@@ -1749,7 +1751,7 @@ export default function WorkPage() {
                         value={currentRemappingWork.files.stage3FileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('stage3FileDescription', e.target.value)}
                         placeholder="3차 튜닝 설명을 입력하세요"
-                        className="w-full border-red-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-xs"
+                        className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-xs placeholder-gray-400"
                       />
                     </div>
                   </div>
