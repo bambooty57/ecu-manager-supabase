@@ -69,6 +69,13 @@ export interface WorkRecordData {
   status: string
   remappingWorks: RemappingWorkInput[]
   created_at: string | null
+  // ECU/ACU 정보 추가
+  ecuMaker?: string | null
+  ecuModel?: string | null
+  acuManufacturer?: string | null
+  acuModel?: string | null
+  acuType?: string | null
+  connectionMethod?: string | null
 }
 
 // 데이터베이스 형식을 프론트엔드 형식으로 변환
@@ -156,10 +163,10 @@ export const getWorkRecordsPaginated = async (
     .from('work_records')
     .select('*', { count: 'exact', head: true })
   
-  // 페이지네이션된 데이터 조회 - ECU/ACU 정보를 위해 remapping_works는 항상 포함
+  // 페이지네이션된 데이터 조회 - ECU/ACU 정보를 위해 remapping_works와 ECU/ACU 컬럼들 포함
   const selectFields = includeFiles 
     ? '*' 
-    : 'id, customer_id, equipment_id, work_date, work_type, total_price, status, created_at, remapping_works'
+    : 'id, customer_id, equipment_id, work_date, work_type, total_price, status, created_at, remapping_works, ecu_maker, ecu_model, acu_manufacturer, acu_model, acu_type, connection_method'
   
   const { data, error } = await supabase
     .from('work_records')
@@ -198,6 +205,13 @@ export const getWorkRecordsPaginated = async (
       status: record.status || '',
       remappingWorks: remappingWorks,
       created_at: record.created_at,
+      // ECU/ACU 정보 추가 (데이터베이스 컬럼에서 직접 가져오기)
+      ecuMaker: record.ecu_maker,
+      ecuModel: record.ecu_model,
+      acuManufacturer: record.acu_manufacturer,
+      acuModel: record.acu_model,
+      acuType: record.acu_type,
+      connectionMethod: record.connection_method,
     }
   })
   

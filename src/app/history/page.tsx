@@ -831,49 +831,66 @@ export default function HistoryPage() {
     const customer = customers.find(c => c.id === record.customerId)
     const equipment = equipments.find(e => e.id === record.equipmentId)
     
-    let ecuMaker = '';
-    let ecuType = '';
-    let ecuConnectionMethod = '';
+    // 데이터베이스의 개별 컬럼에서 ECU/ACU 정보 가져오기 (우선순위)
+    let ecuMaker = record.ecuMaker || '';
+    let ecuType = record.ecuModel || '';
+    let ecuConnectionMethod = record.connectionMethod || '';
     let ecuTool = '';
     let ecuTuningWorks: string[] = [];
-    let acuManufacturer = '';
-    let acuModel = '';
-    let acuConnectionMethod = '';
+    let acuManufacturer = record.acuManufacturer || '';
+    let acuModel = record.acuModel || '';
+    let acuConnectionMethod = record.connectionMethod || '';
     let acuTool = '';
     let acuTuningWorks: string[] = [];
     let allFiles: any[] = [];
     
-    // remappingWorks에서 ECU/ACU 정보 추출
+    // 디버깅: ECU/ACU 데이터 확인
+    console.log('🔍 Record ID:', record.id, 'ECU/ACU Info:', {
+      ecuMaker: record.ecuMaker,
+      ecuModel: record.ecuModel,
+      acuManufacturer: record.acuManufacturer,
+      acuModel: record.acuModel,
+      acuType: record.acuType,
+      connectionMethod: record.connectionMethod
+    });
+    
+    // remappingWorks에서 추가 정보 추출 (데이터베이스 컬럼이 비어있는 경우 보완)
     if (record.remappingWorks && record.remappingWorks.length > 0) {
       const firstWork = record.remappingWorks[0] as any;
       
-      // ECU 정보 추출
+      // ECU 정보 추출 (데이터베이스 컬럼이 비어있는 경우만 보완)
+      if (firstWork.ecu && !ecuMaker && !ecuType) {
+        ecuMaker = firstWork.ecu.maker || ecuMaker;
+        ecuType = firstWork.ecu.type || firstWork.ecu.typeCustom || ecuType;
+        ecuConnectionMethod = firstWork.ecu.connectionMethod || ecuConnectionMethod;
+      }
+      
+      // ECU 도구 정보 구성
       if (firstWork.ecu) {
-        ecuMaker = firstWork.ecu.maker || '';
-        ecuType = firstWork.ecu.type || firstWork.ecu.typeCustom || '';
-        ecuConnectionMethod = firstWork.ecu.connectionMethod || '';
-        // 실제 사용도구 정보 구성: 카테고리 + 연결방법 + 제조사 + 모델
         const ecuToolParts = [
           firstWork.ecu.toolCategory,
-          firstWork.ecu.connectionMethod,
-          firstWork.ecu.maker,
-          firstWork.ecu.type || firstWork.ecu.typeCustom
+          ecuConnectionMethod,
+          ecuMaker,
+          ecuType
         ].filter(Boolean);
         ecuTool = ecuToolParts.length > 0 ? ecuToolParts.join(' / ') : '';
         ecuTuningWorks = firstWork.ecu.selectedWorks || [];
       }
       
-      // ACU 정보 추출
+      // ACU 정보 추출 (데이터베이스 컬럼이 비어있는 경우만 보완)
+      if (firstWork.acu && !acuManufacturer && !acuModel) {
+        acuManufacturer = firstWork.acu.manufacturer || acuManufacturer;
+        acuModel = firstWork.acu.model || firstWork.acu.modelCustom || acuModel;
+        acuConnectionMethod = firstWork.acu.connectionMethod || acuConnectionMethod;
+      }
+      
+      // ACU 도구 정보 구성
       if (firstWork.acu) {
-        acuManufacturer = firstWork.acu.manufacturer || '';
-        acuModel = firstWork.acu.model || firstWork.acu.modelCustom || '';
-        acuConnectionMethod = firstWork.acu.connectionMethod || '';
-        // 실제 사용도구 정보 구성: 카테고리 + 연결방법 + 제조사 + 모델
         const acuToolParts = [
           firstWork.acu.toolCategory,
-          firstWork.acu.connectionMethod,
-          firstWork.acu.manufacturer,
-          firstWork.acu.model || firstWork.acu.modelCustom
+          acuConnectionMethod,
+          acuManufacturer,
+          acuModel
         ].filter(Boolean);
         acuTool = acuToolParts.length > 0 ? acuToolParts.join(' / ') : '';
         acuTuningWorks = firstWork.acu.selectedWorks || [];
