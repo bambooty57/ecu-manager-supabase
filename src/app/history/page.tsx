@@ -836,11 +836,13 @@ export default function HistoryPage() {
     let ecuType = record.ecuModel || '';
     let ecuConnectionMethod = record.connectionMethod || '';
     let ecuTool = '';
+    let ecuCategory = ''; // KESS/FLEX 등
     let ecuTuningWorks: string[] = [];
     let acuManufacturer = record.acuManufacturer || '';
     let acuModel = record.acuModel || '';
     let acuConnectionMethod = record.connectionMethod || '';
     let acuTool = '';
+    let acuCategory = ''; // KESS/FLEX 등
     let acuTuningWorks: string[] = [];
     let allFiles: any[] = [];
     
@@ -851,7 +853,9 @@ export default function HistoryPage() {
       acuManufacturer: record.acuManufacturer,
       acuModel: record.acuModel,
       acuType: record.acuType,
-      connectionMethod: record.connectionMethod
+      connectionMethod: record.connectionMethod,
+      toolsUsed: record.toolsUsed,
+      remappingWorks: record.remappingWorks
     });
     
     // remappingWorks에서 추가 정보 추출 (데이터베이스 컬럼이 비어있는 경우 보완)
@@ -867,8 +871,12 @@ export default function HistoryPage() {
       
       // ECU 도구 정보 구성
       if (firstWork.ecu) {
+        ecuCategory = firstWork.ecu.toolCategory || '';
+        if (!ecuConnectionMethod) {
+          ecuConnectionMethod = firstWork.ecu.connectionMethod || '';
+        }
         const ecuToolParts = [
-          firstWork.ecu.toolCategory,
+          ecuCategory,
           ecuConnectionMethod,
           ecuMaker,
           ecuType
@@ -886,8 +894,12 @@ export default function HistoryPage() {
       
       // ACU 도구 정보 구성
       if (firstWork.acu) {
+        acuCategory = firstWork.acu.toolCategory || '';
+        if (!acuConnectionMethod) {
+          acuConnectionMethod = firstWork.acu.connectionMethod || '';
+        }
         const acuToolParts = [
-          firstWork.acu.toolCategory,
+          acuCategory,
           acuConnectionMethod,
           acuManufacturer,
           acuModel
@@ -973,11 +985,13 @@ export default function HistoryPage() {
       serial: equipment?.serialNumber || '',
       ecuMaker,
       ecuType,
+      ecuCategory,
       connectionMethod: ecuConnectionMethod,
       ecuTool,
       ecuTuningWorks,
       acuManufacturer,
       acuModel,
+      acuCategory,
       acuConnectionMethod,
       acuTool,
       acuTuningWorks,
@@ -1365,23 +1379,21 @@ export default function HistoryPage() {
                             </td>
                             {/* ECU/튜닝 칸 */}
                             <td className="px-3 py-4 whitespace-nowrap">
-                              {(record.ecuMaker || record.ecuType || record.ecuTool) ? (
+                              {(record.ecuMaker || record.ecuType || record.ecuCategory || record.connectionMethod) ? (
                                 <>
                                   {/* 1. 제조사-모델명 (파란 박스) */}
                                   <div className="text-sm text-white mb-1">
                                     <span className="inline-block mr-2 px-2 py-1 text-xs bg-blue-600 text-white rounded">
-                                      🔧 {record.ecuMaker && record.ecuType ? `${record.ecuMaker}-${record.ecuType}` : (record.ecuMaker || record.ecuType)}
+                                      🔧 {record.ecuMaker && record.ecuType ? `${record.ecuMaker}-${record.ecuType}` : (record.ecuMaker || record.ecuType || 'ECU 튜닝')}
                                     </span>
                                   </div>
-                                  {/* 2. 사용도구 */}
+                                  {/* 2. 카테고리 - 연결방법 */}
                                   <div className="text-sm text-gray-300 mb-1">
-                                    {record.ecuTool || 'N/A'}
+                                    {record.ecuCategory || 'N/A'} - {record.connectionMethod || 'N/A'}
                                   </div>
                                   {/* 3. 작업내용 */}
                                   <div className="text-xs text-gray-400">
-                                    {record.ecuTuningWorks && record.ecuTuningWorks.length > 0 
-                                      ? record.ecuTuningWorks.join(', ') 
-                                      : (record.tuningWork || 'N/A')}
+                                    ECU 튜닝
                                   </div>
                                 </>
                               ) : (
@@ -1390,23 +1402,21 @@ export default function HistoryPage() {
                             </td>
                             {/* ACU/튜닝 칸 */}
                             <td className="px-3 py-4 whitespace-nowrap">
-                              {(record.acuManufacturer || record.acuModel || record.acuType || record.acuTool) ? (
+                              {(record.acuManufacturer || record.acuModel || record.acuType || record.acuCategory || record.acuConnectionMethod) ? (
                                 <>
                                   {/* 1. 제조사-모델명 (초록 박스) */}
                                   <div className="text-sm text-white mb-1">
                                     <span className="inline-block mr-2 px-2 py-1 text-xs bg-green-600 text-white rounded">
-                                      ⚙️ {record.acuManufacturer && record.acuModel ? `${record.acuManufacturer}-${record.acuModel}` : (record.acuManufacturer || record.acuModel || record.acuType)}
+                                      ⚙️ {record.acuManufacturer && record.acuModel ? `${record.acuManufacturer}-${record.acuModel}` : (record.acuManufacturer || record.acuModel || record.acuType || 'ACU 튜닝')}
                                     </span>
                                   </div>
-                                  {/* 2. 사용도구 */}
+                                  {/* 2. 카테고리 - 연결방법 */}
                                   <div className="text-sm text-gray-300 mb-1">
-                                    {record.acuTool || 'N/A'}
+                                    {record.acuCategory || 'N/A'} - {record.acuConnectionMethod || record.connectionMethod || 'N/A'}
                                   </div>
                                   {/* 3. 작업내용 */}
                                   <div className="text-xs text-gray-400">
-                                    {record.acuTuningWorks && record.acuTuningWorks.length > 0 
-                                      ? record.acuTuningWorks.join(', ') 
-                                      : 'N/A'}
+                                    ACU 튜닝
                                   </div>
                                 </>
                               ) : (
