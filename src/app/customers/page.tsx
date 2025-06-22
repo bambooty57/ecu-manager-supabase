@@ -313,13 +313,39 @@ export default function CustomersPage() {
       const newWindow = window.open(mapUrl, '_blank', 'noopener,noreferrer')
       
       if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-        // 팝업이 차단된 경우 현재 탭에서 열기
-        window.location.href = mapUrl
+        // 팝업이 차단된 경우 사용자에게 알리고 직접 복사할 수 있도록 함
+        const userChoice = confirm(
+          `팝업이 차단되어 지도를 열 수 없습니다.\n\n` +
+          `다음 중 하나를 선택해주세요:\n` +
+          `확인: 주소를 클립보드에 복사\n` +
+          `취소: 작업 취소`
+        )
+        
+        if (userChoice) {
+          // 클립보드에 주소 복사
+          navigator.clipboard.writeText(address).then(() => {
+            alert(`주소가 클립보드에 복사되었습니다:\n${address}\n\n직접 지도 앱에서 검색해주세요.`)
+          }).catch(() => {
+            // 클립보드 복사 실패 시 주소 표시
+            alert(`주소: ${address}\n\n위 주소를 복사하여 지도 앱에서 검색해주세요.`)
+          })
+        }
       }
     } catch (error) {
       console.error('지도 열기 오류:', error)
-      // 오류 발생 시 현재 탭에서 열기
-      window.location.href = mapUrl
+      // 오류 발생 시에도 클립보드 복사로 대체
+      const userChoice = confirm(
+        `지도를 열 수 없습니다.\n\n` +
+        `확인을 누르면 주소를 클립보드에 복사합니다.`
+      )
+      
+      if (userChoice) {
+        navigator.clipboard.writeText(address).then(() => {
+          alert(`주소가 클립보드에 복사되었습니다:\n${address}\n\n직접 지도 앱에서 검색해주세요.`)
+        }).catch(() => {
+          alert(`주소: ${address}\n\n위 주소를 복사하여 지도 앱에서 검색해주세요.`)
+        })
+      }
     }
   }
 
