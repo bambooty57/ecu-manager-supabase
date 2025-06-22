@@ -156,10 +156,10 @@ export const getWorkRecordsPaginated = async (
     .from('work_records')
     .select('*', { count: 'exact', head: true })
   
-  // 페이지네이션된 데이터 조회
+  // 페이지네이션된 데이터 조회 - ECU/ACU 정보를 위해 remapping_works는 항상 포함
   const selectFields = includeFiles 
     ? '*' 
-    : 'id, customer_id, equipment_id, work_date, work_type, total_price, status, created_at'
+    : 'id, customer_id, equipment_id, work_date, work_type, total_price, status, created_at, remapping_works'
   
   const { data, error } = await supabase
     .from('work_records')
@@ -172,17 +172,34 @@ export const getWorkRecordsPaginated = async (
     throw error
   }
   
-  const workRecords = data.map((record: any) => ({
-    id: record.id,
-    customerId: record.customer_id,
-    equipmentId: record.equipment_id ?? undefined,
-    workDate: record.work_date,
-    workType: record.work_type,
-    totalPrice: record.total_price ?? undefined,
-    status: record.status || '',
-    remappingWorks: includeFiles ? (record.remapping_works || []) : [],
-    created_at: record.created_at,
-  }))
+  const workRecords = data.map((record: any) => {
+    // remapping_works 처리 개선
+    let remappingWorks = []
+    if (record.remapping_works) {
+      try {
+        if (typeof record.remapping_works === 'string') {
+          remappingWorks = JSON.parse(record.remapping_works)
+        } else if (Array.isArray(record.remapping_works)) {
+          remappingWorks = record.remapping_works
+        }
+      } catch (error) {
+        console.warn('❌ remapping_works 파싱 실패:', error)
+        remappingWorks = []
+      }
+    }
+    
+    return {
+      id: record.id,
+      customerId: record.customer_id,
+      equipmentId: record.equipment_id ?? undefined,
+      workDate: record.work_date,
+      workType: record.work_type,
+      totalPrice: record.total_price ?? undefined,
+      status: record.status || '',
+      remappingWorks: remappingWorks,
+      created_at: record.created_at,
+    }
+  })
   
   return {
     data: workRecords,

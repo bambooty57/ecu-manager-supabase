@@ -278,7 +278,7 @@ export default function HistoryPage() {
     try {
       // 병렬로 모든 데이터 로드 (페이지네이션 적용)
       const [paginatedResult, customersData, equipmentsData] = await Promise.all([
-        getWorkRecordsPaginated(page, pageSize, false), // 파일 데이터 제외
+        getWorkRecordsPaginated(page, pageSize, false), // remapping_works는 항상 포함됨
         getAllCustomers(),
         getAllEquipment()
       ])
@@ -288,34 +288,13 @@ export default function HistoryPage() {
       setTotalPages(Math.ceil(paginatedResult.totalCount / pageSize))
       setCurrentPage(page)
 
-      // 작업 기록에 고객명과 장비 정보 추가 (간단한 형태)
+      // 작업 기록에 고객명과 장비 정보 추가 및 ECU/ACU 정보 처리
       const enrichedWorkRecords = paginatedResult.data.map(record => {
-        const customer = customersData.find(c => c.id === record.customerId)
-        const equipment = equipmentsData.find(e => e.id === record.equipmentId)
+        // processRemappingWorks 함수를 사용하여 ECU/ACU 정보 추출
+        const processedRecord = processRemappingWorks(record, customersData, equipmentsData)
         
         return {
-          ...record,
-          customerName: customer?.name || '알 수 없음',
-          equipmentType: equipment?.equipmentType || '알 수 없음',
-          manufacturer: equipment?.manufacturer || '알 수 없음',
-          model: equipment?.model || '알 수 없음',
-          serial: equipment?.serialNumber || '',
-          // 기본값들
-          ecuMaker: '',
-          ecuType: '',
-          connectionMethod: '',
-          ecuTool: '',
-          ecuTuningWorks: [],
-          acuManufacturer: '',
-          acuModel: '',
-          acuConnectionMethod: '',
-          acuTool: '',
-          acuTuningWorks: [],
-          tuningWork: record.workType,
-          customTuningWork: record.workType,
-          registrationDate: record.workDate,
-          price: record.totalPrice || 0,
-          files: [], // 빈 배열로 초기화
+          ...processedRecord,
           hasFiles: false // 파일 로드 여부 플래그
         }
       })
