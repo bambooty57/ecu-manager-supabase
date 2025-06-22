@@ -26,6 +26,7 @@ export default function WorkPage() {
   interface RemappingWork {
     id: number
     ecuToolCategory: string
+    ecuToolCategoryCustom?: string
     connectionMethod: string
     ecuMaker?: string
     ecuType: string
@@ -83,6 +84,7 @@ export default function WorkPage() {
   // 현재 편집 중인 Remapping 작업
   const [currentRemappingWork, setCurrentRemappingWork] = useState({
     ecuToolCategory: '',
+    ecuToolCategoryCustom: '',
     connectionMethod: '',
     ecuMaker: '',
     ecuType: '',
@@ -199,6 +201,15 @@ export default function WorkPage() {
         setAcuModelsByManufacturer(newModelsByManufacturer)
         localStorage.setItem('acuModelsByManufacturer', JSON.stringify(newModelsByManufacturer))
       }
+    }
+  }
+
+  // 새로운 ECU 카테고리를 목록에 추가
+  const addNewEcuCategory = (newCategory: string) => {
+    if (newCategory.trim() && !ECU_TOOL_CATEGORIES.includes(newCategory.trim() as any)) {
+      // 상수 배열에 직접 추가 (실제 앱에서는 데이터베이스나 로컬 스토리지 사용)
+      ;(ECU_TOOL_CATEGORIES as any).push(newCategory.trim())
+      alert('새로운 카테고리가 추가되었습니다.')
     }
   }
 
@@ -367,6 +378,7 @@ export default function WorkPage() {
     // 현재 Remapping 작업 초기화
     setCurrentRemappingWork({
       ecuToolCategory: '',
+      ecuToolCategoryCustom: '',
       connectionMethod: '',
       ecuMaker: '',
       ecuType: '',
@@ -419,6 +431,7 @@ export default function WorkPage() {
   const handleEditRemappingWork = (work: RemappingWork) => {
     setCurrentRemappingWork({
       ecuToolCategory: work.ecuToolCategory,
+      ecuToolCategoryCustom: work.ecuToolCategoryCustom || '',
       connectionMethod: work.connectionMethod,
       ecuMaker: work.ecuMaker || '',
       ecuType: work.ecuType,
@@ -458,6 +471,7 @@ export default function WorkPage() {
   const handleCancelRemappingEdit = () => {
     setCurrentRemappingWork({
       ecuToolCategory: '',
+      ecuToolCategoryCustom: '',
       connectionMethod: '',
       ecuMaker: '',
       ecuType: '',
@@ -809,6 +823,7 @@ export default function WorkPage() {
     setRemappingWorks([])
     setCurrentRemappingWork({
       ecuToolCategory: '',
+      ecuToolCategoryCustom: '',
       connectionMethod: '',
       ecuMaker: '',
       ecuType: '',
@@ -1199,7 +1214,39 @@ export default function WorkPage() {
                         {category}
                       </option>
                     ))}
+                    <option value="직접입력">직접입력</option>
                   </select>
+                  
+                  {/* 직접입력 선택 시 새 카테고리 추가 필드 */}
+                  {currentRemappingWork.ecuToolCategory === '직접입력' && (
+                    <div className="mt-2 flex space-x-2">
+                      <input
+                        type="text"
+                        value={currentRemappingWork.ecuToolCategoryCustom || ''}
+                        onChange={(e) => setCurrentRemappingWork(prev => ({ ...prev, ecuToolCategoryCustom: e.target.value }))}
+                        className="flex-1 bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                        placeholder="새로운 ECU 카테고리를 입력하세요"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const customCategory = currentRemappingWork.ecuToolCategoryCustom?.trim()
+                          if (customCategory) {
+                            addNewEcuCategory(customCategory)
+                            setCurrentRemappingWork(prev => ({ 
+                              ...prev, 
+                              ecuToolCategory: customCategory,
+                              ecuToolCategoryCustom: ''
+                            }))
+                          }
+                        }}
+                        className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                        title="카테고리 목록에 추가하고 선택"
+                      >
+                        추가
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1667,12 +1714,12 @@ export default function WorkPage() {
                   </div>
 
                   {/* ACU 파일 업로드 섹션 */}
-                  <div className="border-t border-gray-300 pt-6">
-                    <h5 className="text-md font-medium text-gray-900 mb-4">ACU 파일 업로드</h5>
+                  <div className="border-t border-gray-500 pt-6">
+                    <h5 className="text-md font-medium text-white mb-4">ACU 파일 업로드</h5>
                     
                     {/* 원본 ACU 파일 */}
                     <div className="mb-6">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         원본 ACU 폴더
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
@@ -1689,12 +1736,12 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="acu-original-folder"
-                          className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-green-300 rounded-lg cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors"
+                          className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-500 rounded-lg cursor-pointer hover:border-green-400 hover:bg-gray-600 transition-colors"
                         >
-                          <svg className="w-6 h-6 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-6 h-6 text-gray-300 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
-                          <span className="text-sm text-green-600">
+                          <span className="text-sm text-gray-300">
                             {currentRemappingWork.files.acuOriginalFiles && currentRemappingWork.files.acuOriginalFiles.length > 0 
                               ? `⚙️ ${currentRemappingWork.files.acuOriginalFiles.length}개 파일 선택됨` 
                               : '⚙️ 원본 ACU 폴더 선택'}
@@ -1706,18 +1753,18 @@ export default function WorkPage() {
                         value={currentRemappingWork.files.acuOriginalFileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('acuOriginalFileDescription', e.target.value)}
                         placeholder="ACU 폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
-                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                        className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 placeholder-gray-400"
                       />
                       {/* 선택된 ACU 파일 목록 표시 */}
                       {currentRemappingWork.files.acuOriginalFiles && currentRemappingWork.files.acuOriginalFiles.length > 0 && (
-                        <div className="mt-2 p-3 bg-green-50 rounded-lg">
-                          <div className="text-sm font-medium text-green-700 mb-2">선택된 ACU 파일:</div>
+                        <div className="mt-2 p-3 bg-gray-600 rounded-lg">
+                          <div className="text-sm font-medium text-gray-200 mb-2">선택된 ACU 파일:</div>
                           <div className="max-h-32 overflow-y-auto">
                             {currentRemappingWork.files.acuOriginalFiles.map((file, index) => (
-                              <div key={index} className="text-xs text-green-600 py-1 flex items-center">
+                              <div key={index} className="text-xs text-gray-300 py-1 flex items-center">
                                 <span className="mr-2">⚙️</span>
                                 <span className="truncate">{file.name}</span>
-                                <span className="ml-auto text-green-400">
+                                <span className="ml-auto text-gray-400">
                                   ({(file.size / 1024).toFixed(1)} KB)
                                 </span>
                               </div>
@@ -1730,8 +1777,8 @@ export default function WorkPage() {
                     {/* ACU Stage 파일들 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       {/* ACU 1차 튜닝 */}
-                      <div className="border border-green-200 rounded-lg p-4 bg-green-50">
-                        <label className="block text-sm font-medium text-green-800 mb-2">
+                      <div className="border border-green-600 rounded-lg p-4 bg-gray-800">
+                        <label className="block text-sm font-medium text-green-300 mb-2">
                           ⚙️ ACU 1차 튜닝
                         </label>
                         <div className="flex items-center space-x-3 mb-2">
@@ -1746,9 +1793,9 @@ export default function WorkPage() {
                           />
                           <label
                             htmlFor="acu-stage1-file"
-                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-100 transition-colors text-xs w-full"
+                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-600 rounded-lg cursor-pointer hover:border-green-400 hover:bg-gray-700 transition-colors text-xs w-full"
                           >
-                            <span className="text-green-700">
+                            <span className="text-green-300">
                               {currentRemappingWork.files.acuStage1File 
                                 ? `⚙️ ${(currentRemappingWork.files.acuStage1File as File).name} (${((currentRemappingWork.files.acuStage1File as File).size / 1024).toFixed(1)} KB)` 
                                 : '⚙️ ACU 1차 튜닝 파일 선택'}
@@ -1760,13 +1807,13 @@ export default function WorkPage() {
                           value={currentRemappingWork.files.acuStage1FileDescription || ''}
                           onChange={(e) => handleFileDescriptionChange('acuStage1FileDescription', e.target.value)}
                           placeholder="ACU 1차 튜닝 설명을 입력하세요"
-                          className="w-full border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-xs"
+                          className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-xs placeholder-gray-400"
                         />
                       </div>
 
                       {/* ACU 2차 튜닝 */}
-                      <div className="border border-green-300 rounded-lg p-4 bg-green-100">
-                        <label className="block text-sm font-medium text-green-800 mb-2">
+                      <div className="border border-yellow-600 rounded-lg p-4 bg-gray-800">
+                        <label className="block text-sm font-medium text-yellow-300 mb-2">
                           ⚙️ ACU 2차 튜닝
                         </label>
                         <div className="flex items-center space-x-3 mb-2">
@@ -1781,9 +1828,9 @@ export default function WorkPage() {
                           />
                           <label
                             htmlFor="acu-stage2-file"
-                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-400 rounded-lg cursor-pointer hover:border-green-600 hover:bg-green-200 transition-colors text-xs w-full"
+                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-yellow-600 rounded-lg cursor-pointer hover:border-yellow-400 hover:bg-gray-700 transition-colors text-xs w-full"
                           >
-                            <span className="text-green-800">
+                            <span className="text-yellow-300">
                               {currentRemappingWork.files.acuStage2File 
                                 ? `⚙️ ${(currentRemappingWork.files.acuStage2File as File).name} (${((currentRemappingWork.files.acuStage2File as File).size / 1024).toFixed(1)} KB)` 
                                 : '⚙️ ACU 2차 튜닝 파일 선택'}
@@ -1795,13 +1842,13 @@ export default function WorkPage() {
                           value={currentRemappingWork.files.acuStage2FileDescription || ''}
                           onChange={(e) => handleFileDescriptionChange('acuStage2FileDescription', e.target.value)}
                           placeholder="ACU 2차 튜닝 설명을 입력하세요"
-                          className="w-full border-green-400 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600 text-xs"
+                          className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-xs placeholder-gray-400"
                         />
                       </div>
 
                       {/* ACU 3차 튜닝 */}
-                      <div className="border border-green-400 rounded-lg p-4 bg-green-200">
-                        <label className="block text-sm font-medium text-green-900 mb-2">
+                      <div className="border border-red-600 rounded-lg p-4 bg-gray-800">
+                        <label className="block text-sm font-medium text-red-300 mb-2">
                           ⚙️ ACU 3차 튜닝
                         </label>
                         <div className="flex items-center space-x-3 mb-2">
@@ -1816,9 +1863,9 @@ export default function WorkPage() {
                           />
                           <label
                             htmlFor="acu-stage3-file"
-                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-500 rounded-lg cursor-pointer hover:border-green-700 hover:bg-green-300 transition-colors text-xs w-full"
+                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-red-600 rounded-lg cursor-pointer hover:border-red-400 hover:bg-gray-700 transition-colors text-xs w-full"
                           >
-                            <span className="text-green-900">
+                            <span className="text-red-300">
                               {currentRemappingWork.files.acuStage3File 
                                 ? `⚙️ ${(currentRemappingWork.files.acuStage3File as File).name} (${((currentRemappingWork.files.acuStage3File as File).size / 1024).toFixed(1)} KB)` 
                                 : '⚙️ ACU 3차 튜닝 파일 선택'}
@@ -1830,7 +1877,7 @@ export default function WorkPage() {
                           value={currentRemappingWork.files.acuStage3FileDescription || ''}
                           onChange={(e) => handleFileDescriptionChange('acuStage3FileDescription', e.target.value)}
                           placeholder="ACU 3차 튜닝 설명을 입력하세요"
-                          className="w-full border-green-500 rounded-md shadow-sm focus:ring-green-700 focus:border-green-700 text-xs"
+                          className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-xs placeholder-gray-400"
                         />
                       </div>
                     </div>
@@ -1838,7 +1885,7 @@ export default function WorkPage() {
 
                   {/* 사진/영상 첨부 (5개) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-4">
+                    <label className="block text-sm font-medium text-gray-300 mb-4">
                       사진/영상 첨부 (최대 5개)
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -1849,8 +1896,8 @@ export default function WorkPage() {
                         const description = currentRemappingWork.files[descKey] as string | undefined
                         
                         return (
-                          <div key={index} className="border border-purple-200 rounded-lg p-3 bg-purple-50">
-                            <label className="block text-xs font-medium text-purple-800 mb-2">
+                          <div key={index} className="border border-purple-600 rounded-lg p-3 bg-gray-800">
+                            <label className="block text-xs font-medium text-purple-300 mb-2">
                               📷 미디어 {index}
                             </label>
                             
@@ -1875,7 +1922,7 @@ export default function WorkPage() {
                                       <img
                                         src={URL.createObjectURL(file)}
                                         alt="미리보기"
-                                        className="w-full h-32 object-cover rounded-lg border border-purple-300"
+                                        className="w-full h-32 object-cover rounded-lg border border-purple-600"
                                       />
                                       <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
                                         <label
@@ -1890,7 +1937,7 @@ export default function WorkPage() {
                                     <div className="relative">
                                       <video
                                         src={URL.createObjectURL(file)}
-                                        className="w-full h-32 object-cover rounded-lg border border-purple-300"
+                                        className="w-full h-32 object-cover rounded-lg border border-purple-600"
                                         controls={false}
                                         muted
                                       />
@@ -1907,8 +1954,8 @@ export default function WorkPage() {
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="w-full h-32 bg-gray-100 rounded-lg border border-purple-300 flex items-center justify-center">
-                                      <div className="text-center text-gray-500">
+                                    <div className="w-full h-32 bg-gray-600 rounded-lg border border-purple-600 flex items-center justify-center">
+                                      <div className="text-center text-gray-300">
                                         <div className="text-lg">📄</div>
                                         <div className="text-xs">미리보기 불가</div>
                                       </div>
@@ -1916,22 +1963,22 @@ export default function WorkPage() {
                                   )}
                                   
                                   {/* 파일 정보 */}
-                                  <div className="mt-1 text-xs text-purple-600 truncate" title={file.name}>
+                                  <div className="mt-1 text-xs text-purple-300 truncate" title={file.name}>
                                     📄 {file.name}
                                   </div>
-                                  <div className="text-xs text-purple-500">
+                                  <div className="text-xs text-purple-400">
                                     ({(file.size / 1024).toFixed(1)} KB)
                                   </div>
                                 </div>
                               ) : (
                                 <label
                                   htmlFor={`media-file-${index}`}
-                                  className="flex items-center justify-center px-2 py-2 border-2 border-dashed border-purple-300 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-100 transition-colors text-xs w-full h-32"
+                                  className="flex items-center justify-center px-2 py-2 border-2 border-dashed border-purple-600 rounded-lg cursor-pointer hover:border-purple-400 hover:bg-gray-700 transition-colors text-xs w-full h-32"
                                 >
-                                  <div className="text-center text-purple-700">
+                                  <div className="text-center text-purple-300">
                                     <div className="text-2xl mb-1">📷</div>
                                     <div>파일 선택</div>
-                                    <div className="text-purple-500">이미지/동영상</div>
+                                    <div className="text-purple-400">이미지/동영상</div>
                                   </div>
                                 </label>
                               )}
@@ -1942,7 +1989,7 @@ export default function WorkPage() {
                               value={description || ''}
                               onChange={(e) => handleFileDescriptionChange(`mediaFile${index}Description`, e.target.value)}
                               placeholder={`미디어 ${index} 설명`}
-                              className="w-full border-purple-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-xs resize-none"
+                              className="w-full bg-gray-600 border-gray-500 text-white rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-xs resize-none placeholder-gray-400"
                               rows={2}
                               maxLength={100}
                             />
@@ -1974,10 +2021,10 @@ export default function WorkPage() {
 
 
           {/* 제출 버튼 */}
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-500">
             <button
               type="button"
-              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-6 py-2 border border-gray-500 rounded-md text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               취소
             </button>
