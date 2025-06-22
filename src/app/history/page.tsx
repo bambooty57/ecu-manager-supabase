@@ -9,6 +9,7 @@ import { searchEngine } from '@/lib/search-engine'
 import { cacheManager, CacheKeys, CacheTTL } from '@/lib/cache-manager'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
+import JSZip from 'jszip'
 
 export default function HistoryPage() {
   const [filters, setFilters] = useState({
@@ -603,28 +604,106 @@ export default function HistoryPage() {
   // 파일 다운로드 핸들러
   const handleFileDownload = (file: any, customTitle?: string) => {
     try {
+      // 파일 확장자 추출 및 안전한 파일명 생성
+      const getFileExtension = (filename: string) => {
+        const match = filename.match(/\.[0-9a-z]+$/i)
+        return match ? match[0] : ''
+      }
+      
+      const sanitizeFilename = (filename: string) => {
+        return filename.replace(/[^\w\s-_.가-힣]/g, '_').trim()
+      }
+      
       if (file.url) {
         // URL이 있는 경우 직접 다운로드
         const link = document.createElement('a')
         link.href = file.url
-        link.download = customTitle || file.name
+        
+        const originalName = customTitle || file.name || `파일_${Date.now()}`
+        const extension = getFileExtension(originalName)
+        const baseName = originalName.replace(extension, '')
+        const safeName = sanitizeFilename(baseName) + extension
+        
+        link.download = safeName
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+        
+        console.log(`✅ 파일 다운로드 완료: ${safeName}`)
       } else if (file.data) {
         // Base64 데이터가 있는 경우
         const link = document.createElement('a')
-        link.href = `data:${file.type || 'application/octet-stream'};base64,${file.data}`
-        link.download = customTitle || file.name
+        
+        // data URL 형식 확인 및 생성
+        let dataUrl = file.data
+        if (!file.data.startsWith('data:')) {
+          dataUrl = `data:${file.type || 'application/octet-stream'};base64,${file.data}`
+        }
+        
+        link.href = dataUrl
+        
+        const originalName = customTitle || file.name || `파일_${Date.now()}`
+        const extension = getFileExtension(originalName)
+        const baseName = originalName.replace(extension, '')
+        const safeName = sanitizeFilename(baseName) + extension
+        
+        link.download = safeName
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+        
+        console.log(`✅ 파일 다운로드 완료: ${safeName}`)
       } else {
-        alert('파일을 다운로드할 수 없습니다.')
+        console.error('파일 데이터가 없습니다:', file)
+        alert('파일을 다운로드할 수 없습니다. 파일 데이터가 손상되었을 수 있습니다.')
       }
     } catch (error) {
       console.error('파일 다운로드 오류:', error)
       alert('파일 다운로드 중 오류가 발생했습니다.')
+    }
+  }
+
+  // ZIP 파일 생성 및 다운로드 (신규 기능)
+  const handleZipDownload = async (files: any[], zipFileName: string) => {
+    try {
+      if (files.length === 0) {
+        alert('다운로드할 파일이 없습니다.')
+        return
+      }
+
+      const zip = new JSZip()
+      
+      // 파일을 ZIP에 추가
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        
+        if (file.data) {
+          // Base64 데이터 처리
+          let fileData = file.data
+          if (file.data.startsWith('data:')) {
+            // data URL에서 Base64 부분만 추출
+            fileData = file.data.split(',')[1]
+          }
+          
+          const fileName = file.name || `파일_${i + 1}`
+          zip.file(fileName, fileData, { base64: true })
+        }
+      }
+
+      // ZIP 파일 생성 및 다운로드
+      const content = await zip.generateAsync({ type: 'blob' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(content)
+      link.download = `${zipFileName}.zip`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      console.log(`✅ ZIP 파일 다운로드 완료: ${zipFileName}.zip`)
+      alert(`${zipFileName}.zip 파일이 다운로드되었습니다.`)
+    } catch (error) {
+      console.error('ZIP 다운로드 오류:', error)
+      alert('ZIP 파일 생성 중 오류가 발생했습니다.')
     }
   }
 
@@ -643,19 +722,27 @@ export default function HistoryPage() {
         return
       }
 
-      // 여러 파일이면 순차적으로 다운로드
-      const downloadPromises = files.map((file, index) => {
-        return new Promise<void>((resolve) => {
-          setTimeout(() => {
-            const customTitle = customFilenames?.[index] || file.name
-            handleFileDownload(file, customTitle)
-            resolve()
-          }, index * 500) // 500ms 간격으로 다운로드
+      // 여러 파일이면 ZIP으로 다운로드 (사용자 선택)
+      const useZip = confirm(`${files.length}개의 ${categoryName} 파일을 ZIP으로 다운로드하시겠습니까?\n\n"확인": ZIP 파일로 다운로드\n"취소": 개별 파일로 다운로드`)
+      
+      if (useZip) {
+        const zipFileName = `${selectedRecord.customerName}_${selectedRecord.workDate}_${categoryName}`
+        await handleZipDownload(files, zipFileName)
+      } else {
+        // 개별 파일로 순차적 다운로드
+        const downloadPromises = files.map((file, index) => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const customTitle = customFilenames?.[index] || file.name
+              handleFileDownload(file, customTitle)
+              resolve()
+            }, index * 500) // 500ms 간격으로 다운로드
+          })
         })
-      })
 
-      await Promise.all(downloadPromises)
-      alert(`${categoryName} 파일들이 모두 다운로드되었습니다.`)
+        await Promise.all(downloadPromises)
+        alert(`${categoryName} 파일들이 모두 다운로드되었습니다.`)
+      }
     } catch (error) {
       console.error('일괄 다운로드 오류:', error)
       alert('파일 다운로드 중 오류가 발생했습니다.')
@@ -1098,13 +1185,14 @@ export default function HistoryPage() {
       ecuType,
       ecuCategory,
       connectionMethod: ecuConnectionMethod,
-      ecuTool,
+      ecuTool: ecuCategory && ecuConnectionMethod ? `${ecuCategory} - ${ecuConnectionMethod}` : (ecuTool || 'N/A'),
       ecuTuningWorks,
       acuManufacturer,
       acuModel,
+      acuType: record.acuType || '',
       acuCategory,
       acuConnectionMethod,
-      acuTool,
+      acuTool: acuCategory && acuConnectionMethod ? `${acuCategory} - ${acuConnectionMethod}` : (acuTool || 'N/A'),
       acuTuningWorks,
       tuningWork: record.workType,
       customTuningWork: record.workType,
@@ -1887,15 +1975,26 @@ export default function HistoryPage() {
               <div className="mt-6">
                 <div className="flex justify-between items-center border-b border-gray-600 pb-2 mb-3">
                   <h4 className="text-md font-medium text-white">첨부 파일</h4>
-                  <button
-                    onClick={() => handleCategoryDownload(selectedRecord.files, `${selectedRecord.customerName}_${selectedRecord.workDate}_전체파일`)}
-                    className="bg-purple-600 text-white text-sm px-3 py-1 rounded hover:bg-purple-700 transition-colors flex items-center space-x-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <span>📦 전체 파일 다운로드</span>
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleZipDownload(selectedRecord.files, `${selectedRecord.customerName}_${selectedRecord.workDate}_전체파일`)}
+                      className="bg-purple-600 text-white text-sm px-4 py-2 rounded-md hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      <span>📦 전체파일 ZIP 다운로드</span>
+                    </button>
+                    <button
+                      onClick={() => handleCategoryDownload(selectedRecord.files, `전체파일`)}
+                      className="bg-gray-600 text-white text-sm px-3 py-2 rounded-md hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span>📄 개별 다운로드</span>
+                    </button>
+                  </div>
                 </div>
                 
                 {/* 파일 카테고리별 분류 */}
@@ -2003,15 +2102,26 @@ export default function HistoryPage() {
                         <div className="flex justify-between items-center mb-4">
                           <h5 className="text-lg font-bold text-white">{title} ({allFiles.length}개)</h5>
                           {allFiles.length > 0 && (
-                            <button
-                              onClick={() => downloadHandler ? downloadHandler(allFiles) : handleCategoryDownload(allFiles, downloadAllLabel)}
-                              className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                              </svg>
-                              <span>📦 {downloadAllLabel} 전체 다운로드</span>
-                            </button>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleZipDownload(allFiles, `${selectedRecord.customerName}_${selectedRecord.workDate}_${downloadAllLabel}`)}
+                                className="bg-blue-600 text-white text-sm px-3 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span>📦 ZIP</span>
+                              </button>
+                              <button
+                                onClick={() => downloadHandler ? downloadHandler(allFiles) : handleCategoryDownload(allFiles, downloadAllLabel)}
+                                className="bg-gray-600 text-white text-sm px-3 py-2 rounded-md hover:bg-gray-700 transition-colors flex items-center space-x-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span>📄 개별</span>
+                              </button>
+                            </div>
                           )}
                         </div>
                         <div className="space-y-4">
