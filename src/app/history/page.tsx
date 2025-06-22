@@ -846,6 +846,24 @@ export default function HistoryPage() {
     let acuTuningWorks: string[] = [];
     let allFiles: any[] = [];
     
+    // tools_used에서 카테고리 정보 추출 시도
+    if (record.toolsUsed && Array.isArray(record.toolsUsed)) {
+      record.toolsUsed.forEach(tool => {
+        if (typeof tool === 'string') {
+          // "KESS", "FLEX" 등의 카테고리 정보 찾기
+          if (tool.toUpperCase().includes('KESS') && !ecuCategory) {
+            ecuCategory = 'KESS';
+          } else if (tool.toUpperCase().includes('FLEX') && !ecuCategory) {
+            ecuCategory = 'FLEX';
+          } else if (tool.toUpperCase().includes('KTAG') && !ecuCategory) {
+            ecuCategory = 'KTAG';
+          } else if (tool.toUpperCase().includes('FGTECH') && !ecuCategory) {
+            ecuCategory = 'FGTECH';
+          }
+        }
+      });
+    }
+
     // 디버깅: ECU/ACU 데이터 확인
     console.log('🔍 Record ID:', record.id, 'ECU/ACU Info:', {
       ecuMaker: record.ecuMaker,
@@ -855,7 +873,9 @@ export default function HistoryPage() {
       acuType: record.acuType,
       connectionMethod: record.connectionMethod,
       toolsUsed: record.toolsUsed,
-      remappingWorks: record.remappingWorks
+      remappingWorks: record.remappingWorks,
+      extractedEcuCategory: ecuCategory,
+      extractedAcuCategory: acuCategory
     });
     
     // remappingWorks에서 추가 정보 추출 (데이터베이스 컬럼이 비어있는 경우 보완)
@@ -871,10 +891,28 @@ export default function HistoryPage() {
       
       // ECU 도구 정보 구성
       if (firstWork.ecu) {
-        ecuCategory = firstWork.ecu.toolCategory || '';
+        // toolCategory 정보를 다양한 경로에서 찾기
+        ecuCategory = firstWork.ecu.toolCategory || 
+                      firstWork.ecu.category || 
+                      firstWork.ecu.tool?.category ||
+                      firstWork.ecu.selectedTool?.category ||
+                      '';
+        
         if (!ecuConnectionMethod) {
-          ecuConnectionMethod = firstWork.ecu.connectionMethod || '';
+          ecuConnectionMethod = firstWork.ecu.connectionMethod || 
+                               firstWork.ecu.connection ||
+                               firstWork.ecu.tool?.connectionMethod ||
+                               '';
         }
+        
+        console.log('🔍 ECU 카테고리 추출:', {
+          toolCategory: firstWork.ecu.toolCategory,
+          category: firstWork.ecu.category,
+          tool: firstWork.ecu.tool,
+          selectedTool: firstWork.ecu.selectedTool,
+          extracted: ecuCategory
+        });
+        
         const ecuToolParts = [
           ecuCategory,
           ecuConnectionMethod,
@@ -894,10 +932,28 @@ export default function HistoryPage() {
       
       // ACU 도구 정보 구성
       if (firstWork.acu) {
-        acuCategory = firstWork.acu.toolCategory || '';
+        // toolCategory 정보를 다양한 경로에서 찾기
+        acuCategory = firstWork.acu.toolCategory || 
+                      firstWork.acu.category || 
+                      firstWork.acu.tool?.category ||
+                      firstWork.acu.selectedTool?.category ||
+                      '';
+        
         if (!acuConnectionMethod) {
-          acuConnectionMethod = firstWork.acu.connectionMethod || '';
+          acuConnectionMethod = firstWork.acu.connectionMethod || 
+                               firstWork.acu.connection ||
+                               firstWork.acu.tool?.connectionMethod ||
+                               '';
         }
+        
+        console.log('🔍 ACU 카테고리 추출:', {
+          toolCategory: firstWork.acu.toolCategory,
+          category: firstWork.acu.category,
+          tool: firstWork.acu.tool,
+          selectedTool: firstWork.acu.selectedTool,
+          extracted: acuCategory
+        });
+        
         const acuToolParts = [
           acuCategory,
           acuConnectionMethod,
