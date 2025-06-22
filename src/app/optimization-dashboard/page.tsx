@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { 
   migrateAllFilesToStorage, 
-  checkMigrationStatus 
+  checkMigrationStatus,
+  analyzeWorkRecordData 
 } from '../../lib/migration-utils'
 import { cacheManager } from '../../lib/cache-manager'
 import { searchEngine } from '../../lib/search-engine'
@@ -86,6 +87,24 @@ export default function OptimizationDashboard() {
     } finally {
       setIsLoading(false)
       setMigrationProgress({ current: 0, total: 0, recordId: 0 })
+    }
+  }
+
+  // 데이터 구조 분석
+  const handleDataAnalysis = async () => {
+    try {
+      setIsLoading(true)
+      console.log('🔍 데이터 구조 분석을 시작합니다...')
+      console.log('브라우저 개발자 도구의 콘솔을 확인하세요.')
+      
+      await analyzeWorkRecordData()
+      
+      alert('✅ 데이터 분석 완료!\n자세한 내용은 브라우저 개발자 도구의 콘솔을 확인하세요.')
+    } catch (error) {
+      console.error('데이터 분석 실패:', error)
+      alert('❌ 데이터 분석 실패')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -279,13 +298,20 @@ export default function OptimizationDashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={handleMigration}
             disabled={isLoading}
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
           >
             🚀 전체 마이그레이션 시작
+          </button>
+          <button
+            onClick={handleDataAnalysis}
+            disabled={isLoading}
+            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            🔍 데이터 구조 분석
           </button>
           <button
             onClick={loadDashboardData}

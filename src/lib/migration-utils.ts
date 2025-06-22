@@ -1,5 +1,22 @@
 import { supabase, uploadFileToStorage, getBucketForFileType, generateUniqueFileName } from './supabase'
-import { getAllWorkRecords, WorkRecordData } from './work-records'
+import { Tables } from './database.types'
+
+type WorkRecordData = Tables<'work_records'>
+
+// 마이그레이션용 작업 기록 조회 (모든 데이터 포함)
+const getAllWorkRecordsForMigration = async (): Promise<WorkRecordData[]> => {
+  const { data, error } = await supabase
+    .from('work_records')
+    .select('*')
+    .order('created_at', { ascending: false })
+  
+  if (error) {
+    console.error('Error fetching work records for migration:', error)
+    throw error
+  }
+  
+  return data
+}
 
 // Base64 데이터를 File 객체로 변환
 export const base64ToFile = (base64Data: string, fileName: string, mimeType: string): File => {
@@ -100,12 +117,17 @@ export const migrateWorkRecordFiles = async (workRecord: WorkRecordData): Promis
   try {
     console.log(`🔄 작업 기록 ${workRecord.id} 파일 마이그레이션 시작...`)
     
-    if (!workRecord.remappingWorks || workRecord.remappingWorks.length === 0) {
+    // remapping_works는 Json 타입이므로 배열로 파싱
+    const remappingWorks = Array.isArray(workRecord.remapping_works) 
+      ? workRecord.remapping_works 
+      : (workRecord.remapping_works ? [workRecord.remapping_works] : [])
+    
+    if (!remappingWorks || remappingWorks.length === 0) {
       console.log('마이그레이션할 파일이 없습니다.')
       return true
     }
 
-    const firstWork = workRecord.remappingWorks[0] as any
+    const firstWork = remappingWorks[0] as any
     let migratedFiles: any[] = []
     let migrationCount = 0
 
@@ -204,7 +226,7 @@ export const migrateAllFilesToStorage = async (
     console.log('🚀 전체 파일 마이그레이션 시작...')
     
     // 모든 작업 기록 조회 (파일 포함)
-    const workRecords = await getAllWorkRecords()
+    const workRecords = await getAllWorkRecordsForMigration()
     const total = workRecords.length
     let success = 0
     let failed = 0
@@ -284,5 +306,106 @@ export const checkMigrationStatus = async (): Promise<{
       pendingRecords: 0,
       migrationProgress: 0
     }
+  }
+}
+
+// 데이터 구조 분석을 위한 디버깅 함수
+export const analyzeWorkRecordData = async (workRecordId?: number): Promise<void> => {
+  try {
+    console.log('🔍 작업 기록 데이터 구조 분석 시작...')
+    
+    // 특정 ID가 주어지면 해당 기록만, 아니면 모든 기록 조회
+    const query = workRecordId 
+      ? supabase.from('work_records').select('*').eq('id', workRecordId)
+      : supabase.from('work_records').select('*').limit(5)
+    
+    const { data: workRecords, error } = await query
+    
+    if (error) {
+      console.error('❌ 데이터 조회 오류:', error)
+      return
+    }
+    
+    if (!workRecords || workRecords.length === 0) {
+      console.log('❌ 조회된 작업 기록이 없습니다.')
+      return
+    }
+    
+    console.log(`📊 총 ${workRecords.length}개 작업 기록 분석`)
+    
+    for (const record of workRecords) {
+      console.log(`\n🔍 작업 기록 ID: ${record.id}`)
+      console.log(`📅 작업 날짜: ${record.work_date}`)
+      console.log(`💰 가격: ${record.total_price}`)
+      
+      // remapping_works 구조 분석
+      if (record.remapping_works) {
+        console.log('📋 remapping_works 구조:')
+        console.log('  - 타입:', typeof record.remapping_works)
+        console.log('  - 배열 여부:', Array.isArray(record.remapping_works))
+        
+        // Json 타입을 배열로 파싱
+        const remappingWorks = Array.isArray(record.remapping_works) 
+          ? record.remapping_works 
+          : (record.remapping_works ? [record.remapping_works] : [])
+        
+        if (remappingWorks && remappingWorks.length > 0) {
+          const firstWork = remappingWorks[0] as any
+          console.log('  - 첫 번째 작업 구조:')
+          console.log('    - files:', !!firstWork.files)
+          console.log('    - acu:', !!firstWork.acu)
+          console.log('    - media:', !!firstWork.media)
+          
+          if (firstWork.files) {
+            console.log('    - files 내용:', Object.keys(firstWork.files))
+            
+            // 각 파일 카테고리 확인
+            const categories = ['original', 'read', 'modified', 'vr', 'stage1', 'stage2', 'stage3']
+            for (const category of categories) {
+              const fileData = firstWork.files[category]
+              if (fileData) {
+                console.log(`      - ${category}:`, {
+                  hasFile: !!fileData.file,
+                  hasData: !!(fileData.file && fileData.file.data),
+                  hasName: !!(fileData.file && fileData.file.name),
+                  dataLength: fileData.file?.data?.length || 0
+                })
+              }
+            }
+            
+            // 미디어 파일들 확인
+            for (let i = 1; i <= 5; i++) {
+              const mediaFile = firstWork.files[`mediaFile${i}`]
+              if (mediaFile) {
+                console.log(`      - mediaFile${i}:`, {
+                  hasFile: !!mediaFile.file,
+                  hasData: !!(mediaFile.file && mediaFile.file.data),
+                  hasName: !!(mediaFile.file && mediaFile.file.name),
+                  dataLength: mediaFile.file?.data?.length || 0
+                })
+              }
+            }
+          }
+          
+          if (firstWork.acu && firstWork.acu.files) {
+            console.log('    - ACU files 내용:', Object.keys(firstWork.acu.files))
+          }
+          
+          if (firstWork.media) {
+            console.log('    - media 내용:', Object.keys(firstWork.media))
+          }
+        }
+      } else {
+        console.log('❌ remapping_works가 없습니다.')
+      }
+      
+      // files 필드 직접 확인
+      if (record.files) {
+        console.log('📁 직접 files 필드:', typeof record.files)
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ 데이터 분석 오류:', error)
   }
 } 
