@@ -65,7 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log('✅ 관리자 인증 성공:', session.user.email)
             setUser(session.user)
             
-            if (event === 'SIGNED_IN') {
+            // 로그인 페이지에서만 홈으로 리다이렉트
+            if (event === 'SIGNED_IN' && window.location.pathname === '/login') {
               router.push('/')
             }
           } else {
