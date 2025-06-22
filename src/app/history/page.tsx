@@ -864,8 +864,50 @@ export default function HistoryPage() {
       });
     }
 
+    // ECU 제조사/모델에 따른 일반적인 장비 카테고리 추정
+    if (!ecuCategory && ecuMaker) {
+      const ecuMakerUpper = ecuMaker.toUpperCase();
+      if (ecuMakerUpper.includes('BOSCH') || ecuMakerUpper.includes('CONTINENTAL') || ecuMakerUpper.includes('DELPHI')) {
+        ecuCategory = 'KESS'; // 일반적으로 KESS로 많이 작업
+      } else if (ecuMakerUpper.includes('CATERPILLAR') || ecuMakerUpper.includes('CUMMINS')) {
+        ecuCategory = 'FLEX'; // 상용차는 주로 FLEX
+      } else if (ecuMakerUpper.includes('CHRYSLER') || ecuMakerUpper.includes('JEEP')) {
+        ecuCategory = 'KESS'; // 크라이슬러는 주로 KESS
+      } else {
+        ecuCategory = 'KESS'; // 기본값
+      }
+    }
+
+    // ACU 제조사에 따른 카테고리 추정
+    if (!acuCategory && acuManufacturer) {
+      const acuManuUpper = acuManufacturer.toUpperCase();
+      if (acuManuUpper.includes('CONTINENTAL') || acuManuUpper.includes('ZF')) {
+        acuCategory = 'FLEX'; // ACU는 주로 FLEX로 작업
+      } else {
+        acuCategory = 'FLEX'; // 기본값
+      }
+    }
+
+    // 연결방법 추정 (ECU)
+    if (!ecuConnectionMethod && ecuMaker) {
+      const ecuMakerUpper = ecuMaker.toUpperCase();
+      if (ecuMakerUpper.includes('CATERPILLAR') || ecuMakerUpper.includes('CUMMINS')) {
+        ecuConnectionMethod = 'BENCH'; // 상용차는 주로 BENCH
+      } else {
+        ecuConnectionMethod = 'OBD'; // 승용차는 주로 OBD
+      }
+    }
+
+    // 연결방법 추정 (ACU)
+    if (!acuConnectionMethod && acuManufacturer) {
+      acuConnectionMethod = 'BENCH'; // ACU는 대부분 BENCH
+    }
+
     // 디버깅: ECU/ACU 데이터 확인
-    console.log('🔍 Record ID:', record.id, 'ECU/ACU Info:', {
+    console.log('🔍 Record ID:', record.id, 'Full Record:', record);
+    console.log('🔍 remappingWorks 상세:', record.remappingWorks);
+    console.log('🔍 toolsUsed 상세:', record.toolsUsed);
+    console.log('🔍 ECU/ACU Info:', {
       ecuMaker: record.ecuMaker,
       ecuModel: record.ecuModel,
       acuManufacturer: record.acuManufacturer,
