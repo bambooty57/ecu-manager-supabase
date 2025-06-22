@@ -408,4 +408,190 @@ export const analyzeWorkRecordData = async (workRecordId?: number): Promise<void
   } catch (error) {
     console.error('❌ 데이터 분석 오류:', error)
   }
+}
+
+// 특정 work_record의 상세 정보 조회 및 분석
+export const analyzeSpecificWorkRecord = async (workRecordId: number): Promise<void> => {
+  try {
+    console.log(`🔍 작업 기록 ID ${workRecordId} 상세 분석 시작...`)
+    
+    // 1. 기본 정보 조회
+    const { data: record, error } = await supabase
+      .from('work_records')
+      .select('*')
+      .eq('id', workRecordId)
+      .single()
+    
+    if (error) {
+      console.error(`❌ 작업 기록 ${workRecordId} 조회 오류:`, error)
+      return
+    }
+    
+    if (!record) {
+      console.log(`❌ 작업 기록 ${workRecordId}가 존재하지 않습니다.`)
+      return
+    }
+    
+    console.log(`✅ 작업 기록 ${workRecordId} 기본 정보:`)
+    console.log('  - ID:', record.id)
+    console.log('  - 고객 ID:', record.customer_id)
+    console.log('  - 장비 ID:', record.equipment_id)
+    console.log('  - 작업 날짜:', record.work_date)
+    console.log('  - 작업 유형:', record.work_type)
+    console.log('  - 총 가격:', record.total_price)
+    console.log('  - 상태:', record.status)
+    console.log('  - ECU 메이커:', record.ecu_maker)
+    console.log('  - ECU 모델:', record.ecu_model)
+    console.log('  - ACU 제조사:', record.acu_manufacturer)
+    console.log('  - ACU 모델:', record.acu_model)
+    console.log('  - 연결 방법:', record.connection_method)
+    
+    // 2. remapping_works 분석
+    if (record.remapping_works) {
+      console.log('📋 remapping_works 분석:')
+      console.log('  - 타입:', typeof record.remapping_works)
+      console.log('  - 원본 데이터:', record.remapping_works)
+      
+      try {
+        const parsedWorks = typeof record.remapping_works === 'string' 
+          ? JSON.parse(record.remapping_works)
+          : record.remapping_works
+        
+        console.log('  - 파싱된 데이터:', parsedWorks)
+        console.log('  - 배열 여부:', Array.isArray(parsedWorks))
+        
+        if (Array.isArray(parsedWorks) && parsedWorks.length > 0) {
+          const firstWork = parsedWorks[0]
+          console.log('  - 첫 번째 작업:', firstWork)
+          
+          if (firstWork.files) {
+            console.log('  - 파일 데이터 존재:', !!firstWork.files)
+            console.log('  - 파일 데이터 타입:', typeof firstWork.files)
+            console.log('  - 파일 데이터:', firstWork.files)
+          }
+        }
+      } catch (parseError) {
+        console.error('  - JSON 파싱 오류:', parseError)
+      }
+    } else {
+      console.log('❌ remapping_works가 없습니다.')
+    }
+    
+    // 3. files 필드 분석
+    if (record.files) {
+      console.log('📁 files 필드 분석:')
+      console.log('  - 타입:', typeof record.files)
+      console.log('  - 원본 데이터:', record.files)
+      
+      try {
+        const parsedFiles = typeof record.files === 'string' 
+          ? JSON.parse(record.files)
+          : record.files
+        
+        console.log('  - 파싱된 파일 데이터:', parsedFiles)
+        
+        if (Array.isArray(parsedFiles)) {
+          console.log(`  - 파일 개수: ${parsedFiles.length}개`)
+          parsedFiles.forEach((file, index) => {
+            console.log(`    파일 ${index + 1}:`, {
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              category: file.category,
+              hasData: !!file.data,
+              dataLength: file.data?.length || 0
+            })
+          })
+        }
+      } catch (parseError) {
+        console.error('  - 파일 JSON 파싱 오류:', parseError)
+      }
+    } else {
+      console.log('❌ files 필드가 없습니다.')
+    }
+    
+    // 4. 마이그레이션 상태 확인
+    const { data: migratedFiles, error: migrationError } = await supabase
+      .from('file_metadata')
+      .select('*')
+      .eq('work_record_id', workRecordId)
+    
+    if (migrationError) {
+      console.error('  - 마이그레이션 데이터 조회 오류:', migrationError)
+    } else {
+      console.log(`📊 마이그레이션 상태: ${migratedFiles?.length || 0}개 파일이 Storage에 저장됨`)
+      if (migratedFiles && migratedFiles.length > 0) {
+        migratedFiles.forEach((file, index) => {
+          console.log(`  마이그레이션된 파일 ${index + 1}:`, {
+            fileName: file.file_name,
+            category: file.category,
+            bucketName: file.bucket_name,
+            storageUrl: file.storage_url
+          })
+        })
+      }
+    }
+    
+  } catch (error) {
+    console.error(`❌ 작업 기록 ${workRecordId} 분석 오류:`, error)
+  }
+}
+
+// 전체 데이터베이스 상태 요약
+export const getDatabaseSummary = async (): Promise<void> => {
+  try {
+    console.log('📊 데이터베이스 상태 요약 시작...')
+    
+    // 1. 전체 작업 기록 수
+    const { count: totalRecords } = await supabase
+      .from('work_records')
+      .select('*', { count: 'exact', head: true })
+    
+    // 2. remapping_works가 있는 기록 수
+    const { count: recordsWithRemapping } = await supabase
+      .from('work_records')
+      .select('*', { count: 'exact', head: true })
+      .not('remapping_works', 'is', null)
+    
+    // 3. files가 있는 기록 수
+    const { count: recordsWithFiles } = await supabase
+      .from('work_records')
+      .select('*', { count: 'exact', head: true })
+      .not('files', 'is', null)
+    
+    // 4. 마이그레이션된 파일 수
+    const { count: migratedFiles } = await supabase
+      .from('file_metadata')
+      .select('*', { count: 'exact', head: true })
+    
+    // 5. 고유한 work_record_id 수 (마이그레이션된)
+    const { data: uniqueWorkRecords } = await supabase
+      .from('file_metadata')
+      .select('work_record_id')
+    
+    const uniqueCount = new Set(uniqueWorkRecords?.map(r => r.work_record_id) || []).size
+    
+    console.log('📈 데이터베이스 상태 요약:')
+    console.log(`  - 전체 작업 기록: ${totalRecords || 0}개`)
+    console.log(`  - remapping_works 있는 기록: ${recordsWithRemapping || 0}개`)
+    console.log(`  - files 필드 있는 기록: ${recordsWithFiles || 0}개`)
+    console.log(`  - 마이그레이션된 파일: ${migratedFiles || 0}개`)
+    console.log(`  - 마이그레이션된 작업 기록: ${uniqueCount}개`)
+    console.log(`  - 마이그레이션 진행률: ${totalRecords ? (uniqueCount / totalRecords * 100).toFixed(1) : 0}%`)
+    
+    // 6. 최근 5개 작업 기록 ID 표시
+    const { data: recentRecords } = await supabase
+      .from('work_records')
+      .select('id, work_date, ecu_maker, acu_manufacturer')
+      .order('created_at', { ascending: false })
+      .limit(5)
+    
+    console.log('📋 최근 작업 기록 5개:')
+    recentRecords?.forEach((record, index) => {
+      console.log(`  ${index + 1}. ID: ${record.id}, 날짜: ${record.work_date}, ECU: ${record.ecu_maker || 'N/A'}, ACU: ${record.acu_manufacturer || 'N/A'}`)
+    })
+    
+  } catch (error) {
+    console.error('❌ 데이터베이스 상태 요약 오류:', error)
+  }
 } 
