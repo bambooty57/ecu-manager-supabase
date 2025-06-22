@@ -113,7 +113,7 @@ export const getAllWorkRecords = async (): Promise<WorkRecordData[]> => {
     throw error
   }
   
-  return data.map(record => ({
+  return data.map((record: any) => ({
     id: record.id,
     customerId: record.customer_id,
     equipmentId: record.equipment_id ?? undefined,
@@ -172,7 +172,7 @@ export const getWorkRecordsPaginated = async (
     throw error
   }
   
-  const workRecords = data.map(record => ({
+  const workRecords = data.map((record: any) => ({
     id: record.id,
     customerId: record.customer_id,
     equipmentId: record.equipment_id ?? undefined,

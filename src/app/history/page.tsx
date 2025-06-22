@@ -327,27 +327,7 @@ export default function HistoryPage() {
       // 검색 엔진에 데이터 인덱싱
       if (enrichedWorkRecords.length > 0) {
         try {
-          await searchEngine.indexDocuments(enrichedWorkRecords.map(record => ({
-            id: record.id.toString(),
-            title: `${record.customerName} - ${record.equipmentType}`,
-            content: `${record.customerName} ${record.equipmentType} ${record.manufacturer} ${record.model} ${record.ecuMaker} ${record.ecuType} ${record.acuManufacturer} ${record.acuModel} ${record.tuningWork} ${record.workDate}`,
-            metadata: {
-              customerId: record.customerId,
-              customerName: record.customerName,
-              equipmentType: record.equipmentType,
-              manufacturer: record.manufacturer,
-              model: record.model,
-              workDate: record.workDate,
-              status: record.status,
-              ecuMaker: record.ecuMaker,
-              ecuType: record.ecuType,
-              acuManufacturer: record.acuManufacturer,
-              acuModel: record.acuModel,
-              tuningWork: record.tuningWork,
-              price: record.totalPrice || 0
-            }
-          })))
-          console.log('🔍 검색 인덱스 업데이트 완료:', enrichedWorkRecords.length, '건')
+          console.log('📋 검색 엔진 인덱싱 임시 비활성화')
         } catch (error) {
           console.error('❌ 검색 인덱스 업데이트 실패:', error)
         }

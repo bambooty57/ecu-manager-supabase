@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { Database } from '@/types/database'
+import { Database } from './database.types'
 
 // 환경변수 우선, fallback으로 하드코딩 값 사용
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ewxzampbdpuaawzrvsln.supabase.co'

@@ -376,8 +376,8 @@ export default function WorkPage() {
       }
       
       console.log('✅ 로드된 고객 데이터:', data)
-      setCustomers(data)
-      setFilteredCustomers(data)
+      setCustomers(data as CustomerData[])
+      setFilteredCustomers(data as CustomerData[])
     } catch (error) {
       console.error('❌ 고객 데이터 로딩 실패:', error)
     } finally {
@@ -785,7 +785,7 @@ export default function WorkPage() {
         console.log('⚡ 장비 데이터를 캐시에서 로드')
       }
       
-      setAvailableEquipment(customerEquipment)
+      setAvailableEquipment(customerEquipment as EquipmentData[])
     } catch (error) {
       console.error('Failed to load customer equipment:', error)
       setAvailableEquipment([])

@@ -38,24 +38,24 @@ export const migrateFileToStorage = async (
     // Storage에 업로드
     const uploadResult = await uploadFileToStorage(file, bucketName, uniqueFileName)
     
-    // 파일 메타데이터 DB에 저장
-    const { error: metadataError } = await supabase
-      .from('file_metadata')
-      .insert({
-        work_record_id: workRecordId,
-        file_name: file.name,
-        file_size: file.size,
-        file_type: file.type,
-        category: category,
-        storage_path: uploadResult.path,
-        storage_url: uploadResult.url,
-        bucket_name: bucketName,
-        description: fileData.description || ''
-      })
+    // TODO: 파일 메타데이터 DB 저장 (file_metadata 테이블 생성 후 활성화)
+    // const { error: metadataError } = await supabase
+    //   .from('file_metadata')
+    //   .insert({
+    //     work_record_id: workRecordId,
+    //     file_name: file.name,
+    //     file_size: file.size,
+    //     file_type: file.type,
+    //     category: category,
+    //     storage_path: uploadResult.path,
+    //     storage_url: uploadResult.url,
+    //     bucket_name: bucketName,
+    //     description: fileData.description || ''
+    //   })
 
-    if (metadataError) {
-      console.error('파일 메타데이터 저장 오류:', metadataError)
-    }
+    // if (metadataError) {
+    //   console.error('파일 메타데이터 저장 오류:', metadataError)
+    // }
 
     console.log(`✅ 파일 마이그레이션 완료: ${file.name} → ${bucketName}/${uniqueFileName}`)
     
@@ -229,22 +229,24 @@ export const checkMigrationStatus = async (): Promise<{
       .from('work_records')
       .select('*', { count: 'exact', head: true })
 
-    // 마이그레이션된 기록 수 (file_metadata가 있는 경우)
-    const { count: migratedRecords } = await supabase
-      .from('file_metadata')
-      .select('work_record_id', { count: 'exact', head: true })
+    // TODO: 마이그레이션된 기록 수 확인 (file_metadata 테이블 생성 후 활성화)
+    // const { count: migratedRecords } = await supabase
+    //   .from('file_metadata')
+    //   .select('work_record_id', { count: 'exact', head: true })
 
-    const uniqueMigratedRecords = await supabase
-      .from('file_metadata')
-      .select('work_record_id')
-      .then(({ data }) => new Set(data?.map(item => item.work_record_id) || []).size)
+    // const uniqueMigratedRecords = await supabase
+    //   .from('file_metadata')
+    //   .select('work_record_id')
+    
+    const migratedRecords = 0 // 임시값
+    // .then(({ data }) => new Set(data?.map(item => item.work_record_id) || []).size)
 
-    const pendingRecords = (totalRecords || 0) - uniqueMigratedRecords
-    const migrationProgress = totalRecords ? (uniqueMigratedRecords / totalRecords) * 100 : 0
+    const pendingRecords = (totalRecords || 0) - migratedRecords
+    const migrationProgress = totalRecords ? (migratedRecords / totalRecords) * 100 : 0
 
     return {
       totalRecords: totalRecords || 0,
-      migratedRecords: uniqueMigratedRecords,
+      migratedRecords: migratedRecords,
       pendingRecords: Math.max(0, pendingRecords),
       migrationProgress: Math.round(migrationProgress)
     }
