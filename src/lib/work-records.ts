@@ -101,11 +101,11 @@ const transformWorkRecordToDB = (record: Omit<WorkRecordData, 'id' | 'created_at
   status: record.status,
 });
 
-// 모든 작업 기록 조회
+// 모든 작업 기록 조회 (파일 데이터 제외)
 export const getAllWorkRecords = async (): Promise<WorkRecordData[]> => {
   const { data, error } = await supabase
     .from('work_records')
-    .select('*')
+    .select('id, customer_id, equipment_id, work_date, work_type, total_price, status, created_at')
     .order('created_at', { ascending: false })
   
   if (error) {
@@ -113,7 +113,81 @@ export const getAllWorkRecords = async (): Promise<WorkRecordData[]> => {
     throw error
   }
   
-  return data.map(transformWorkRecordFromDB)
+  return data.map(record => ({
+    id: record.id,
+    customerId: record.customer_id,
+    equipmentId: record.equipment_id ?? undefined,
+    workDate: record.work_date,
+    workType: record.work_type,
+    totalPrice: record.total_price ?? undefined,
+    status: record.status || '',
+    remappingWorks: [], // 빈 배열로 초기화 (필요시 별도 로드)
+    created_at: record.created_at,
+  }))
+}
+
+// 파일 데이터를 포함한 상세 작업 기록 조회 (개별 상세보기용)
+export const getWorkRecordWithFiles = async (id: number): Promise<WorkRecordData | null> => {
+  const { data, error } = await supabase
+    .from('work_records')
+    .select('*')
+    .eq('id', id)
+    .single()
+  
+  if (error) {
+    console.error('Error fetching work record with files:', error)
+    throw error
+  }
+  
+  return data ? transformWorkRecordFromDB(data) : null
+}
+
+// 페이지네이션된 작업 기록 조회
+export const getWorkRecordsPaginated = async (
+  page: number = 1, 
+  pageSize: number = 20,
+  includeFiles: boolean = false
+): Promise<{ data: WorkRecordData[], totalCount: number }> => {
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+  
+  // 총 개수 조회
+  const { count } = await supabase
+    .from('work_records')
+    .select('*', { count: 'exact', head: true })
+  
+  // 페이지네이션된 데이터 조회
+  const selectFields = includeFiles 
+    ? '*' 
+    : 'id, customer_id, equipment_id, work_date, work_type, total_price, status, created_at'
+  
+  const { data, error } = await supabase
+    .from('work_records')
+    .select(selectFields)
+    .order('created_at', { ascending: false })
+    .range(from, to)
+  
+  if (error) {
+    console.error('Error fetching paginated work records:', error)
+    throw error
+  }
+  
+  const workRecords = data.map(record => ({
+    id: record.id,
+    customerId: record.customer_id,
+    equipmentId: record.equipment_id ?? undefined,
+    workDate: record.work_date,
+    workType: record.work_type,
+    totalPrice: record.total_price ?? undefined,
+    status: record.status || '',
+    remappingWorks: includeFiles ? (record.remapping_works || []) : [],
+    created_at: record.created_at,
+  }))
+  
+  return {
+    data: workRecords,
+    totalCount: count || 0
+  }
 }
 
 // 특정 고객의 작업 기록 조회

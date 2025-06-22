@@ -700,7 +700,7 @@ export const ECU_TOOL_CATEGORIES = [
   'FLEX 시리즈',
   'PAD Flash 시리즈',
   'KESS 시리즈',
-  '기타'
+  '직접입력'
 ] as const
 
 // ECU 장비 상세 목록
@@ -729,7 +729,7 @@ export const ECU_TOOLS = {
     'KESS Clone'
   ],
 
-  '기타': [
+  '직접입력': [
     'CMD Flash',
     'Galletto',
     'MPPS',

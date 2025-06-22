@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { Database } from './database.types'
+import { Database } from '@/types/database'
 
 // 환경변수 우선, fallback으로 하드코딩 값 사용
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ewxzampbdpuaawzrvsln.supabase.co'
@@ -64,4 +64,95 @@ export const testSupabaseConnection = async () => {
   }
 }
 
-export default supabase 
+export default supabase
+
+// Supabase Storage 유틸리티 함수들
+
+// 파일 업로드 (최적화된 버전)
+export const uploadFileToStorage = async (file: File, bucketName: string, fileName: string): Promise<{ path: string, url: string }> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (error) {
+      console.error('파일 업로드 오류:', error)
+      throw error
+    }
+
+    // 공개 URL 생성
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(data.path)
+
+    return {
+      path: data.path,
+      url: publicUrl
+    }
+  } catch (error) {
+    console.error('파일 업로드 실패:', error)
+    throw error
+  }
+}
+
+// 파일 삭제
+export const deleteFileFromStorage = async (bucketName: string, filePath: string): Promise<void> => {
+  try {
+    const { error } = await supabase.storage
+      .from(bucketName)
+      .remove([filePath])
+
+    if (error) {
+      console.error('파일 삭제 오류:', error)
+      throw error
+    }
+  } catch (error) {
+    console.error('파일 삭제 실패:', error)
+    throw error
+  }
+}
+
+// 파일 다운로드 URL 생성
+export const getFileDownloadUrl = async (bucketName: string, filePath: string): Promise<string> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .createSignedUrl(filePath, 60) // 60초 유효
+
+    if (error) {
+      console.error('다운로드 URL 생성 오류:', error)
+      throw error
+    }
+
+    return data.signedUrl
+  } catch (error) {
+    console.error('다운로드 URL 생성 실패:', error)
+    throw error
+  }
+}
+
+// 고유한 파일명 생성
+export const generateUniqueFileName = (originalName: string, workRecordId?: number): string => {
+  const timestamp = Date.now()
+  const randomString = Math.random().toString(36).substring(2, 15)
+  const extension = originalName.split('.').pop()
+  const baseName = originalName.replace(/\.[^/.]+$/, "")
+  
+  return workRecordId 
+    ? `work_${workRecordId}/${timestamp}_${randomString}_${baseName}.${extension}`
+    : `${timestamp}_${randomString}_${baseName}.${extension}`
+}
+
+// 파일 타입별 버킷 결정
+export const getBucketForFileType = (fileType: string, category: string): string => {
+  if (fileType.startsWith('image/') || fileType.startsWith('video/')) {
+    return 'work-media'
+  } else if (category.includes('ecu') || category.includes('acu')) {
+    return 'work-files'
+  } else {
+    return 'work-documents'
+  }
+} 

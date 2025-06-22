@@ -43,14 +43,18 @@ export default function CustomersPage() {
     loadCustomers()
   }, [])
 
-  // 페이지 포커스 시 고객 목록 새로고침
+  // 페이지 포커스 시 고객 목록 새로고침 (모달이 열려있지 않을 때만)
   useEffect(() => {
     const handleFocus = () => {
-      loadCustomers()
+      // 모달이 열려있을 때는 새로고침하지 않음
+      if (!isFormOpen && !isDetailModalOpen) {
+        loadCustomers()
+      }
     }
 
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
+      // 모달이 열려있을 때는 새로고침하지 않음
+      if (!document.hidden && !isFormOpen && !isDetailModalOpen) {
         loadCustomers()
       }
     }
@@ -62,7 +66,7 @@ export default function CustomersPage() {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [])
+  }, [isFormOpen, isDetailModalOpen]) // 의존성 배열에 모달 상태 추가
 
   const loadCustomers = async () => {
     setIsLoading(true)
@@ -291,7 +295,11 @@ export default function CustomersPage() {
   }
 
   // 카카오맵에서 주소 보기
-  const handleViewOnMap = (address: string) => {
+  const handleViewOnMap = (e: React.MouseEvent, address: string) => {
+    // 이벤트 전파 방지
+    e.preventDefault()
+    e.stopPropagation()
+    
     if (!address) {
       alert('주소 정보가 없습니다.')
       return
@@ -299,7 +307,20 @@ export default function CustomersPage() {
     
     // 카카오맵 URL로 이동
     const mapUrl = `https://map.kakao.com/link/search/${encodeURIComponent(address)}`
-    window.open(mapUrl, '_blank')
+    
+    try {
+      // 팝업 차단 감지를 위한 처리
+      const newWindow = window.open(mapUrl, '_blank', 'noopener,noreferrer')
+      
+      if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+        // 팝업이 차단된 경우 현재 탭에서 열기
+        window.location.href = mapUrl
+      }
+    } catch (error) {
+      console.error('지도 열기 오류:', error)
+      // 오류 발생 시 현재 탭에서 열기
+      window.location.href = mapUrl
+    }
   }
 
   // 수정용 주소 검색 함수
@@ -648,7 +669,7 @@ export default function CustomersPage() {
                       <td className="px-6 py-4">
                         <div 
                           className="text-sm text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
-                          onClick={() => handleViewOnMap(customer.roadAddress)}
+                          onClick={(e) => handleViewOnMap(e, customer.roadAddress)}
                           title="카카오맵에서 보기"
                         >
                           {customer.roadAddress}
@@ -656,7 +677,7 @@ export default function CustomersPage() {
                         {customer.jibunAddress && (
                           <div 
                             className="text-xs text-gray-400 hover:text-gray-300 hover:underline cursor-pointer mt-1"
-                            onClick={() => handleViewOnMap(customer.jibunAddress)}
+                            onClick={(e) => handleViewOnMap(e, customer.jibunAddress)}
                             title="카카오맵에서 보기"
                           >
                             지번: {customer.jibunAddress}
@@ -740,7 +761,7 @@ export default function CustomersPage() {
                         <span className="font-medium text-gray-600">주소:</span> 
                         <span 
                           className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer ml-1"
-                          onClick={() => handleViewOnMap(customer.roadAddress)}
+                          onClick={(e) => handleViewOnMap(e, customer.roadAddress)}
                           title="카카오맵에서 보기"
                         >
                           {customer.roadAddress}
@@ -749,7 +770,7 @@ export default function CustomersPage() {
                       {customer.jibunAddress && (
                         <div 
                           className="text-xs text-gray-500 hover:text-gray-700 hover:underline cursor-pointer mt-1"
-                          onClick={() => handleViewOnMap(customer.jibunAddress)}
+                          onClick={(e) => handleViewOnMap(e, customer.jibunAddress)}
                           title="카카오맵에서 보기"
                         >
                           지번: {customer.jibunAddress}
@@ -1084,7 +1105,7 @@ export default function CustomersPage() {
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">도로명 주소</h4>
                             <p 
                               className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                              onClick={() => handleViewOnMap(selectedCustomer.roadAddress)}
+                              onClick={(e) => handleViewOnMap(e, selectedCustomer.roadAddress)}
                               title="카카오맵에서 보기"
                             >
                               {selectedCustomer.roadAddress}
@@ -1101,7 +1122,7 @@ export default function CustomersPage() {
                               <h4 className="text-lg font-semibold text-gray-900 mb-2">지번 주소</h4>
                               <p 
                                 className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                                onClick={() => handleViewOnMap(selectedCustomer.jibunAddress)}
+                                onClick={(e) => handleViewOnMap(e, selectedCustomer.jibunAddress)}
                                 title="카카오맵에서 보기"
                               >
                                 {selectedCustomer.jibunAddress}

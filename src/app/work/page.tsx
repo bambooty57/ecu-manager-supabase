@@ -6,8 +6,11 @@ import { ACU_TYPES, ACU_MANUFACTURERS, ACU_MODELS_BY_MANUFACTURER, ECU_MODELS, E
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getEquipmentByCustomerId, EquipmentData } from '@/lib/equipment'
 import { createWorkRecord, WorkRecordData } from '@/lib/work-records'
+import { cacheManager, CacheKeys, CacheTTL } from '@/lib/cache-manager'
+import { generateOptimizedImageUrl, generateCacheHeaders } from '@/lib/cdn-utils'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
+import CustomDropdown from '@/components/CustomDropdown'
 
 export default function WorkPage() {
   const router = useRouter()
@@ -357,7 +360,21 @@ export default function WorkPage() {
     setIsLoadingCustomers(true)
     try {
       console.log('🔄 고객 데이터 로딩 시작...')
-      const data = await getAllCustomers()
+      
+      // 캐시에서 먼저 확인
+      let data = await cacheManager.get(CacheKeys.CUSTOMERS)
+      
+      if (!data) {
+        console.log('🔄 고객 데이터를 서버에서 로드 중...')
+        data = await getAllCustomers()
+        
+        // 캐시에 저장 (5분간 유지)
+        await cacheManager.set(CacheKeys.CUSTOMERS, data, CacheTTL.SHORT)
+        console.log('💾 고객 데이터 캐시 저장 완료')
+      } else {
+        console.log('⚡ 고객 데이터를 캐시에서 로드')
+      }
+      
       console.log('✅ 로드된 고객 데이터:', data)
       setCustomers(data)
       setFilteredCustomers(data)
@@ -752,9 +769,22 @@ export default function WorkPage() {
     }))
     setShowCustomerDropdown(false)
 
-    // 선택된 고객의 장비 목록 업데이트 - 실제 Supabase 데이터 사용
+    // 선택된 고객의 장비 목록 업데이트 (캐시 적용)
     try {
-      const customerEquipment = await getEquipmentByCustomerId(customer.id)
+      const cacheKey = `${CacheKeys.EQUIPMENT}_customer_${customer.id}`
+      let customerEquipment = await cacheManager.get(cacheKey)
+      
+      if (!customerEquipment) {
+        console.log('🔄 장비 데이터를 서버에서 로드 중...')
+        customerEquipment = await getEquipmentByCustomerId(customer.id)
+        
+        // 캐시에 저장 (3분간 유지)
+        await cacheManager.set(cacheKey, customerEquipment, CacheTTL.SHORT)
+        console.log('💾 장비 데이터 캐시 저장 완료')
+      } else {
+        console.log('⚡ 장비 데이터를 캐시에서 로드')
+      }
+      
       setAvailableEquipment(customerEquipment)
     } catch (error) {
       console.error('Failed to load customer equipment:', error)
@@ -1138,6 +1168,85 @@ export default function WorkPage() {
     }
   }, [])
 
+  // 이미지 압축 함수
+  const compressImage = (file: File, maxWidth: number = 1920, maxHeight: number = 1080, quality: number = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      
+      img.onload = () => {
+        // 비율 유지하며 크기 조정
+        let { width, height } = img
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height
+            height = maxHeight
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // 이미지 그리기
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        // 압축된 blob 생성
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now()
+            })
+            resolve(compressedFile)
+          } else {
+            resolve(file) // 압축 실패시 원본 반환
+          }
+        }, file.type, quality)
+      }
+      
+      img.onerror = () => resolve(file) // 오류시 원본 반환
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  // 파일을 Base64로 변환하는 함수 (압축 적용)
+  const convertFileToBase64 = async (file: File): Promise<string> => {
+    // 이미지 파일인 경우 압축 적용
+    let processedFile = file
+    if (file.type.startsWith('image/') && file.size > 500000) { // 500KB 이상인 이미지만 압축
+      console.log(`🖼️ 이미지 압축 시작: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`)
+      processedFile = await compressImage(file)
+      console.log(`✅ 이미지 압축 완료: ${processedFile.name} (${(processedFile.size / 1024 / 1024).toFixed(2)}MB)`)
+    }
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result as string
+        resolve(result.split(',')[1]) // Base64 데이터만 추출
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(processedFile)
+    })
+  }
+
+  // 파일 크기 검증 함수
+  const validateFileSize = (file: File, maxSizeMB: number = 10): boolean => {
+    const fileSizeMB = file.size / 1024 / 1024
+    if (fileSizeMB > maxSizeMB) {
+      alert(`파일 크기가 너무 큽니다. 최대 ${maxSizeMB}MB까지 업로드 가능합니다.\n현재 파일 크기: ${fileSizeMB.toFixed(2)}MB`)
+      return false
+    }
+    return true
+  }
+
   return (
     <AuthGuard>
               <Navigation />
@@ -1150,6 +1259,24 @@ export default function WorkPage() {
         <p className="mt-2 text-gray-600">
           새로운 ECU 튜닝 작업을 등록하고 관리합니다.
         </p>
+      </div>
+
+      {/* 최적화 상태 알림 */}
+      <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <div className="flex items-center space-x-2 text-sm text-green-700">
+          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span>
+            ⚡ 성능 최적화 활성화: 이미지 자동 압축, 캐시 시스템, 파일 크기 검증이 적용되어 업로드 속도가 향상되었습니다.
+          </span>
+          <a 
+            href="/optimization-dashboard" 
+            className="text-green-600 hover:text-green-800 underline ml-2"
+          >
+            관리 대시보드 →
+          </a>
+        </div>
       </div>
 
       {/* 작업 등록 폼 */}
@@ -1229,23 +1356,19 @@ export default function WorkPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 장비 선택 *
               </label>
-              <select
+              <CustomDropdown
                 name="equipmentId"
                 value={formData.equipmentId}
-                onChange={handleInputChange}
-                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                required
+                onChange={(value) => setFormData(prev => ({ ...prev, equipmentId: value }))}
+                options={availableEquipment.map(equipment => ({
+                  value: equipment.id.toString(),
+                  label: `${equipment.equipmentType} - ${equipment.manufacturer} ${equipment.model}`
+                }))}
+                placeholder={formData.customerId ? '장비를 선택하세요' : '먼저 고객을 선택하세요'}
                 disabled={!formData.customerId}
-              >
-                <option value="">
-                  {formData.customerId ? '장비를 선택하세요' : '먼저 고객을 선택하세요'}
-                </option>
-                {availableEquipment.map((equipment) => (
-                  <option key={equipment.id} value={equipment.id}>
-                    {equipment.equipmentType} - {equipment.manufacturer} {equipment.model}
-                  </option>
-                ))}
-              </select>
+                required={true}
+                maxHeight="250px"
+              />
               {formData.equipmentId && (
                 <div className="mt-2 p-3 bg-green-50 rounded-md">
                   <p className="text-sm text-green-700">
@@ -1486,54 +1609,39 @@ export default function WorkPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       ECU 장비 카테고리
                     </label>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.ecu.toolCategory}
-                      onChange={(e) => handleRemappingWorkInputChange('ecu', 'toolCategory', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">장비 카테고리를 선택하세요</option>
-                      {ECU_TOOL_CATEGORIES.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleRemappingWorkInputChange('ecu', 'toolCategory', value)}
+                      options={ECU_TOOL_CATEGORIES.map(category => ({ value: category, label: category }))}
+                      placeholder="장비 카테고리를 선택하세요"
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       연결 방법
                     </label>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.ecu.connectionMethod}
-                      onChange={(e) => handleRemappingWorkInputChange('ecu', 'connectionMethod', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">연결 방법을 선택하세요</option>
-                      {CONNECTION_METHODS.map((method) => (
-                        <option key={method} value={method}>
-                          {method}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleRemappingWorkInputChange('ecu', 'connectionMethod', value)}
+                      options={CONNECTION_METHODS.map(method => ({ value: method, label: method }))}
+                      placeholder="연결 방법을 선택하세요"
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       ECU 제조사
                     </label>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.ecu.maker}
-                      onChange={(e) => handleRemappingWorkInputChange('ecu', 'maker', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">ECU 제조사를 선택하세요</option>
-                      {ECU_MAKERS.map((maker) => (
-                        <option key={maker} value={maker}>
-                          {maker}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleRemappingWorkInputChange('ecu', 'maker', value)}
+                      options={ECU_MAKERS.map(maker => ({ value: maker, label: maker }))}
+                      placeholder="ECU 제조사를 선택하세요"
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>
@@ -1550,18 +1658,13 @@ export default function WorkPage() {
                         관리
                       </button>
                     </div>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.ecu.type}
-                      onChange={(e) => handleRemappingWorkInputChange('ecu', 'type', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">ECU 모델을 선택하세요</option>
-                      {ecuModels.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleRemappingWorkInputChange('ecu', 'type', value)}
+                      options={ecuModels.map(type => ({ value: type, label: type }))}
+                      placeholder="ECU 모델을 선택하세요"
+                      maxHeight="250px"
+                    />
                     <div className="mt-2 flex space-x-2">
                       <input
                         type="text"
@@ -1591,17 +1694,13 @@ export default function WorkPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       ECU 작업 상태
                     </label>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.ecu.status}
-                      onChange={(e) => handleRemappingWorkInputChange('ecu', 'status', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      {WORK_STATUS.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleRemappingWorkInputChange('ecu', 'status', value)}
+                      options={WORK_STATUS.map(status => ({ value: status, label: status }))}
+                      placeholder="작업 상태를 선택하세요"
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>
@@ -1643,54 +1742,39 @@ export default function WorkPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       ACU 장비 카테고리
                     </label>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.acu.toolCategory}
-                      onChange={(e) => handleRemappingWorkInputChange('acu', 'toolCategory', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                    >
-                      <option value="">장비 카테고리를 선택하세요</option>
-                      {ECU_TOOL_CATEGORIES.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleRemappingWorkInputChange('acu', 'toolCategory', value)}
+                      options={ECU_TOOL_CATEGORIES.map(category => ({ value: category, label: category }))}
+                      placeholder="장비 카테고리를 선택하세요"
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       연결 방법
                     </label>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.acu.connectionMethod}
-                      onChange={(e) => handleRemappingWorkInputChange('acu', 'connectionMethod', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                    >
-                      <option value="">연결 방법을 선택하세요</option>
-                      {CONNECTION_METHODS.map((method) => (
-                        <option key={method} value={method}>
-                          {method}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleRemappingWorkInputChange('acu', 'connectionMethod', value)}
+                      options={CONNECTION_METHODS.map(method => ({ value: method, label: method }))}
+                      placeholder="연결 방법을 선택하세요"
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       ACU 제조사
                     </label>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.acu.manufacturer}
-                      onChange={(e) => handleRemappingWorkInputChange('acu', 'manufacturer', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                    >
-                      <option value="">ACU 제조사를 선택하세요</option>
-                      {ACU_MANUFACTURERS.map((manufacturer) => (
-                        <option key={manufacturer} value={manufacturer}>
-                          {manufacturer}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleRemappingWorkInputChange('acu', 'manufacturer', value)}
+                      options={ACU_MANUFACTURERS.map(manufacturer => ({ value: manufacturer, label: manufacturer }))}
+                      placeholder="ACU 제조사를 선택하세요"
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>
@@ -1707,21 +1791,17 @@ export default function WorkPage() {
                         관리
                       </button>
                     </div>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.acu.model}
-                      onChange={(e) => handleRemappingWorkInputChange('acu', 'model', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                      onChange={(value) => handleRemappingWorkInputChange('acu', 'model', value)}
+                      options={currentRemappingWork.acu.manufacturer ? 
+                        getAvailableAcuModels(currentRemappingWork.acu.manufacturer).map(model => ({ value: model, label: model })) : 
+                        []
+                      }
+                      placeholder={currentRemappingWork.acu.manufacturer ? 'ACU 모델을 선택하세요' : '먼저 제조사를 선택하세요'}
                       disabled={!currentRemappingWork.acu.manufacturer}
-                    >
-                      <option value="">
-                        {currentRemappingWork.acu.manufacturer ? 'ACU 모델을 선택하세요' : '먼저 제조사를 선택하세요'}
-                      </option>
-                      {currentRemappingWork.acu.manufacturer && getAvailableAcuModels(currentRemappingWork.acu.manufacturer).map((model) => (
-                        <option key={model} value={model}>
-                          {model}
-                        </option>
-                      ))}
-                    </select>
+                      maxHeight="250px"
+                    />
                     <div className="mt-2 flex space-x-2">
                       <input
                         type="text"
@@ -1753,17 +1833,13 @@ export default function WorkPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       ACU 작업 상태
                     </label>
-                    <select
+                    <CustomDropdown
                       value={currentRemappingWork.acu.status}
-                      onChange={(e) => handleRemappingWorkInputChange('acu', 'status', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                    >
-                      {WORK_STATUS.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleRemappingWorkInputChange('acu', 'status', value)}
+                      options={WORK_STATUS.map(status => ({ value: status, label: status }))}
+                      placeholder="작업 상태를 선택하세요"
+                      maxHeight="250px"
+                    />
                   </div>
 
                   <div>

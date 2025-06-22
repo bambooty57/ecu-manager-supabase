@@ -7,6 +7,7 @@ import { getAllEquipment, createEquipment, deleteEquipment, updateEquipment, Equ
 import { getModelsByManufacturerObject, addEquipmentModel } from '@/lib/equipment-models'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
+import CustomDropdown from '@/components/CustomDropdown'
 
 interface Equipment {
   id: number
@@ -968,17 +969,14 @@ export default function EquipmentPage() {
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         ECU 타입
                       </label>
-                      <select
+                      <CustomDropdown
                         name="ecuType"
                         value={editFormData.ecuType}
-                        onChange={handleEditInputChange}
-                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">선택하세요</option>
-                        {ecuModels.map(type => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
+                        onChange={(value) => setEditFormData(prev => ({ ...prev, ecuType: value }))}
+                        options={ecuModels.map(type => ({ value: type, label: type }))}
+                        placeholder="선택하세요"
+                        maxHeight="250px"
+                      />
                       <div className="mt-2 flex space-x-2">
                         <input
                           type="text"
@@ -1012,17 +1010,14 @@ export default function EquipmentPage() {
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         ACU 타입
                       </label>
-                      <select
+                      <CustomDropdown
                         name="acuType"
                         value={editFormData.acuType}
-                        onChange={handleEditInputChange}
-                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">선택하세요</option>
-                        {acuTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
+                        onChange={(value) => setEditFormData(prev => ({ ...prev, acuType: value }))}
+                        options={acuTypes.map(type => ({ value: type, label: type }))}
+                        placeholder="선택하세요"
+                        maxHeight="250px"
+                      />
                       <div className="mt-2 flex space-x-2">
                         <input
                           type="text"
@@ -1232,19 +1227,16 @@ export default function EquipmentPage() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       모델명 *
                     </label>
-                    <select
+                    <CustomDropdown
                       name="model"
                       value={formData.model}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      onChange={(value) => setFormData(prev => ({ ...prev, model: value }))}
+                      options={formData.manufacturer ? getAvailableModels(formData.manufacturer).map(model => ({ value: model, label: model })) : []}
+                      placeholder="모델을 선택하세요"
                       disabled={!formData.manufacturer}
-                    >
-                      <option value="">모델을 선택하세요</option>
-                      {formData.manufacturer && getAvailableModels(formData.manufacturer).map((model) => (
-                        <option key={model} value={model}>{model}</option>
-                      ))}
-                    </select>
+                      required={true}
+                      maxHeight="250px"
+                    />
                     {formData.manufacturer && (
                       <div className="mt-2 flex space-x-2">
                         <input
@@ -1313,17 +1305,14 @@ export default function EquipmentPage() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       ECU 타입
                     </label>
-                    <select
+                    <CustomDropdown
                       name="ecuType"
                       value={formData.ecuType}
-                      onChange={handleInputChange}
-                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">선택하세요</option>
-                      {ecuModels.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
+                      onChange={(value) => setFormData(prev => ({ ...prev, ecuType: value }))}
+                      options={ecuModels.map(type => ({ value: type, label: type }))}
+                      placeholder="선택하세요"
+                      maxHeight="250px"
+                    />
                     <div className="mt-2 flex space-x-2">
                       <input
                         type="text"
@@ -1357,17 +1346,14 @@ export default function EquipmentPage() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       ACU 타입
                     </label>
-                    <select
+                    <CustomDropdown
                       name="acuType"
                       value={formData.acuType}
-                      onChange={handleInputChange}
-                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">선택하세요</option>
-                      {acuTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
+                      onChange={(value) => setFormData(prev => ({ ...prev, acuType: value }))}
+                      options={acuTypes.map(type => ({ value: type, label: type }))}
+                      placeholder="선택하세요"
+                      maxHeight="250px"
+                    />
                     <div className="mt-2 flex space-x-2">
                       <input
                         type="text"
