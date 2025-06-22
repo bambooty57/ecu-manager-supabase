@@ -537,17 +537,30 @@ export default function HistoryPage() {
         const fullRecord = await getWorkRecordWithFiles(record.id)
         
         if (fullRecord && fullRecord.remappingWorks) {
-          // 파일 데이터 추출 및 처리
+          // 파일 데이터 추출 및 처리 (기존 정보 보존)
           const processedRecord = processRemappingWorks(fullRecord, customers, equipments)
+          
+          // 기존 레코드의 ECU/ACU 정보 보존 (이미 표시된 정보가 있다면)
+          const preservedRecord = {
+            ...processedRecord,
+            hasFiles: true,
+            // 기존 정보가 유효하다면 보존
+            ecuMaker: record.ecuMaker && record.ecuMaker !== 'N/A' ? record.ecuMaker : processedRecord.ecuMaker,
+            ecuModel: record.ecuModel && record.ecuModel !== 'N/A' ? record.ecuModel : processedRecord.ecuModel,
+            acuManufacturer: record.acuManufacturer && record.acuManufacturer !== 'N/A' ? record.acuManufacturer : processedRecord.acuManufacturer,
+            acuModel: record.acuModel && record.acuModel !== 'N/A' ? record.acuModel : processedRecord.acuModel,
+            connectionMethod: record.connectionMethod && record.connectionMethod !== 'N/A' ? record.connectionMethod : processedRecord.connectionMethod,
+            toolsUsed: record.toolsUsed && record.toolsUsed.length > 0 ? record.toolsUsed : processedRecord.toolsUsed
+          }
           
           // 상태 업데이트 (해당 레코드만)
           setWorkRecords(prev => prev.map(r => 
-            r.id === record.id ? { ...processedRecord, hasFiles: true } : r
+            r.id === record.id ? preservedRecord : r
           ))
           
           // 선택된 레코드도 업데이트
-          setSelectedRecord({ ...processedRecord, hasFiles: true })
-          console.log('✅ 파일 데이터 로딩 완료:', record.id)
+          setSelectedRecord(preservedRecord)
+          console.log('✅ 파일 데이터 로딩 완료 (정보 보존):', record.id)
         }
       } catch (error) {
         console.error('❌ 파일 데이터 로딩 실패:', error)
@@ -1020,15 +1033,21 @@ export default function HistoryPage() {
       extractedAcuCategory: acuCategory
     });
     
-    // remappingWorks에서 추가 정보 추출 (데이터베이스 컬럼이 비어있는 경우 보완)
+    // remappingWorks에서 추가 정보 추출 (데이터베이스 컬럼이 비어있는 경우만 보완)
     if (record.remappingWorks && record.remappingWorks.length > 0) {
       const firstWork = record.remappingWorks[0] as any;
       
-      // ECU 정보 추출 (데이터베이스 컬럼이 비어있는 경우만 보완)
-      if (firstWork.ecu && !ecuMaker && !ecuType) {
-        ecuMaker = firstWork.ecu.maker || ecuMaker;
-        ecuType = firstWork.ecu.type || firstWork.ecu.typeCustom || ecuType;
-        ecuConnectionMethod = firstWork.ecu.connectionMethod || ecuConnectionMethod;
+      // ECU 정보 추출 (기존 데이터가 없거나 N/A인 경우만 보완)
+      if (firstWork.ecu) {
+        if (!ecuMaker || ecuMaker === 'N/A') {
+          ecuMaker = firstWork.ecu.maker || firstWork.ecu.manufacturer || ecuMaker;
+        }
+        if (!ecuType || ecuType === 'N/A') {
+          ecuType = firstWork.ecu.type || firstWork.ecu.typeCustom || firstWork.ecu.model || ecuType;
+        }
+        if (!ecuConnectionMethod || ecuConnectionMethod === 'N/A') {
+          ecuConnectionMethod = firstWork.ecu.connectionMethod || ecuConnectionMethod;
+        }
       }
       
       // ECU 도구 정보 구성
@@ -1065,11 +1084,17 @@ export default function HistoryPage() {
         ecuTuningWorks = firstWork.ecu.selectedWorks || [];
       }
       
-      // ACU 정보 추출 (데이터베이스 컬럼이 비어있는 경우만 보완)
-      if (firstWork.acu && !acuManufacturer && !acuModel) {
-        acuManufacturer = firstWork.acu.manufacturer || acuManufacturer;
-        acuModel = firstWork.acu.model || firstWork.acu.modelCustom || acuModel;
-        acuConnectionMethod = firstWork.acu.connectionMethod || acuConnectionMethod;
+      // ACU 정보 추출 (기존 데이터가 없거나 N/A인 경우만 보완)
+      if (firstWork.acu) {
+        if (!acuManufacturer || acuManufacturer === 'N/A') {
+          acuManufacturer = firstWork.acu.manufacturer || acuManufacturer;
+        }
+        if (!acuModel || acuModel === 'N/A') {
+          acuModel = firstWork.acu.model || firstWork.acu.modelCustom || acuModel;
+        }
+        if (!acuConnectionMethod || acuConnectionMethod === 'N/A') {
+          acuConnectionMethod = firstWork.acu.connectionMethod || acuConnectionMethod;
+        }
       }
       
       // ACU 도구 정보 구성
