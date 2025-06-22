@@ -798,16 +798,28 @@ export default function WorkPage() {
           }
         }
 
+        // 파일 데이터를 remappingWork에 추가
+        const remappingWorkWithFiles = {
+          ...remappingWork,
+          files: files // Base64로 변환된 파일 데이터 추가
+        }
+
         // Supabase에 저장할 작업 기록 데이터 생성
-                 const workRecordData: Omit<WorkRecordData, 'id' | 'created_at'> = {
+        const workRecordData: Omit<WorkRecordData, 'id' | 'created_at'> = {
           customerId: parseInt(formData.customerId),
           equipmentId: parseInt(formData.equipmentId),
           workDate: formData.workDate,
           workType: 'ECU 튜닝',
           totalPrice: parseFloat(remappingWork.price) || 0,
           status: remappingWork.status,
-          remappingWorks: [remappingWork as any]
+          remappingWorks: [remappingWorkWithFiles as any]
         }
+
+        console.log(`🔍 작업 기록 ${index + 1} 저장 데이터:`, {
+          workRecordData,
+          filesCount: files.length,
+          remappingWork: remappingWorkWithFiles
+        })
 
         // Supabase에 작업 기록 저장
         const savedRecord = await createWorkRecord(workRecordData)

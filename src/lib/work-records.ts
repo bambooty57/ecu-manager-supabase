@@ -213,13 +213,45 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
     return { ...recordData, id: Date.now(), created_at: new Date().toISOString() }
   }
 
+  console.log('🔍 작업 기록 생성 시작:', recordData)
+
   const { remappingWorks, totalPrice, ...restOfRecordData } = recordData as any
+
+  // ECU/ACU 정보 추출 (첫 번째 remapping work에서)
+  const firstWork = remappingWorks && remappingWorks.length > 0 ? remappingWorks[0] : null
+  let ecuMaker = null
+  let ecuModel = null
+  let acuManufacturer = null
+  let acuModel = null
+  let connectionMethod = null
+
+  if (firstWork) {
+    ecuMaker = firstWork.ecuMaker || null
+    ecuModel = firstWork.ecuType || firstWork.ecuTypeCustom || null
+    acuManufacturer = firstWork.acuManufacturer || null
+    acuModel = firstWork.acuModel || firstWork.acuModelCustom || null
+    connectionMethod = firstWork.connectionMethod || null
+  }
+
+  // 파일 데이터 추출 (첫 번째 remapping work에서)
+  let filesData = null
+  if (firstWork && firstWork.files) {
+    filesData = firstWork.files
+  }
 
   const recordToInsert = {
     ...transformWorkRecordToDB(restOfRecordData),
-    remapping_works: JSON.stringify(remappingWorks) as any,
-    total_price: totalPrice,
+    remapping_works: remappingWorks ? JSON.stringify(remappingWorks) : null,
+    files: filesData ? JSON.stringify(filesData) : null,
+    total_price: totalPrice || null,
+    ecu_maker: ecuMaker,
+    ecu_model: ecuModel,
+    acu_manufacturer: acuManufacturer,
+    acu_model: acuModel,
+    connection_method: connectionMethod,
   }
+
+  console.log('📤 Supabase에 저장할 데이터:', recordToInsert)
 
   const { data, error } = await supabase
     .from('work_records')
@@ -228,10 +260,12 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
     .single()
   
   if (error) {
-    console.error('Error creating work record:', error)
+    console.error('❌ 작업 기록 저장 오류:', error)
+    console.error('❌ 저장 시도한 데이터:', recordToInsert)
     throw error
   }
 
+  console.log('✅ 작업 기록 저장 완료:', data)
   return data
 }
 
