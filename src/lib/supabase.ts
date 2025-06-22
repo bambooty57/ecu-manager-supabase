@@ -143,16 +143,39 @@ export const getFileDownloadUrl = async (bucketName: string, filePath: string): 
   }
 }
 
-// 고유한 파일명 생성
+// 고유한 파일명 생성 (한글 파일명 안전 처리)
 export const generateUniqueFileName = (originalName: string, workRecordId?: number): string => {
   const timestamp = Date.now()
   const randomString = Math.random().toString(36).substring(2, 15)
   const extension = originalName.split('.').pop()
-  const baseName = originalName.replace(/\.[^/.]+$/, "")
+  
+  // 파일명에서 확장자 제거
+  let baseName = originalName.replace(/\.[^/.]+$/, "")
+  
+  // 한글 및 특수문자를 안전한 문자로 변환
+  baseName = baseName
+    .replace(/[가-힣]/g, '') // 한글 제거
+    .replace(/[^\w\-_.]/g, '_') // 특수문자를 언더스코어로 변환
+    .replace(/_{2,}/g, '_') // 연속된 언더스코어 하나로 변환
+    .replace(/^_+|_+$/g, '') // 앞뒤 언더스코어 제거
+  
+  // 빈 문자열이면 기본명 사용
+  if (!baseName) {
+    baseName = 'file'
+  }
+  
+  // 파일명 길이 제한 (50자)
+  if (baseName.length > 50) {
+    baseName = baseName.substring(0, 50)
+  }
+  
+  const fileName = `${timestamp}_${randomString}_${baseName}.${extension}`
+  
+  console.log(`📝 파일명 변환: "${originalName}" → "${fileName}"`)
   
   return workRecordId 
-    ? `work_${workRecordId}/${timestamp}_${randomString}_${baseName}.${extension}`
-    : `${timestamp}_${randomString}_${baseName}.${extension}`
+    ? `${workRecordId}/${fileName}`
+    : fileName
 }
 
 // 파일 타입별 버킷 결정 (파일명 기반) - 포괄적 파일 형식 지원
