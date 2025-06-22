@@ -155,13 +155,34 @@ export const generateUniqueFileName = (originalName: string, workRecordId?: numb
     : `${timestamp}_${randomString}_${baseName}.${extension}`
 }
 
-// 파일 타입별 버킷 결정
-export const getBucketForFileType = (fileType: string, category: string): string => {
-  if (fileType.startsWith('image/') || fileType.startsWith('video/')) {
+// 파일 타입별 버킷 결정 (파일명 기반)
+export const getBucketForFileType = (fileName: string): string => {
+  if (!fileName || typeof fileName !== 'string') {
+    console.warn('⚠️ getBucketForFileType: 유효하지 않은 파일명:', fileName)
+    return 'work-documents' // 기본값
+  }
+
+  const ext = fileName.split('.').pop()?.toLowerCase()
+  
+  if (!ext) {
+    console.warn('⚠️ getBucketForFileType: 확장자를 찾을 수 없음:', fileName)
+    return 'work-documents' // 기본값
+  }
+
+  console.log(`📁 getBucketForFileType: ${fileName} → 확장자: ${ext}`)
+  
+  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'svg']
+  const videoExts = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm']
+  const ecuExts = ['mmf', 'bin', 'hex', 'map', 'ecu', 'acu', 'cal']
+  
+  if (imageExts.includes(ext) || videoExts.includes(ext)) {
+    console.log(`📁 → work-media (미디어 파일)`)
     return 'work-media'
-  } else if (category.includes('ecu') || category.includes('acu')) {
+  } else if (ecuExts.includes(ext) || fileName.toLowerCase().includes('ecu') || fileName.toLowerCase().includes('acu')) {
+    console.log(`📁 → work-files (ECU/ACU 파일)`)
     return 'work-files'
   } else {
+    console.log(`📁 → work-documents (문서 파일)`)
     return 'work-documents'
   }
 } 

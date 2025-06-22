@@ -3,6 +3,21 @@ import { Tables } from './database.types'
 
 type WorkRecordData = Tables<'work_records'>
 
+const BUCKET_CONFIG: { [key: string]: { name: string; extensions: string[] } } = {
+  media: {
+    name: 'work-media',
+    extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'mp4', 'avi', 'mov', 'wmv', 'flv'],
+  },
+  docs: {
+    name: 'work-documents',
+    extensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'mmf'],
+  },
+  misc: {
+    name: 'work-files',
+    extensions: [], // for any other type
+  }
+};
+
 // 마이그레이션용 작업 기록 조회 (모든 데이터 포함)
 const getAllWorkRecordsForMigration = async (): Promise<WorkRecordData[]> => {
   const { data, error } = await supabase
@@ -18,34 +33,98 @@ const getAllWorkRecordsForMigration = async (): Promise<WorkRecordData[]> => {
   return data
 }
 
-// Base64 데이터를 File 객체로 변환
-export const base64ToFile = (base64Data: string, fileName: string, mimeType: string): File => {
-  try {
-    // base64 데이터에서 data: prefix 제거
-    const cleanBase64 = base64Data.replace(/^data:[^;]+;base64,/, '')
-    
-    console.log(`🔄 Base64 → File 변환: ${fileName}`)
-    console.log(`📊 Base64 길이: ${cleanBase64.length} 문자`)
-    
-    const byteCharacters = atob(cleanBase64)
-    const byteNumbers = new Array(byteCharacters.length)
-    
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i)
-    }
-    
-    const byteArray = new Uint8Array(byteNumbers)
-    const blob = new Blob([byteArray], { type: mimeType })
-    const file = new File([blob], fileName, { type: mimeType })
-    
-    console.log(`✅ 파일 변환 완료: ${file.size} bytes`)
-    
-    return file
-  } catch (error) {
-    console.error('❌ Base64 → File 변환 실패:', error)
-    throw new Error(`Base64 변환 실패: ${fileName}`)
+// Base64를 파일 객체로 변환
+export const base64ToFile = (base64: string, filename: string, mimeType: string): File => {
+  console.log(`  [base64ToFile] Converting for "${filename}"`);
+  console.log(`  [base64ToFile] Input data (first 80 chars): ${base64.substring(0, 80)}...`);
+
+  let cleanBase64 = base64;
+  const match = base64.match(/^data:.*?;base64,(.*)$/);
+  if (match) {
+    console.log("  [base64ToFile] Data URL format detected. Extracting base64 content.");
+    cleanBase64 = match[1];
   }
-}
+
+  // Handle non-standard base64 characters and padding
+  console.log("  [base64ToFile] Cleaning base64 string for atob compatibility...");
+  cleanBase64 = cleanBase64.replace(/-/g, '+').replace(/_/g, '/');
+  cleanBase64 = cleanBase64.replace(/\s/g, '');
+  const padding = '='.repeat((4 - cleanBase64.length % 4) % 4);
+  cleanBase64 += padding;
+
+  try {
+    const byteCharacters = atob(cleanBase64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    console.log(`  [base64ToFile] Created blob with size: ${blob.size} for file: ${filename}`);
+    return new File([blob], filename, { type: mimeType });
+  } catch (e: any) {
+    console.error(`  [base64ToFile] 🔴 Failed to decode base64 for "${filename}". Error: ${e.message}`);
+    console.error(`  [base64ToFile] Faulty data (first 80 chars): ${cleanBase64.substring(0, 80)}...`);
+    throw e; // re-throw the error to be caught by the calling function
+  }
+};
+
+// 단일 파일 마이그레이션
+const migrateSingleFile = async (
+  base64Data: string,
+  fileName: string,
+  mimeType: string,
+  workRecordId: number | string,
+  category: string
+): Promise<any> => {
+  console.log(`  [migrateSingleFile] Migrating "${fileName}" for record ${workRecordId}`);
+  const file = base64ToFile(base64Data, fileName, mimeType);
+  const bucket = getBucketForFileType(fileName);
+  const uniqueName = generateUniqueFileName(fileName);
+  const storagePath = `${workRecordId}/${uniqueName}`;
+
+  // 1. Upload to Storage
+  console.log(`  [migrateSingleFile] Uploading to bucket: "${bucket}", path: "${storagePath}"`);
+  const { data: uploadData, error } = await supabase.storage
+    .from(bucket)
+    .upload(storagePath, file);
+
+  if (error) {
+    console.error(`  [migrateSingleFile] 🔴 Storage upload failed for "${fileName}":`, error);
+    throw new Error(`Storage 업로드 실패: ${error.message}`);
+  }
+
+  // 2. Get public URL
+  const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(storagePath);
+  
+  // 3. Insert metadata
+  const metadata = {
+    work_record_id: typeof workRecordId === 'string' ? parseInt(workRecordId, 10) : workRecordId,
+    file_name: uniqueName,
+    original_name: fileName,
+    file_size: file.size,
+    file_type: file.type,
+    category: category,
+    bucket_name: bucket,
+    storage_path: uploadData.path,
+    storage_url: urlData.publicUrl,
+  };
+
+  const { data: insertData, error: insertError } = await supabase
+    .from('file_metadata')
+    .insert(metadata)
+    .select()
+    .single();
+
+  if (insertError) {
+    console.error(`  [migrateSingleFile] 🔴 Metadata insert failed for "${fileName}":`, insertError);
+    // TODO: Consider deleting the uploaded file from storage to avoid orphans
+    throw new Error(`메타데이터 저장 실패: ${insertError.message}`);
+  }
+
+  console.log(`  [migrateSingleFile] ✅ Successfully migrated "${fileName}"`);
+  return insertData;
+};
 
 // 단일 파일 마이그레이션
 export const migrateFileToStorage = async (
@@ -73,8 +152,8 @@ export const migrateFileToStorage = async (
     const file = base64ToFile(fileData.data, fileData.name, fileData.type || 'application/octet-stream')
     
     // 버킷 및 파일명 결정
-    const bucketName = getBucketForFileType(file.type, category)
-    const uniqueFileName = generateUniqueFileName(file.name, workRecordId)
+    const bucketName = getBucketForFileType(file.name)
+    const uniqueFileName = generateUniqueFileName(file.name)
     
     // Storage에 업로드
     const uploadResult = await uploadFileToStorage(file, bucketName, uniqueFileName)
@@ -218,197 +297,288 @@ export const migrateWorkRecordFiles = async (workRecord: WorkRecordData): Promis
   }
 }
 
-// 전체 데이터베이스 마이그레이션
+// 데이터 마이그레이션 메인 함수
 export const migrateAllFilesToStorage = async (
-  onProgress?: (current: number, total: number, recordId: number) => void
-): Promise<{ success: number, failed: number, total: number }> => {
-  try {
-    console.log('🚀 전체 파일 마이그레이션 시작...')
+  onProgress: (current: number, total: number, recordId: number | string) => void
+): Promise<{ success: number; failed: number }> => {
+  const stats = { succeeded: 0, failed: 0, skipped: 0, totalFiles: 0 };
+  console.log('🚀 [MIGRATION START] 전체 파일 마이그레이션을 시작합니다.');
+
+  const recordsToProcess = await getAllWorkRecordsForMigration();
+
+  if (recordsToProcess.length === 0) {
+    console.log('🏁 [MIGRATION END] 처리할 레코드가 없습니다.');
+    return { success: 0, failed: 0 };
+  }
+
+  for (const [index, record] of recordsToProcess.entries()) {
+    onProgress(index + 1, recordsToProcess.length, record.id);
+    console.log(`\n--- [Processing Record ${index + 1}/${recordsToProcess.length}] ID: ${record.id} ---`);
+
+    // Check if already migrated by looking at file_metadata table
+    const { count: existingFiles } = await supabase
+      .from('file_metadata')
+      .select('*', { count: 'exact', head: true })
+      .eq('work_record_id', record.id);
     
-    // 모든 작업 기록 조회 (파일 포함)
-    const workRecords = await getAllWorkRecordsForMigration()
-    const total = workRecords.length
-    let success = 0
-    let failed = 0
+    if (existingFiles && existingFiles > 0) {
+      console.log(`  > 🟢 [ALREADY MIGRATED] ID ${record.id}는 이미 마이그레이션되었습니다. (${existingFiles}개 파일)`);
+      stats.skipped++;
+      continue;
+    }
+    
+    console.log(`  [step 2.1] ID ${record.id}의 파일 데이터 추출을 시작합니다.`);
+    let filesToMigrate: any[] = [];
+    let rawFilesData: any = null;
 
-    console.log(`📊 총 ${total}개 작업 기록 마이그레이션 예정`)
+    const recordFromDb = record as any;
+    const potentialFields = ['remappingWorks', 'remapping_works', 'files'];
 
-    for (let i = 0; i < workRecords.length; i++) {
-      const record = workRecords[i]
+    for (const field of potentialFields) {
+      console.log(`    - ${field} 필드에서 데이터를 찾습니다.`);
+      const data = recordFromDb[field];
       
-      // 진행률 콜백 호출
-      if (onProgress) {
-        onProgress(i + 1, total, record.id)
-      }
+      if (data) {
+        let parsedData: any = null;
+        if (typeof data === 'string') {
+          console.log(`      - ${field}가 문자열입니다. 파싱을 시도합니다.`);
+          try {
+            parsedData = JSON.parse(data);
+          } catch (e) {
+            console.error(`      - 🔴 ${field} 1차 JSON 파싱 실패:`, e);
+            parsedData = null;
+          }
+        } else {
+          parsedData = data;
+        }
 
-      // 개별 작업 기록 마이그레이션
-      const result = await migrateWorkRecordFiles(record)
-      if (result) {
-        success++
-      } else {
-        failed++
-      }
+        // Handle double-stringified JSON
+        if (typeof parsedData === 'string') {
+            console.log(`      - 데이터가 이중으로 문자열화되어 있습니다. 추가 파싱을 시도합니다.`);
+            try {
+                rawFilesData = JSON.parse(parsedData);
+            } catch (e) {
+                console.error(`      - 🔴 ${field} 2차 JSON 파싱 실패:`, e);
+                rawFilesData = null;
+            }
+        } else {
+            rawFilesData = parsedData;
+        }
 
-      // 과부하 방지를 위한 딜레이
-      await new Promise(resolve => setTimeout(resolve, 100))
+        if (rawFilesData && Array.isArray(rawFilesData)) {
+            filesToMigrate = rawFilesData.filter(file => file && (file.file_base64 || file.base64 || file.data));
+            if (filesToMigrate.length > 0) {
+              console.log(`      - ✅ ${field}에서 ${filesToMigrate.length}개의 유효한 파일을 찾았습니다.`);
+              break; 
+            }
+        }
+      }
     }
 
-    console.log(`🎉 전체 마이그레이션 완료! 성공: ${success}, 실패: ${failed}`)
-    
-    return { success, failed, total }
+    if (filesToMigrate.length === 0) {
+      console.log('    - 🟡 마이그레이션할 파일 데이터를 찾지 못했습니다.');
+      const debugData = {
+        id: record.id,
+        created_at: record.created_at,
+        remappingWorks: recordFromDb.remappingWorks ? 'Found' : 'Not Found',
+        remapping_works: recordFromDb.remapping_works ? 'Found' : 'Not Found',
+        files: recordFromDb.files ? 'Found' : 'Not Found',
+      }
+      console.log('    - [DEBUG] Record relevant fields status:', JSON.stringify(debugData, null, 2));
+    }
 
-  } catch (error) {
-    console.error('❌ 전체 마이그레이션 실패:', error)
-    return { success: 0, failed: 1, total: 1 }
+    // If no files found, skip
+    if (filesToMigrate.length === 0) {
+      console.log(`  > 🟡 [SKIPPED] ID ${record.id} 마이그레이션 대상 파일 없음.`);
+      stats.skipped++;
+      continue;
+    }
+
+    console.log(`  [step 2.2] ID ${record.id}에 대해 총 ${filesToMigrate.length}개의 파일을 마이그레이션합니다.`);
+    stats.totalFiles += filesToMigrate.length;
+
+    let successInRecord = true;
+    let migratedCountInRecord = 0;
+    for (const [fileIndex, file] of filesToMigrate.entries()) {
+      try {
+        // Adapt to possible variations in property names (file_base64 or base64 or data)
+        const base64Data = file.file_base64 || file.base64 || file.data;
+        const fileName = file.file_name || file.name || 'unknown_file';
+
+        if (!base64Data) {
+          console.log(`      - 🟡 파일에 Base64 데이터가 없어 건너뜁니다: ${fileName}`);
+          continue;
+        }
+        
+        console.log(`    [step 2.2.${fileIndex + 1}] "${fileName}" 파일 마이그레이션 중...`);
+
+        const newFileMetadata = await migrateSingleFile(
+          base64Data,
+          fileName,
+          file.type || 'application/octet-stream',
+          record.id,
+          file.category || 'unknown'
+        );
+
+        if (newFileMetadata) {
+          migratedCountInRecord++;
+        } else {
+          successInRecord = false;
+        }
+      } catch (e: any) {
+        successInRecord = false;
+        console.error(`  > 🔴 [ERROR] 파일 마이그레이션 중 오류 발생 (File: ${file.file_name || file.name}, Record ID: ${record.id}):`, e);
+      }
+    }
+
+    // After processing all files for a record, update stats
+    if (successInRecord) {
+      console.log(`  > ✅ [SUCCESS] ID ${record.id}의 모든 파일 (${migratedCountInRecord}개) 마이그레이션 성공.`);
+      stats.succeeded++;
+    } else {
+      console.log(`  > 🔴 [FAILED] ID ${record.id}의 파일 중 일부 또는 전체 마이그레이션 실패.`);
+      stats.failed++;
+    }
   }
+
+  console.log('\n🏁 [MIGRATION END] 마이그레이션 작업이 완료되었습니다.');
+  console.log(`   - 성공: ${stats.succeeded}건`);
+  console.log(`   - 실패: ${stats.failed}건`);
+  console.log(`   - 스킵: ${stats.skipped}건`);
+  console.log(`   - 총 처리된 파일: ${stats.totalFiles}개`);
+
+  return { success: stats.succeeded, failed: stats.failed };
 }
 
-// 마이그레이션 상태 확인
-export const checkMigrationStatus = async (): Promise<{
-  totalRecords: number,
-  migratedRecords: number,
-  pendingRecords: number,
-  migrationProgress: number
-}> => {
+// 마이그레이션 상태 확인 (대시보드용)
+export const checkMigrationStatus = async () => {
   try {
-    // 전체 작업 기록 수
-    const { count: totalRecords } = await supabase
+    console.log('📊 마이그레이션 상태 확인 중...');
+    
+    // 1. 전체 작업 기록 수
+    const { count: totalRecords, error: totalError } = await supabase
       .from('work_records')
-      .select('*', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true });
 
-    // 마이그레이션된 기록 수 확인
-    const { data: migratedData, error: migratedError } = await supabase
+    if (totalError) {
+      console.error('❌ 전체 작업 기록 수 조회 실패:', totalError);
+      throw totalError;
+    }
+
+    // 2. 마이그레이션된 파일 수
+    const { count: migratedFiles, error: migratedError } = await supabase
+      .from('file_metadata')
+      .select('*', { count: 'exact', head: true });
+
+    if (migratedError) {
+      console.error('❌ 마이그레이션된 파일 수 조회 실패:', migratedError);
+      throw migratedError;
+    }
+
+    // 3. 마이그레이션된 레코드 수 (고유한 work_record_id)
+    const { data: distinctRecords, error: distinctError } = await supabase
       .from('file_metadata')
       .select('work_record_id')
-    
-    if (migratedError) {
-      console.error('마이그레이션 데이터 조회 오류:', migratedError)
-    }
-    
-    // 고유한 work_record_id 개수 계산
-    const uniqueWorkRecordIds = new Set(migratedData?.map(item => item.work_record_id) || [])
-    const migratedRecords = uniqueWorkRecordIds.size
+      .not('work_record_id', 'is', null);
 
-    const pendingRecords = (totalRecords || 0) - migratedRecords
-    const migrationProgress = totalRecords ? (migratedRecords / totalRecords) * 100 : 0
+    if (distinctError) {
+      console.error('❌ 고유 레코드 조회 실패:', distinctError);
+      throw distinctError;
+    }
+
+    const uniqueRecordIds = new Set(distinctRecords?.map(r => r.work_record_id) || []);
+    const migratedRecords = uniqueRecordIds.size;
+
+    console.log('✅ 마이그레이션 상태 조회 완료:', {
+      totalRecords,
+      migratedFiles,
+      migratedRecords
+    });
 
     return {
       totalRecords: totalRecords || 0,
-      migratedRecords: migratedRecords,
-      pendingRecords: Math.max(0, pendingRecords),
-      migrationProgress: Math.round(migrationProgress)
-    }
+      migratedFiles: migratedFiles || 0,
+      migratedRecords,
+      migrationProgress: totalRecords ? Math.round((migratedRecords / totalRecords) * 100) : 0
+    };
   } catch (error) {
-    console.error('마이그레이션 상태 확인 오류:', error)
-    return {
-      totalRecords: 0,
-      migratedRecords: 0,
-      pendingRecords: 0,
-      migrationProgress: 0
-    }
+    console.error('❌ 마이그레이션 상태 확인 실패:', error);
+    throw error;
   }
-}
+};
+
+// 마이그레이션 상태 확인
+export const getMigrationStatus = async (): Promise<{ total: number; migrated: number }> => {
+  const { count: total, error: totalError } = await supabase
+    .from('work_records')
+    .select('*', { count: 'exact', head: true });
+
+  if (totalError) {
+    console.error('🔴 전체 작업 기록 수 조회 실패:', totalError);
+    return { total: 0, migrated: 0 };
+  }
+
+  // Count distinct work_record_id from file_metadata table
+  const { data: migratedRecords, error: migratedError } = await supabase
+    .from('file_metadata')
+    .select('work_record_id')
+    .not('work_record_id', 'is', null);
+
+  if (migratedError) {
+    console.error('🔴 마이그레이션된 레코드 조회 실패:', migratedError);
+    return { total: total || 0, migrated: 0 };
+  }
+
+  // Get unique work_record_ids
+  const uniqueRecordIds = new Set(migratedRecords?.map(r => r.work_record_id) || []);
+  
+  return {
+    total: total || 0,
+    migrated: uniqueRecordIds.size,
+  };
+};
 
 // 데이터 구조 분석을 위한 디버깅 함수
-export const analyzeWorkRecordData = async (workRecordId?: number): Promise<void> => {
-  try {
-    console.log('🔍 작업 기록 데이터 구조 분석 시작...')
-    
-    // 특정 ID가 주어지면 해당 기록만, 아니면 모든 기록 조회
-    const query = workRecordId 
-      ? supabase.from('work_records').select('*').eq('id', workRecordId)
-      : supabase.from('work_records').select('*').limit(5)
-    
-    const { data: workRecords, error } = await query
-    
-    if (error) {
-      console.error('❌ 데이터 조회 오류:', error)
-      return
-    }
-    
-    if (!workRecords || workRecords.length === 0) {
-      console.log('❌ 조회된 작업 기록이 없습니다.')
-      return
-    }
-    
-    console.log(`📊 총 ${workRecords.length}개 작업 기록 분석`)
-    
-    for (const record of workRecords) {
-      console.log(`\n🔍 작업 기록 ID: ${record.id}`)
-      console.log(`📅 작업 날짜: ${record.work_date}`)
-      console.log(`💰 가격: ${record.total_price}`)
-      
-      // remapping_works 구조 분석
-      if (record.remapping_works) {
-        console.log('📋 remapping_works 구조:')
-        console.log('  - 타입:', typeof record.remapping_works)
-        console.log('  - 배열 여부:', Array.isArray(record.remapping_works))
-        
-        // Json 타입을 배열로 파싱
-        const remappingWorks = Array.isArray(record.remapping_works) 
-          ? record.remapping_works 
-          : (record.remapping_works ? [record.remapping_works] : [])
-        
-        if (remappingWorks && remappingWorks.length > 0) {
-          const firstWork = remappingWorks[0] as any
-          console.log('  - 첫 번째 작업 구조:')
-          console.log('    - files:', !!firstWork.files)
-          console.log('    - acu:', !!firstWork.acu)
-          console.log('    - media:', !!firstWork.media)
-          
-          if (firstWork.files) {
-            console.log('    - files 내용:', Object.keys(firstWork.files))
-            
-            // 각 파일 카테고리 확인
-            const categories = ['original', 'read', 'modified', 'vr', 'stage1', 'stage2', 'stage3']
-            for (const category of categories) {
-              const fileData = firstWork.files[category]
-              if (fileData) {
-                console.log(`      - ${category}:`, {
-                  hasFile: !!fileData.file,
-                  hasData: !!(fileData.file && fileData.file.data),
-                  hasName: !!(fileData.file && fileData.file.name),
-                  dataLength: fileData.file?.data?.length || 0
-                })
-              }
-            }
-            
-            // 미디어 파일들 확인
-            for (let i = 1; i <= 5; i++) {
-              const mediaFile = firstWork.files[`mediaFile${i}`]
-              if (mediaFile) {
-                console.log(`      - mediaFile${i}:`, {
-                  hasFile: !!mediaFile.file,
-                  hasData: !!(mediaFile.file && mediaFile.file.data),
-                  hasName: !!(mediaFile.file && mediaFile.file.name),
-                  dataLength: mediaFile.file?.data?.length || 0
-                })
-              }
-            }
-          }
-          
-          if (firstWork.acu && firstWork.acu.files) {
-            console.log('    - ACU files 내용:', Object.keys(firstWork.acu.files))
-          }
-          
-          if (firstWork.media) {
-            console.log('    - media 내용:', Object.keys(firstWork.media))
-          }
-        }
-      } else {
-        console.log('❌ remapping_works가 없습니다.')
-      }
-      
-      // files 필드 직접 확인
-      if (record.files) {
-        console.log('📁 직접 files 필드:', typeof record.files)
-      }
-    }
-    
-  } catch (error) {
-    console.error('❌ 데이터 분석 오류:', error)
+export const analyzeWorkRecordData = async (recordId: number) => {
+  console.log(`🔍 Record ID ${recordId} 데이터 분석 시작...`);
+  const { data, error } = await supabase
+    .from('work_records')
+    .select('*')
+    .eq('id', recordId)
+    .single();
+
+  if (error) {
+    console.error('  🔴 레코드 조회 실패:', error);
+    return;
   }
-}
+
+  if (!data) {
+    console.log('  🟡 레코드를 찾을 수 없습니다.');
+    return;
+  }
+
+  console.log('  ✅ 레코드 조회 성공. 필드 분석:');
+  
+  for (const key in data) {
+    const value = (data as any)[key];
+    console.log(`    - 필드명: ${key}`);
+    console.log(`      - 타입: ${typeof value}`);
+    if (typeof value === 'string') {
+      console.log(`      - 길이: ${value.length}`);
+      console.log(`      - 내용 (앞 100자): ${value.substring(0, 100)}...`);
+      try {
+        JSON.parse(value);
+        console.log(`      - ✅ JSON 파싱 가능`);
+      } catch (e) {
+        console.log(`      - ❌ JSON 파싱 불가능`);
+      }
+    } else if (value && typeof value === 'object') {
+      console.log(`      - 내용: ${JSON.stringify(value, null, 2)}`);
+    } else {
+      console.log(`      - 값: ${value}`);
+    }
+  }
+};
 
 // 특정 work_record의 상세 정보 조회 및 분석
 export const analyzeSpecificWorkRecord = async (workRecordId: number): Promise<void> => {
@@ -536,6 +706,35 @@ export const analyzeSpecificWorkRecord = async (workRecordId: number): Promise<v
     console.error(`❌ 작업 기록 ${workRecordId} 분석 오류:`, error)
   }
 }
+
+// 마이그레이션 대상인 가장 최신 작업 기록을 자동으로 찾아 분석하는 함수
+export const analyzeLatestWorkRecordWithFiles = async (): Promise<void> => {
+  try {
+    console.log('🔄 마이그레이션 대상 최신 작업 기록 분석 시작...');
+
+    const { data: latestRecord, error } = await supabase
+      .from('work_records')
+      .select('id')
+      .not('remapping_works', 'is', null)
+      .order('id', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !latestRecord) {
+      console.log('🟡 마이그레이션할 파일이 포함된 작업 기록을 찾을 수 없습니다.');
+      if (error && error.code !== 'PGRST116') { // 'PGRST116' (no rows) is an expected outcome here.
+         console.error('최신 기록 조회 오류:', error);
+      }
+      return;
+    }
+
+    console.log(`✅ 최신 작업 기록 ID ${latestRecord.id}를 찾았습니다. 상세 분석을 시작합니다.`);
+    await analyzeSpecificWorkRecord(latestRecord.id);
+
+  } catch (err) {
+    console.error('💥 최신 작업 기록 분석 중 예외 발생:', err);
+  }
+};
 
 // 전체 데이터베이스 상태 요약
 export const getDatabaseSummary = async (): Promise<void> => {

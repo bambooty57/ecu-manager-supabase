@@ -4,15 +4,15 @@ import { useState, useEffect } from 'react'
 import { 
   migrateAllFilesToStorage, 
   checkMigrationStatus,
-  analyzeWorkRecordData,
   analyzeSpecificWorkRecord,
-  getDatabaseSummary 
+  getDatabaseSummary,
+  analyzeLatestWorkRecordWithFiles
 } from '../../lib/migration-utils'
 import { cacheManager } from '../../lib/cache-manager'
 import { searchEngine } from '../../lib/search-engine'
 import { 
   generateCDNUrl, 
-  manageBrowserCache, 
+  manageBrowserCache,
   LazyImageLoader,
   isWebPSupported,
   isAVIFSupported 
@@ -27,13 +27,12 @@ export default function OptimizationDashboard() {
   const [searchStats, setSearchStats] = useState<any>(null)
   const [cdnStatus, setCdnStatus] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [migrationProgress, setMigrationProgress] = useState({ current: 0, total: 0, recordId: 0 })
+  const [migrationProgress, setMigrationProgress] = useState({ current: 0, total: 0, recordId: 0 as string | number })
 
-  // 초기 데이터 로드
   useEffect(() => {
+    // 페이지 로드 시 마이그레이션 상태만 체크
     loadDashboardData()
-    detectBrowserSupport()
-  }, [])
+  }, []);
 
   const loadDashboardData = async () => {
     try {
@@ -99,7 +98,7 @@ export default function OptimizationDashboard() {
       console.log('🔍 데이터 구조 분석을 시작합니다...')
       console.log('브라우저 개발자 도구의 콘솔을 확인하세요.')
       
-      await analyzeWorkRecordData()
+      await analyzeLatestWorkRecordWithFiles()
       
       alert('✅ 데이터 분석 완료!\n자세한 내용은 브라우저 개발자 도구의 콘솔을 확인하세요.')
     } catch (error) {
@@ -115,34 +114,22 @@ export default function OptimizationDashboard() {
     try {
       setIsLoading(true)
       console.log('📊 데이터베이스 상태 요약을 시작합니다...')
-      console.log('브라우저 개발자 도구의 콘솔을 확인하세요.')
-      
       await getDatabaseSummary()
-      
-      alert('✅ 데이터베이스 상태 분석 완료!\n자세한 내용은 브라우저 개발자 도구의 콘솔을 확인하세요.')
+      alert('✅ DB 상태 요약 완료! 콘솔을 확인하세요.')
     } catch (error) {
-      console.error('데이터베이스 상태 분석 실패:', error)
-      alert('❌ 데이터베이스 상태 분석 실패')
+      console.error('DB 상태 요약 실패:', error)
+      alert('❌ DB 상태 요약 실패')
     } finally {
       setIsLoading(false)
     }
   }
 
   // 특정 작업 기록 분석
-  const handleSpecificRecordAnalysis = async () => {
+  const handleSpecificRecordAnalysis = async (recordId: number) => {
     try {
-      const recordId = prompt('분석할 작업 기록 ID를 입력하세요:')
-      if (!recordId || isNaN(Number(recordId))) {
-        alert('올바른 숫자를 입력해주세요.')
-        return
-      }
-
       setIsLoading(true)
       console.log(`🔍 작업 기록 ID ${recordId} 상세 분석을 시작합니다...`)
-      console.log('브라우저 개발자 도구의 콘솔을 확인하세요.')
-      
-      await analyzeSpecificWorkRecord(Number(recordId))
-      
+      await analyzeSpecificWorkRecord(recordId)
       alert(`✅ 작업 기록 ID ${recordId} 분석 완료!\n자세한 내용은 브라우저 개발자 도구의 콘솔을 확인하세요.`)
     } catch (error) {
       console.error('특정 작업 기록 분석 실패:', error)
@@ -372,7 +359,14 @@ export default function OptimizationDashboard() {
             🔍 전체 데이터 분석
           </button>
           <button
-            onClick={handleSpecificRecordAnalysis}
+            onClick={() => {
+              const recordId = prompt('분석할 작업 기록 ID를 입력하세요:')
+              if (recordId && !isNaN(Number(recordId))) {
+                handleSpecificRecordAnalysis(Number(recordId))
+              } else if (recordId !== null) {
+                alert('올바른 숫자를 입력해주세요.')
+              }
+            }}
             disabled={isLoading}
             className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
           >
