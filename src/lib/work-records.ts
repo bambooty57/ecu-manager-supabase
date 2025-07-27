@@ -80,6 +80,9 @@ export interface WorkRecordData {
   toolsUsed?: string[] | null
   files?: any[]
   hasFiles?: boolean
+  workDescription?: string | null
+  price?: number | null
+  userId?: string | null
 }
 
 // 데이터베이스 형식을 프론트엔드 형식으로 변환
@@ -159,11 +162,12 @@ export const getWorkRecordWithFiles = async (id: number): Promise<WorkRecordData
 export const getWorkRecordsPaginated = async (
   page: number = 1,
   pageSize: number = 20,
+  includeFiles: boolean = false,
   useCache: boolean = true
-): Promise<{ data: WorkRecordData[]; totalCount: number }> => {
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize - 1;
-  const cacheKey = `work_records_paginated:${page}:${pageSize}`;
+): Promise<{ data: WorkRecordData[], totalCount: number }> => {
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+  const cacheKey = `work_records_paginated:${page}:${pageSize}:${includeFiles}`;
 
   if (useCache) {
     const cachedData = await cacheManager.get(cacheKey);
@@ -172,18 +176,24 @@ export const getWorkRecordsPaginated = async (
       return cachedData as { data: WorkRecordData[]; totalCount: number };
     }
   }
-
-  console.log(`🔍 페이지네이션 데이터 DB 조회: ${page} 페이지, ${pageSize}개`);
+  
+  // 페이지네이션된 데이터 조회 - ECU/ACU 정보를 위해 remapping_works와 ECU/ACU 컬럼들 포함
+  const selectFields = includeFiles 
+    ? '*' 
+    : 'id, customer_id, equipment_id, work_date, work_type, total_price, status, created_at, remapping_works, ecu_maker, ecu_model, acu_manufacturer, acu_model, acu_type, connection_method, tools_used, work_description, price, user_id'
+  
   const { data, count, error } = await supabase
     .from('work_records')
-    .select('*, files', { count: 'exact' }) // files 컬럼을 명시적으로 포함
-    .range(start, end)
-    .order('work_date', { ascending: false });
-
+    .select(selectFields, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to)
+  
   if (error) {
-    console.error('❌ 페이지네이션 데이터 로드 실패:', error);
-    throw error;
+    console.error('Error fetching paginated work records:', error)
+    throw error
   }
+
+  console.log(`🔍 페이지네이션 데이터 DB 조회: ${page} 페이지, ${pageSize}개`);
 
   const workRecords = data.map((record: any) => {
     // remapping_works 처리 개선
@@ -219,6 +229,9 @@ export const getWorkRecordsPaginated = async (
       acuType: record.acu_type,
       connectionMethod: record.connection_method,
       toolsUsed: record.tools_used,
+      workDescription: record.work_description,
+      price: record.price,
+      userId: record.user_id,
     }
   })
   
@@ -267,14 +280,44 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
   let ecuModel = null
   let acuManufacturer = null
   let acuModel = null
+  let acuType = null
   let connectionMethod = null
+  let toolsUsed: string[] = []
+  let workDescription = null
+  let price = null
 
   if (firstWork) {
     ecuMaker = firstWork.ecuMaker || null
     ecuModel = firstWork.ecuType || firstWork.ecuTypeCustom || null
     acuManufacturer = firstWork.acuManufacturer || null
     acuModel = firstWork.acuModel || firstWork.acuModelCustom || null
+    acuType = firstWork.acuType || null
     connectionMethod = firstWork.connectionMethod || null
+    
+    // tools_used 배열 생성 (ECU 도구 카테고리와 연결방법 기반)
+    if (firstWork.ecuToolCategory) {
+      toolsUsed.push(firstWork.ecuToolCategory)
+    }
+    if (firstWork.connectionMethod) {
+      toolsUsed.push(firstWork.connectionMethod)
+    }
+    
+    // work_description 생성
+    const ecuInfo = ecuMaker && ecuModel ? `ECU(${ecuMaker}-${ecuModel})` : ''
+    const acuInfo = acuManufacturer && acuModel ? `ACU(${acuManufacturer}-${acuModel})` : ''
+    
+    if (ecuInfo && acuInfo) {
+      workDescription = `${ecuInfo} 및 ${acuInfo} 통합 튜닝`
+    } else if (ecuInfo) {
+      workDescription = `${ecuInfo} 엔진 튜닝`
+    } else if (acuInfo) {
+      workDescription = `${acuInfo} 변속기 튜닝`
+    } else {
+      workDescription = firstWork.workDetails || restOfRecordData.workType || '튜닝 작업'
+    }
+    
+    // 개별 작업 가격
+    price = firstWork.price ? parseFloat(firstWork.price) : null
   }
 
   // 파일 데이터 추출 (첫 번째 remapping work에서)
@@ -292,7 +335,11 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
     ecu_model: ecuModel,
     acu_manufacturer: acuManufacturer,
     acu_model: acuModel,
+    acu_type: acuType,
     connection_method: connectionMethod,
+    tools_used: toolsUsed.length > 0 ? toolsUsed : null,
+    work_description: workDescription,
+    price: price,
   }
 
   console.log('📤 Supabase에 저장할 데이터:', recordToInsert)

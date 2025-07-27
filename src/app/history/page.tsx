@@ -11,7 +11,7 @@ import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 import JSZip from 'jszip'
 
-export default function HistoryPage() {
+function HistoryPage() {
   const [filters, setFilters] = useState({
     dateFrom: '',
     dateTo: '',
@@ -530,9 +530,32 @@ export default function HistoryPage() {
           r.id === record.id ? updatedRecord : r
         ));
         
-        // 현재 선택된 레코드도 업데이트
-        setSelectedRecord(updatedRecord);
-        console.log('✅ 파일 데이터 로딩 및 병합 완료:', record.id);
+        if (fullRecordWithFiles && fullRecordWithFiles.remappingWorks) {
+          // 파일 데이터 추출 및 처리 (기존 정보 보존)
+          const processedRecord = processRemappingWorks(fullRecordWithFiles, customers, equipments)
+          
+          // 기존 레코드의 ECU/ACU 정보 보존 (이미 표시된 정보가 있다면)
+          const preservedRecord = {
+            ...processedRecord,
+            hasFiles: true,
+            // 기존 정보가 유효하다면 보존
+            ecuMaker: record.ecuMaker && record.ecuMaker !== 'N/A' ? record.ecuMaker : processedRecord.ecuMaker,
+            ecuModel: record.ecuModel && record.ecuModel !== 'N/A' ? record.ecuModel : processedRecord.ecuModel,
+            acuManufacturer: record.acuManufacturer && record.acuManufacturer !== 'N/A' ? record.acuManufacturer : processedRecord.acuManufacturer,
+            acuModel: record.acuModel && record.acuModel !== 'N/A' ? record.acuModel : processedRecord.acuModel,
+            connectionMethod: record.connectionMethod && record.connectionMethod !== 'N/A' ? record.connectionMethod : processedRecord.connectionMethod,
+            toolsUsed: record.toolsUsed && record.toolsUsed.length > 0 ? record.toolsUsed : processedRecord.toolsUsed
+          }
+          
+          // 상태 업데이트 (해당 레코드만)
+          setWorkRecords(prev => prev.map(r => 
+            r.id === record.id ? preservedRecord : r
+          ))
+          
+          // 선택된 레코드도 업데이트
+          setSelectedRecord(preservedRecord);
+          console.log('✅ 파일 데이터 로딩 완료 (정보 보존):', record.id);
+        }
       }
     } catch (error) {
       console.error('❌ 파일 데이터 로딩 실패:', error);
@@ -645,6 +668,7 @@ export default function HistoryPage() {
     }
   }
 
+  // ZIP 파일 생성 및 다운로드 (신규 기능)
   const handleZipDownload = async (files: any[], zipFileName: string) => {
     try {
       if (files.length === 0) {
@@ -688,6 +712,7 @@ export default function HistoryPage() {
     }
   }
 
+  // 카테고리별 일괄 다운로드 핸들러 (개선된 버전)
   const handleCategoryDownload = async (files: any[], categoryName: string, customFilenames?: string[]) => {
     try {
       if (files.length === 0) {
@@ -888,44 +913,273 @@ export default function HistoryPage() {
   const processRemappingWorks = (record: WorkRecordData, customers: CustomerData[], equipments: EquipmentData[]) => {
     const customer = customers.find(c => c.id === record.customerId)
     const equipment = equipments.find(e => e.id === record.equipmentId)
+    
+    // 데이터베이스의 개별 컬럼에서 ECU/ACU 정보 가져오기 (우선순위)
+    let ecuMaker = record.ecuMaker || '';
+    let ecuType = record.ecuModel || '';
+    let ecuConnectionMethod = record.connectionMethod || '';
+    let ecuTool = '';
+    let ecuCategory = ''; // KESS/FLEX 등
+    let ecuTuningWorks: string[] = [];
+    let acuManufacturer = record.acuManufacturer || '';
+    let acuModel = record.acuModel || '';
+    let acuConnectionMethod = record.connectionMethod || '';
+    let acuTool = '';
+    let acuCategory = ''; // KESS/FLEX 등
+    let acuTuningWorks: string[] = [];
+    let allFiles: any[] = [];
+    
+    // tools_used에서 카테고리 정보 추출 시도 (우선순위)
+    if (record.toolsUsed && Array.isArray(record.toolsUsed)) {
+      record.toolsUsed.forEach(tool => {
+        if (typeof tool === 'string') {
+          const toolUpper = tool.toUpperCase();
+          // ECU 카테고리 추출
+          if (toolUpper.includes('KESS') && !ecuCategory) {
+            ecuCategory = 'KESS';
+          } else if (toolUpper.includes('FLEX') && !ecuCategory) {
+            ecuCategory = 'FLEX';
+          } else if (toolUpper.includes('KTAG') && !ecuCategory) {
+            ecuCategory = 'KTAG';
+          } else if (toolUpper.includes('FGTECH') && !ecuCategory) {
+            ecuCategory = 'FGTECH';
+          }
+          
+          // 연결방법 추출
+          if (toolUpper.includes('OBD') && !ecuConnectionMethod) {
+            ecuConnectionMethod = 'OBD';
+          } else if (toolUpper.includes('BENCH') && !ecuConnectionMethod) {
+            ecuConnectionMethod = 'BENCH';
+          }
+        }
+      });
+      
+      // ACU 카테고리는 일반적으로 FLEX
+      if (record.acuManufacturer && !acuCategory) {
+        acuCategory = 'FLEX';
+      }
+    }
 
-    // 1. 기본 정보 설정 (레코드의 최상위 데이터를 최우선으로 사용)
-    const processed = {
+    // ECU 제조사/모델에 따른 일반적인 장비 카테고리 추정
+    if (!ecuCategory && ecuMaker) {
+      const ecuMakerUpper = ecuMaker.toUpperCase();
+      if (ecuMakerUpper.includes('BOSCH') || ecuMakerUpper.includes('CONTINENTAL') || ecuMakerUpper.includes('DELPHI')) {
+        ecuCategory = 'KESS'; // 일반적으로 KESS로 많이 작업
+      } else if (ecuMakerUpper.includes('CATERPILLAR') || ecuMakerUpper.includes('CUMMINS')) {
+        ecuCategory = 'FLEX'; // 상용차는 주로 FLEX
+      } else if (ecuMakerUpper.includes('CHRYSLER') || ecuMakerUpper.includes('JEEP')) {
+        ecuCategory = 'KESS'; // 크라이슬러는 주로 KESS
+      } else {
+        ecuCategory = 'KESS'; // 기본값
+      }
+    }
+
+    // ACU 제조사에 따른 카테고리 추정
+    if (!acuCategory && acuManufacturer) {
+      const acuManuUpper = acuManufacturer.toUpperCase();
+      if (acuManuUpper.includes('CONTINENTAL') || acuManuUpper.includes('ZF')) {
+        acuCategory = 'FLEX'; // ACU는 주로 FLEX로 작업
+      } else {
+        acuCategory = 'FLEX'; // 기본값
+      }
+    }
+
+    // 연결방법 추정 (ECU)
+    if (!ecuConnectionMethod && ecuMaker) {
+      const ecuMakerUpper = ecuMaker.toUpperCase();
+      if (ecuMakerUpper.includes('CATERPILLAR') || ecuMakerUpper.includes('CUMMINS')) {
+        ecuConnectionMethod = 'BENCH'; // 상용차는 주로 BENCH
+      } else {
+        ecuConnectionMethod = 'OBD'; // 승용차는 주로 OBD
+      }
+    }
+
+    // 연결방법 추정 (ACU)
+    if (!acuConnectionMethod && acuManufacturer) {
+      acuConnectionMethod = 'BENCH'; // ACU는 대부분 BENCH
+    }
+
+    // 디버깅: ECU/ACU 데이터 확인
+    console.log('🔍 Record ID:', record.id, 'Full Record:', record);
+    console.log('🔍 remappingWorks 상세:', record.remappingWorks);
+    console.log('🔍 toolsUsed 상세:', record.toolsUsed);
+    console.log('🔍 ECU/ACU Info:', {
+      ecuMaker: record.ecuMaker,
+      ecuModel: record.ecuModel,
+      acuManufacturer: record.acuManufacturer,
+      acuModel: record.acuModel,
+      acuType: record.acuType,
+      connectionMethod: record.connectionMethod,
+      toolsUsed: record.toolsUsed,
+      remappingWorks: record.remappingWorks,
+      extractedEcuCategory: ecuCategory,
+      extractedAcuCategory: acuCategory
+    });
+    
+    // remappingWorks에서 추가 정보 추출 (데이터베이스 컬럼이 비어있는 경우만 보완)
+    if (record.remappingWorks && record.remappingWorks.length > 0) {
+      const firstWork = record.remappingWorks[0] as any;
+      
+      // 상세 디버깅: firstWork 전체 구조 확인
+      console.log('🔍 firstWork 전체 구조:', JSON.stringify(firstWork, null, 2));
+      
+      // ECU 정보 추출 (기존 데이터가 없거나 N/A인 경우만 보완)
+      // firstWork 최상위 레벨에서 직접 추출
+      if (!ecuMaker || ecuMaker === 'N/A') {
+        ecuMaker = firstWork.ecuMaker || ecuMaker;
+      }
+      if (!ecuType || ecuType === 'N/A') {
+        ecuType = firstWork.ecuType || firstWork.ecuTypeCustom || ecuType;
+      }
+      if (!ecuConnectionMethod || ecuConnectionMethod === 'N/A') {
+        ecuConnectionMethod = firstWork.connectionMethod || ecuConnectionMethod;
+      }
+      
+      // ECU 카테고리 추출
+      if (!ecuCategory || ecuCategory === 'N/A') {
+        ecuCategory = firstWork.ecuToolCategory || firstWork.ecuToolCategoryCustom || ecuCategory;
+      }
+      
+      // ECU 도구 정보 구성
+      const ecuToolParts = [
+        ecuCategory,
+        ecuConnectionMethod
+      ].filter(Boolean);
+      ecuTool = ecuToolParts.length > 0 ? ecuToolParts.join(' - ') : 'N/A';
+      
+      // 튜닝 작업 내역 추출
+      ecuTuningWorks = firstWork.selectedWorks ? 
+        firstWork.selectedWorks.filter((work: string) => work.startsWith('ECU:')) : [];
+      
+      // ACU 정보 추출 (기존 데이터가 없거나 N/A인 경우만 보완)
+      // firstWork 최상위 레벨에서 직접 추출
+      if (!acuManufacturer || acuManufacturer === 'N/A') {
+        acuManufacturer = firstWork.acuManufacturer || acuManufacturer;
+      }
+      if (!acuModel || acuModel === 'N/A') {
+        acuModel = firstWork.acuModel || firstWork.acuModelCustom || acuModel;
+      }
+      if (!acuConnectionMethod || acuConnectionMethod === 'N/A') {
+        acuConnectionMethod = firstWork.connectionMethod || acuConnectionMethod;
+      }
+      
+      // ACU 도구 정보 구성 (ACU는 일반적으로 FLEX 사용)
+      if (!acuCategory && acuManufacturer) {
+        acuCategory = 'FLEX'; // ACU는 주로 FLEX로 작업
+      }
+      if (!acuConnectionMethod && acuManufacturer) {
+        acuConnectionMethod = 'BENCH'; // ACU는 대부분 BENCH 연결
+      }
+      
+      const acuToolParts = [
+        acuCategory,
+        acuConnectionMethod
+      ].filter(Boolean);
+      acuTool = acuToolParts.length > 0 ? acuToolParts.join(' - ') : 'N/A';
+      
+      // ACU 튜닝 작업 내역 추출
+      acuTuningWorks = firstWork.selectedWorks ? 
+        firstWork.selectedWorks.filter((work: string) => work.startsWith('ACU:')) : [];
+      
+      // 파일 정보 추출
+      if (firstWork.files) {
+        Object.entries(firstWork.files).forEach(([category, fileData]: [string, any]) => {
+          if (fileData && fileData.file) {
+            let mappedCategory = category;
+            if (category === 'original') mappedCategory = 'original';
+            else if (category === 'read') mappedCategory = 'read';
+            else if (category === 'modified') mappedCategory = 'modified';
+            else if (category === 'vr') mappedCategory = 'vr';
+            
+            allFiles.push({
+              name: fileData.file.name || `${category}.bin`,
+              size: fileData.file.size || 0,
+              type: fileData.file.type || 'application/octet-stream',
+              data: fileData.file.data || '',
+              description: fileData.description || '',
+              category: mappedCategory,
+              uploadDate: new Date().toISOString()
+            });
+          }
+        });
+      }
+      
+      // 미디어 파일 추출
+      if (firstWork.media) {
+        if (firstWork.media.before) {
+          allFiles.push({
+            name: firstWork.media.before.name || 'before_media',
+            size: firstWork.media.before.size || 0,
+            type: firstWork.media.before.type || 'image/jpeg',
+            data: firstWork.media.before.data || '',
+            description: '작업 전 미디어',
+            category: 'before',
+            uploadDate: new Date().toISOString()
+          });
+        }
+        if (firstWork.media.after) {
+          allFiles.push({
+            name: firstWork.media.after.name || 'after_media',
+            size: firstWork.media.after.size || 0,
+            type: firstWork.media.after.type || 'image/jpeg',
+            data: firstWork.media.after.data || '',
+            description: '작업 후 미디어',
+            category: 'after',
+            uploadDate: new Date().toISOString()
+          });
+        }
+      }
+      
+      // 추가 미디어 파일들 (mediaFile1~5)
+      if (firstWork.files) {
+        for (let i = 1; i <= 5; i++) {
+          const mediaFile = (firstWork.files as any)[`mediaFile${i}`];
+          if (mediaFile && mediaFile.file) {
+            allFiles.push({
+              name: mediaFile.file.name || `media_${i}`,
+              size: mediaFile.file.size || 0,
+              type: mediaFile.file.type || 'image/jpeg',
+              data: mediaFile.file.data || '',
+              description: mediaFile.description || `미디어 파일 ${i}`,
+              category: `media${i}`,
+              uploadDate: new Date().toISOString()
+            });
+          }
+        }
+      }
+    }
+    
+    return {
       ...record,
       customerName: customer?.name || '알 수 없음',
       equipmentType: equipment?.equipmentType || '알 수 없음',
       manufacturer: equipment?.manufacturer || '알 수 없음',
       model: equipment?.model || '알 수 없음',
       serial: equipment?.serialNumber || '',
+      ecuMaker,
+      ecuType,
+      ecuCategory,
+      connectionMethod: ecuConnectionMethod,
+      ecuTool: ecuCategory && ecuConnectionMethod ? `${ecuCategory} - ${ecuConnectionMethod}` : (ecuTool || 'N/A'),
+      ecuTuningWorks,
+      acuManufacturer,
+      acuModel,
+      acuType: record.acuType || '',
+      acuCategory,
+      acuConnectionMethod,
+      acuTool: acuCategory && acuConnectionMethod ? `${acuCategory} - ${acuConnectionMethod}` : (acuTool || 'N/A'),
+      acuTuningWorks,
+      tuningWork: record.workType,
+      customTuningWork: record.workType,
       registrationDate: record.workDate,
       price: record.totalPrice || 0,
-      
-      // ECU 정보: record에 있는 값을 우선 사용, 없으면 빈 문자열
-      ecuMaker: record.ecuMaker || '',
-      ecuType: record.ecuModel || '',
-      ecuConnectionMethod: record.connectionMethod || '',
-      ecuTool: (record.toolsUsed || []).join(' / '),
-      ecuTuningWorks: (record.workType || '').split(',').map(w => w.trim()),
-
-      // ACU 정보: record에 있는 값을 우선 사용, 없으면 빈 문자열
-      acuManufacturer: record.acuManufacturer || '',
-      acuModel: record.acuModel || '',
-      acuConnectionMethod: record.connectionMethod || '',
-      acuTool: (record.toolsUsed || []).join(' / '),
+      files: allFiles
     }
 
-    // 2. remappingWorks JSON 데이터에서 파일 정보 추출 (데이터 보충용)
-    let remappingWorksData = {}
-    if (typeof record.remappingWorks === 'string') {
-      try {
-        remappingWorksData = JSON.parse(record.remappingWorks)
-      } catch (error) {
-        console.warn('⚠️ remappingWorks JSON 파싱 오류:', error)
-        remappingWorksData = {}
-      }
-    } else if (typeof record.remappingWorks === 'object' && record.remappingWorks !== null) {
-      remappingWorksData = record.remappingWorks
-    }
+    // 2. remappingWorks 배열에서 추가 파일 정보 추출 (데이터 보충용)
+    const remappingWorksData = Array.isArray(record.remappingWorks) && record.remappingWorks.length > 0 
+      ? record.remappingWorks[0] 
+      : {}
 
     const safeAccess = (obj: any, path: string[], defaultValue: any[] = []) => {
         return path.reduce((xs, x) => (xs && xs[x] ? xs[x] : null), obj) || defaultValue
@@ -935,7 +1189,7 @@ export default function HistoryPage() {
     const acuFiles = safeAccess(remappingWorksData, ['acu', 'files']).map((f:any) => ({ ...f, category: 'ACU' }))
     const mediaFiles = safeAccess(remappingWorksData, ['media', 'files']).map((f:any) => ({ ...f, category: 'Media' }))
 
-    const allFiles = [...(record.files || []), ...ecuFiles, ...acuFiles, ...mediaFiles]
+    const allFilesFromRecord = [...(record.files || []), ...ecuFiles, ...acuFiles, ...mediaFiles]
       .filter((file, index, self) => file && file.name && self.findIndex(f => f.name === file.name) === index)
       .map(fileData => ({
         name: fileData.name || 'N/A',
@@ -944,11 +1198,16 @@ export default function HistoryPage() {
       }));
 
     return {
-      ...processed,
+      ...record,
+      customerName: customer?.name || '알 수 없음',
+      equipmentType: equipment?.equipmentType || '알 수 없음',
+      manufacturer: equipment?.manufacturer || '알 수 없음',
+      model: equipment?.model || '알 수 없음',
+      serial: equipment?.serialNumber || '',
       ecuFiles,
       acuFiles,
       mediaFiles,
-      files: allFiles
+      files: allFilesFromRecord
     };
   }
 
@@ -1646,7 +1905,7 @@ export default function HistoryPage() {
                     <span className="text-sm text-white font-medium">{selectedRecord.ecuTool || 'N/A'}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-sm font-medium text-gray-700">ECU 튜닝 작업:</span>
+                    <span className="text-sm font-medium text-blue-300">ECU 튜닝 작업:</span>
                     <div className="text-sm text-white">
                       {selectedRecord.ecuTuningWorks && selectedRecord.ecuTuningWorks.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
@@ -2544,4 +2803,6 @@ export default function HistoryPage() {
       </div>
     </AuthGuard>
   )
-} 
+}
+
+export default HistoryPage
