@@ -1,5 +1,5 @@
 -- ===============================================
--- TracForce Supabase Database Migration
+-- Tuning Box Supabase Database Migration
 -- 실행 방법: Supabase Dashboard > SQL Editor에서 실행
 -- ===============================================
 
@@ -133,4 +133,4 @@ SELECT
 FROM work_records;
 
 -- 완료 메시지
-SELECT 'TracForce 데이터베이스 마이그레이션이 성공적으로 완료되었습니다!' as message;
+SELECT 'Tuning Box 데이터베이스 마이그레이션이 성공적으로 완료되었습니다!' as message;

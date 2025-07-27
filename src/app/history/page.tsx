@@ -9,6 +9,7 @@ import { searchEngine } from '@/lib/search-engine'
 import { cacheManager, CacheKeys, CacheTTL } from '@/lib/cache-manager'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
+import JSZip from 'jszip'
 
 export default function HistoryPage() {
   const [filters, setFilters] = useState({
@@ -144,7 +145,7 @@ export default function HistoryPage() {
         getAllEquipment()
       ])
 
-      const enrichedNewRecords = paginatedResult.data.map(record => {
+      const enrichedNewRecords = paginatedResult.data.map((record: any) => {
         const customer = customersData.find(c => c.id === record.customerId)
         const equipment = equipmentsData.find(e => e.id === record.equipmentId)
         
@@ -155,22 +156,8 @@ export default function HistoryPage() {
           manufacturer: equipment?.manufacturer || '알 수 없음',
           model: equipment?.model || '알 수 없음',
           serial: equipment?.serialNumber || '',
-          ecuMaker: '',
-          ecuType: '',
-          connectionMethod: '',
-          ecuTool: '',
-          ecuTuningWorks: [],
-          acuManufacturer: '',
-          acuModel: '',
-          acuConnectionMethod: '',
-          acuTool: '',
-          acuTuningWorks: [],
-          tuningWork: record.workType,
-          customTuningWork: record.workType,
-          registrationDate: record.workDate,
-          price: record.totalPrice || 0,
-          files: [],
-          hasFiles: false
+          files: record.files || [],
+          hasFiles: record.files && record.files.length > 0
         }
       })
 
@@ -265,59 +252,58 @@ export default function HistoryPage() {
     }
 
     window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
+    window.addEventListener('visibilitychange', handleVisibilityChange)
+    
     return () => {
       window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 
   const loadAllData = async (page: number = 1) => {
     setIsLoadingRecords(true)
     try {
-      // 병렬로 모든 데이터 로드 (페이지네이션 적용)
-      const [paginatedResult, customersData, equipmentsData] = await Promise.all([
-        getWorkRecordsPaginated(page, pageSize, false), // remapping_works는 항상 포함됨
+      const paginatedResult = await getWorkRecordsPaginated(page, pageSize, false)
+
+      const [customersData, equipmentsData] = await Promise.all([
         getAllCustomers(),
         getAllEquipment()
       ])
 
-      // 페이지네이션 정보 업데이트
+      const enrichedNewRecords = paginatedResult.data.map((record: any) => {
+        const customer = customersData.find(c => c.id === record.customerId)
+        const equipment = equipmentsData.find(e => e.id === record.equipmentId)
+        
+        const files = record.files || []
+        const hasFiles = files.length > 0
+
+        return {
+          ...record,
+          customerName: customer?.name || '알 수 없음',
+          equipmentType: equipment?.equipmentType || '알 수 없음',
+          manufacturer: equipment?.manufacturer || '알 수 없음',
+          model: equipment?.model || '알 수 없음',
+          serial: equipment?.serialNumber || '',
+          ecuMaker: record.ecuMaker || 'N/A',
+          ecuType: record.ecuModel || 'N/A',
+          connectionMethod: record.connectionMethod || 'N/A',
+          ecuTool: (record.toolsUsed || []).join(' / ') || 'N/A',
+          ecuTuningWorks: record.workType ? record.workType.split(',').map((w: string) => w.trim()) : [],
+          acuManufacturer: record.acuManufacturer || 'N/A',
+          acuModel: record.acuModel || 'N/A',
+          acuConnectionMethod: record.connectionMethod || 'N/A',
+          acuTool: (record.toolsUsed || []).join(' / '),
+          files: files,
+          hasFiles: hasFiles,
+        }
+      })
+      
+      setWorkRecords(enrichedNewRecords)
       setTotalCount(paginatedResult.totalCount)
       setTotalPages(Math.ceil(paginatedResult.totalCount / pageSize))
       setCurrentPage(page)
+      setHasMoreData(paginatedResult.data.length >= pageSize)
 
-      // 작업 기록에 고객명과 장비 정보 추가 및 ECU/ACU 정보 처리
-      const enrichedWorkRecords = paginatedResult.data.map(record => {
-        // processRemappingWorks 함수를 사용하여 ECU/ACU 정보 추출
-        const processedRecord = processRemappingWorks(record, customersData, equipmentsData)
-        
-        return {
-          ...processedRecord,
-          hasFiles: false // 파일 로드 여부 플래그
-        }
-      })
-
-      setWorkRecords(enrichedWorkRecords)
-      setCustomers(customersData)
-      setEquipments(equipmentsData)
-      
-      // 검색 엔진에 데이터 인덱싱
-      if (enrichedWorkRecords.length > 0) {
-        try {
-          console.log('📋 검색 엔진 인덱싱 임시 비활성화')
-        } catch (error) {
-          console.error('❌ 검색 인덱스 업데이트 실패:', error)
-        }
-      }
-      
-      console.log('✅ 작업 이력 데이터 로드 완료 (페이지네이션):', {
-        page,
-        pageSize,
-        totalCount: paginatedResult.totalCount,
-        currentRecords: enrichedWorkRecords.length
-      })
     } catch (error) {
       console.error('❌ 데이터 로드 실패:', error)
     } finally {
@@ -325,26 +311,22 @@ export default function HistoryPage() {
     }
   }
 
-  // 페이지 변경 핸들러
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       loadAllData(newPage)
     }
   }
 
-  // 페이지 크기 변경 핸들러
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize)
     setCurrentPage(1)
     loadAllData(1)
   }
 
-  // 제조사별 모델명 목록 가져오기
   const getAvailableModels = (manufacturer: string) => {
     return MANUFACTURER_MODELS[manufacturer] || []
   }
 
-  // ECU 모델 추가 함수
   const addNewEcuModel = () => {
     if (newEcuModel.trim() && !ecuModels.includes(newEcuModel.trim())) {
       const updatedModels = [...ecuModels, newEcuModel.trim()]
@@ -357,7 +339,6 @@ export default function HistoryPage() {
     }
   }
 
-  // ACU 타입 추가 함수
   const addNewAcuType = () => {
     if (newAcuType.trim() && !acuTypes.includes(newAcuType.trim())) {
       const updatedTypes = [...acuTypes, newAcuType.trim()]
@@ -370,7 +351,6 @@ export default function HistoryPage() {
     }
   }
 
-  // 필터링된 작업 목록
   const filteredWorkRecords = workRecords.filter(record => {
     // 날짜 필터링
     if (filters.dateFrom && record.workDate < filters.dateFrom) return false
@@ -440,7 +420,6 @@ export default function HistoryPage() {
     })
   }
 
-  // 검색 기능
   const handleSearch = async (query: string) => {
     if (!query.trim()) {
       setSearchResults([])
@@ -471,7 +450,6 @@ export default function HistoryPage() {
     }
   }
 
-  // 자동완성 기능
   const handleSearchInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
     setSearchQuery(query)
@@ -490,14 +468,12 @@ export default function HistoryPage() {
     }
   }
 
-  // 검색 제안 선택
   const handleSuggestionClick = (suggestion: string) => {
     setSearchQuery(suggestion)
     setShowSuggestions(false)
     handleSearch(suggestion)
   }
 
-  // 검색 초기화
   const clearSearch = () => {
     setSearchQuery('')
     setSearchResults([])
@@ -506,7 +482,6 @@ export default function HistoryPage() {
     setSearchTook(0)
   }
 
-  // 검색어 하이라이팅 함수
   const highlightSearchTerm = (text: string, searchTerm: string) => {
     if (!searchTerm || !text) return text
     
@@ -522,52 +497,61 @@ export default function HistoryPage() {
     )
   }
 
-  // 상세보기 핸들러 (파일 데이터 지연 로딩)
   const handleViewDetail = async (record: any) => {
     console.log('🔍 상세보기 클릭:', record)
-    setSelectedRecord(record)
-    setShowDetailModal(true)
-    console.log('📋 모달 상태 업데이트 완료')
     
-    // 파일 데이터가 없으면 로드
-    if (!record.hasFiles) {
-      try {
-        console.log('📁 파일 데이터 로딩 시작:', record.id)
-        const fullRecord = await getWorkRecordWithFiles(record.id)
+    // 이미 상세 정보가 로드되었다면 다시 로드하지 않음
+    if (record.hasFiles) {
+      setSelectedRecord(record);
+      setShowDetailModal(true);
+      return;
+    }
+
+    // 기본 정보를 먼저 표시
+    setSelectedRecord(record);
+    setShowDetailModal(true);
+    console.log('📋 모달 상태 업데이트 완료 (기본 정보)');
+    
+    try {
+      console.log('📁 파일 데이터 로딩 시작:', record.id);
+      const fullRecordWithFiles = await getWorkRecordWithFiles(record.id);
+      
+      if (fullRecordWithFiles) {
+        // 기존 레코드 정보에 파일 정보만 추가하여 상태 업데이트
+        const updatedRecord = {
+          ...record, // 기존에 표시되던 record 데이터를 그대로 사용
+          files: fullRecordWithFiles.files || [], // 파일 정보만 추가
+          remappingWorks: fullRecordWithFiles.remappingWorks, // 원본 JSON 데이터도 업데이트
+          hasFiles: true,
+        };
+
+        // 전체 작업 목록에서 해당 레코드 업데이트
+        setWorkRecords(prev => prev.map(r => 
+          r.id === record.id ? updatedRecord : r
+        ));
         
-        if (fullRecord && fullRecord.remappingWorks) {
-          // 파일 데이터 추출 및 처리
-          const processedRecord = processRemappingWorks(fullRecord, customers, equipments)
-          
-          // 상태 업데이트 (해당 레코드만)
-          setWorkRecords(prev => prev.map(r => 
-            r.id === record.id ? { ...processedRecord, hasFiles: true } : r
-          ))
-          
-          // 선택된 레코드도 업데이트
-          setSelectedRecord({ ...processedRecord, hasFiles: true })
-          console.log('✅ 파일 데이터 로딩 완료:', record.id)
-        }
-      } catch (error) {
-        console.error('❌ 파일 데이터 로딩 실패:', error)
+        // 현재 선택된 레코드도 업데이트
+        setSelectedRecord(updatedRecord);
+        console.log('✅ 파일 데이터 로딩 및 병합 완료:', record.id);
       }
+    } catch (error) {
+      console.error('❌ 파일 데이터 로딩 실패:', error);
+      // 에러 발생 시 사용자에게 알림 (선택적)
+      // alert('상세 정보를 불러오는 데 실패했습니다.');
     }
   }
 
-  // 수정 핸들러
   const handleEdit = (record: any) => {
     setSelectedRecord(record)
     setEditFormData({ ...record })
     setShowEditModal(true)
   }
 
-  // 수정 폼 입력 핸들러
   const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setEditFormData((prev: any) => ({ ...prev, [name]: value }))
   }
 
-  // 수정 저장 핸들러
   const handleSaveEdit = async () => {
     try {
       // Supabase에서 작업 기록 수정
@@ -600,27 +584,60 @@ export default function HistoryPage() {
     }
   }
 
-  // 파일 다운로드 핸들러
   const handleFileDownload = (file: any, customTitle?: string) => {
     try {
+      // 파일 확장자 추출 및 안전한 파일명 생성
+      const getFileExtension = (filename: string) => {
+        const match = filename.match(/\.[0-9a-z]+$/i)
+        return match ? match[0] : ''
+      }
+      
+      const sanitizeFilename = (filename: string) => {
+        return filename.replace(/[^\w\s-_.가-힣]/g, '_').trim()
+      }
+      
       if (file.url) {
         // URL이 있는 경우 직접 다운로드
         const link = document.createElement('a')
         link.href = file.url
-        link.download = customTitle || file.name
+        
+        const originalName = customTitle || file.name || `파일_${Date.now()}`
+        const extension = getFileExtension(originalName)
+        const baseName = originalName.replace(extension, '')
+        const safeName = sanitizeFilename(baseName) + extension
+        
+        link.download = safeName
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+        
+        console.log(`✅ 파일 다운로드 완료: ${safeName}`)
       } else if (file.data) {
         // Base64 데이터가 있는 경우
         const link = document.createElement('a')
-        link.href = `data:${file.type || 'application/octet-stream'};base64,${file.data}`
-        link.download = customTitle || file.name
+        
+        // data URL 형식 확인 및 생성
+        let dataUrl = file.data
+        if (!file.data.startsWith('data:')) {
+          dataUrl = `data:${file.type || 'application/octet-stream'};base64,${file.data}`
+        }
+        
+        link.href = dataUrl
+        
+        const originalName = customTitle || file.name || `파일_${Date.now()}`
+        const extension = getFileExtension(originalName)
+        const baseName = originalName.replace(extension, '')
+        const safeName = sanitizeFilename(baseName) + extension
+        
+        link.download = safeName
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+        
+        console.log(`✅ 파일 다운로드 완료: ${safeName}`)
       } else {
-        alert('파일을 다운로드할 수 없습니다.')
+        console.error('파일 데이터가 없습니다:', file)
+        alert('파일을 다운로드할 수 없습니다. 파일 데이터가 손상되었을 수 있습니다.')
       }
     } catch (error) {
       console.error('파일 다운로드 오류:', error)
@@ -628,7 +645,49 @@ export default function HistoryPage() {
     }
   }
 
-  // 카테고리별 일괄 다운로드 핸들러 (개선된 버전)
+  const handleZipDownload = async (files: any[], zipFileName: string) => {
+    try {
+      if (files.length === 0) {
+        alert('다운로드할 파일이 없습니다.')
+        return
+      }
+
+      const zip = new JSZip()
+      
+      // 파일을 ZIP에 추가
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        
+        if (file.data) {
+          // Base64 데이터 처리
+          let fileData = file.data
+          if (file.data.startsWith('data:')) {
+            // data URL에서 Base64 부분만 추출
+            fileData = file.data.split(',')[1]
+          }
+          
+          const fileName = file.name || `파일_${i + 1}`
+          zip.file(fileName, fileData, { base64: true })
+        }
+      }
+
+      // ZIP 파일 생성 및 다운로드
+      const content = await zip.generateAsync({ type: 'blob' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(content)
+      link.download = `${zipFileName}.zip`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      console.log(`✅ ZIP 파일 다운로드 완료: ${zipFileName}.zip`)
+      alert(`${zipFileName}.zip 파일이 다운로드되었습니다.`)
+    } catch (error) {
+      console.error('ZIP 다운로드 오류:', error)
+      alert('ZIP 파일 생성 중 오류가 발생했습니다.')
+    }
+  }
+
   const handleCategoryDownload = async (files: any[], categoryName: string, customFilenames?: string[]) => {
     try {
       if (files.length === 0) {
@@ -643,26 +702,33 @@ export default function HistoryPage() {
         return
       }
 
-      // 여러 파일이면 순차적으로 다운로드
-      const downloadPromises = files.map((file, index) => {
-        return new Promise<void>((resolve) => {
-          setTimeout(() => {
-            const customTitle = customFilenames?.[index] || file.name
-            handleFileDownload(file, customTitle)
-            resolve()
-          }, index * 500) // 500ms 간격으로 다운로드
+      // 여러 파일이면 ZIP으로 다운로드 (사용자 선택)
+      const useZip = confirm(`${files.length}개의 ${categoryName} 파일을 ZIP으로 다운로드하시겠습니까?\n\n"확인": ZIP 파일로 다운로드\n"취소": 개별 파일로 다운로드`)
+      
+      if (useZip) {
+        const zipFileName = `${selectedRecord.customerName}_${selectedRecord.workDate}_${categoryName}`
+        await handleZipDownload(files, zipFileName)
+      } else {
+        // 개별 파일로 순차적 다운로드
+        const downloadPromises = files.map((file, index) => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const customTitle = customFilenames?.[index] || file.name
+              handleFileDownload(file, customTitle)
+              resolve()
+            }, index * 500) // 500ms 간격으로 다운로드
+          })
         })
-      })
 
-      await Promise.all(downloadPromises)
-      alert(`${categoryName} 파일들이 모두 다운로드되었습니다.`)
+        await Promise.all(downloadPromises)
+        alert(`${categoryName} 파일들이 모두 다운로드되었습니다.`)
+      }
     } catch (error) {
       console.error('일괄 다운로드 오류:', error)
       alert('파일 다운로드 중 오류가 발생했습니다.')
     }
   }
 
-  // ECU 파일 다운로드 헬퍼
   const handleEcuFilesDownload = (ecuFiles: any[]) => {
     const ecuFileNames = ecuFiles.map(file => {
       const category = file.category || 'unknown'
@@ -680,7 +746,6 @@ export default function HistoryPage() {
     handleCategoryDownload(ecuFiles, 'ECU', ecuFileNames)
   }
 
-  // ACU 파일 다운로드 헬퍼
   const handleAcuFilesDownload = (acuFiles: any[]) => {
     const acuFileNames = acuFiles.map(file => {
       const category = file.category || 'unknown'
@@ -698,7 +763,6 @@ export default function HistoryPage() {
     handleCategoryDownload(acuFiles, 'ACU', acuFileNames)
   }
 
-  // 미디어 파일 다운로드 헬퍼
   const handleMediaFilesDownload = (mediaFiles: any[]) => {
     const mediaFileNames = mediaFiles.map(file => {
       const category = file.category || 'unknown'
@@ -717,7 +781,6 @@ export default function HistoryPage() {
     handleCategoryDownload(mediaFiles, '미디어', mediaFileNames)
   }
 
-  // 작업 기록 삭제 핸들러
   const handleDeleteRecord = async (record: any) => {
     if (confirm(`'${record.customerName}' 고객의 작업 기록(ID: ${record.id})을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
       try {
@@ -737,7 +800,6 @@ export default function HistoryPage() {
     }
   };
 
-  // 파일 업로드 핸들러
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
@@ -777,7 +839,6 @@ export default function HistoryPage() {
     e.target.value = ''
   }
 
-  // 파일 삭제 핸들러
   const handleRemoveFile = (index: number) => {
     setEditFormData((prev: any) => ({
       ...prev,
@@ -785,7 +846,6 @@ export default function HistoryPage() {
     }))
   }
 
-  // 고객 정보 보기 핸들러
   const handleViewCustomer = async (customerId: number) => {
     try {
       // customers 상태에서 먼저 찾기
@@ -816,7 +876,6 @@ export default function HistoryPage() {
     }
   }
 
-  // 모달 닫기 핸들러
   const closeModals = () => {
     setShowDetailModal(false)
     setShowEditModal(false)
@@ -826,279 +885,71 @@ export default function HistoryPage() {
     setEditFormData({})
   }
 
-  // remappingWorks 처리 함수 분리
   const processRemappingWorks = (record: WorkRecordData, customers: CustomerData[], equipments: EquipmentData[]) => {
     const customer = customers.find(c => c.id === record.customerId)
     const equipment = equipments.find(e => e.id === record.equipmentId)
-    
-    // 데이터베이스의 개별 컬럼에서 ECU/ACU 정보 가져오기 (우선순위)
-    let ecuMaker = record.ecuMaker || '';
-    let ecuType = record.ecuModel || '';
-    let ecuConnectionMethod = record.connectionMethod || '';
-    let ecuTool = '';
-    let ecuCategory = ''; // KESS/FLEX 등
-    let ecuTuningWorks: string[] = [];
-    let acuManufacturer = record.acuManufacturer || '';
-    let acuModel = record.acuModel || '';
-    let acuConnectionMethod = record.connectionMethod || '';
-    let acuTool = '';
-    let acuCategory = ''; // KESS/FLEX 등
-    let acuTuningWorks: string[] = [];
-    let allFiles: any[] = [];
-    
-    // tools_used에서 카테고리 정보 추출 시도
-    if (record.toolsUsed && Array.isArray(record.toolsUsed)) {
-      record.toolsUsed.forEach(tool => {
-        if (typeof tool === 'string') {
-          // "KESS", "FLEX" 등의 카테고리 정보 찾기
-          if (tool.toUpperCase().includes('KESS') && !ecuCategory) {
-            ecuCategory = 'KESS';
-          } else if (tool.toUpperCase().includes('FLEX') && !ecuCategory) {
-            ecuCategory = 'FLEX';
-          } else if (tool.toUpperCase().includes('KTAG') && !ecuCategory) {
-            ecuCategory = 'KTAG';
-          } else if (tool.toUpperCase().includes('FGTECH') && !ecuCategory) {
-            ecuCategory = 'FGTECH';
-          }
-        }
-      });
-    }
 
-    // ECU 제조사/모델에 따른 일반적인 장비 카테고리 추정
-    if (!ecuCategory && ecuMaker) {
-      const ecuMakerUpper = ecuMaker.toUpperCase();
-      if (ecuMakerUpper.includes('BOSCH') || ecuMakerUpper.includes('CONTINENTAL') || ecuMakerUpper.includes('DELPHI')) {
-        ecuCategory = 'KESS'; // 일반적으로 KESS로 많이 작업
-      } else if (ecuMakerUpper.includes('CATERPILLAR') || ecuMakerUpper.includes('CUMMINS')) {
-        ecuCategory = 'FLEX'; // 상용차는 주로 FLEX
-      } else if (ecuMakerUpper.includes('CHRYSLER') || ecuMakerUpper.includes('JEEP')) {
-        ecuCategory = 'KESS'; // 크라이슬러는 주로 KESS
-      } else {
-        ecuCategory = 'KESS'; // 기본값
-      }
-    }
-
-    // ACU 제조사에 따른 카테고리 추정
-    if (!acuCategory && acuManufacturer) {
-      const acuManuUpper = acuManufacturer.toUpperCase();
-      if (acuManuUpper.includes('CONTINENTAL') || acuManuUpper.includes('ZF')) {
-        acuCategory = 'FLEX'; // ACU는 주로 FLEX로 작업
-      } else {
-        acuCategory = 'FLEX'; // 기본값
-      }
-    }
-
-    // 연결방법 추정 (ECU)
-    if (!ecuConnectionMethod && ecuMaker) {
-      const ecuMakerUpper = ecuMaker.toUpperCase();
-      if (ecuMakerUpper.includes('CATERPILLAR') || ecuMakerUpper.includes('CUMMINS')) {
-        ecuConnectionMethod = 'BENCH'; // 상용차는 주로 BENCH
-      } else {
-        ecuConnectionMethod = 'OBD'; // 승용차는 주로 OBD
-      }
-    }
-
-    // 연결방법 추정 (ACU)
-    if (!acuConnectionMethod && acuManufacturer) {
-      acuConnectionMethod = 'BENCH'; // ACU는 대부분 BENCH
-    }
-
-    // 디버깅: ECU/ACU 데이터 확인
-    console.log('🔍 Record ID:', record.id, 'Full Record:', record);
-    console.log('🔍 remappingWorks 상세:', record.remappingWorks);
-    console.log('🔍 toolsUsed 상세:', record.toolsUsed);
-    console.log('🔍 ECU/ACU Info:', {
-      ecuMaker: record.ecuMaker,
-      ecuModel: record.ecuModel,
-      acuManufacturer: record.acuManufacturer,
-      acuModel: record.acuModel,
-      acuType: record.acuType,
-      connectionMethod: record.connectionMethod,
-      toolsUsed: record.toolsUsed,
-      remappingWorks: record.remappingWorks,
-      extractedEcuCategory: ecuCategory,
-      extractedAcuCategory: acuCategory
-    });
-    
-    // remappingWorks에서 추가 정보 추출 (데이터베이스 컬럼이 비어있는 경우 보완)
-    if (record.remappingWorks && record.remappingWorks.length > 0) {
-      const firstWork = record.remappingWorks[0] as any;
-      
-      // ECU 정보 추출 (데이터베이스 컬럼이 비어있는 경우만 보완)
-      if (firstWork.ecu && !ecuMaker && !ecuType) {
-        ecuMaker = firstWork.ecu.maker || ecuMaker;
-        ecuType = firstWork.ecu.type || firstWork.ecu.typeCustom || ecuType;
-        ecuConnectionMethod = firstWork.ecu.connectionMethod || ecuConnectionMethod;
-      }
-      
-      // ECU 도구 정보 구성
-      if (firstWork.ecu) {
-        // toolCategory 정보를 다양한 경로에서 찾기
-        ecuCategory = firstWork.ecu.toolCategory || 
-                      firstWork.ecu.category || 
-                      firstWork.ecu.tool?.category ||
-                      firstWork.ecu.selectedTool?.category ||
-                      '';
-        
-        if (!ecuConnectionMethod) {
-          ecuConnectionMethod = firstWork.ecu.connectionMethod || 
-                               firstWork.ecu.connection ||
-                               firstWork.ecu.tool?.connectionMethod ||
-                               '';
-        }
-        
-        console.log('🔍 ECU 카테고리 추출:', {
-          toolCategory: firstWork.ecu.toolCategory,
-          category: firstWork.ecu.category,
-          tool: firstWork.ecu.tool,
-          selectedTool: firstWork.ecu.selectedTool,
-          extracted: ecuCategory
-        });
-        
-        const ecuToolParts = [
-          ecuCategory,
-          ecuConnectionMethod,
-          ecuMaker,
-          ecuType
-        ].filter(Boolean);
-        ecuTool = ecuToolParts.length > 0 ? ecuToolParts.join(' / ') : '';
-        ecuTuningWorks = firstWork.ecu.selectedWorks || [];
-      }
-      
-      // ACU 정보 추출 (데이터베이스 컬럼이 비어있는 경우만 보완)
-      if (firstWork.acu && !acuManufacturer && !acuModel) {
-        acuManufacturer = firstWork.acu.manufacturer || acuManufacturer;
-        acuModel = firstWork.acu.model || firstWork.acu.modelCustom || acuModel;
-        acuConnectionMethod = firstWork.acu.connectionMethod || acuConnectionMethod;
-      }
-      
-      // ACU 도구 정보 구성
-      if (firstWork.acu) {
-        // toolCategory 정보를 다양한 경로에서 찾기
-        acuCategory = firstWork.acu.toolCategory || 
-                      firstWork.acu.category || 
-                      firstWork.acu.tool?.category ||
-                      firstWork.acu.selectedTool?.category ||
-                      '';
-        
-        if (!acuConnectionMethod) {
-          acuConnectionMethod = firstWork.acu.connectionMethod || 
-                               firstWork.acu.connection ||
-                               firstWork.acu.tool?.connectionMethod ||
-                               '';
-        }
-        
-        console.log('🔍 ACU 카테고리 추출:', {
-          toolCategory: firstWork.acu.toolCategory,
-          category: firstWork.acu.category,
-          tool: firstWork.acu.tool,
-          selectedTool: firstWork.acu.selectedTool,
-          extracted: acuCategory
-        });
-        
-        const acuToolParts = [
-          acuCategory,
-          acuConnectionMethod,
-          acuManufacturer,
-          acuModel
-        ].filter(Boolean);
-        acuTool = acuToolParts.length > 0 ? acuToolParts.join(' / ') : '';
-        acuTuningWorks = firstWork.acu.selectedWorks || [];
-      }
-      
-      // 파일 정보 추출
-      if (firstWork.files) {
-        Object.entries(firstWork.files).forEach(([category, fileData]: [string, any]) => {
-          if (fileData && fileData.file) {
-            let mappedCategory = category;
-            if (category === 'original') mappedCategory = 'original';
-            else if (category === 'read') mappedCategory = 'read';
-            else if (category === 'modified') mappedCategory = 'modified';
-            else if (category === 'vr') mappedCategory = 'vr';
-            
-            allFiles.push({
-              name: fileData.file.name || `${category}.bin`,
-              size: fileData.file.size || 0,
-              type: fileData.file.type || 'application/octet-stream',
-              data: fileData.file.data || '',
-              description: fileData.description || '',
-              category: mappedCategory,
-              uploadDate: new Date().toISOString()
-            });
-          }
-        });
-      }
-      
-      // 미디어 파일 추출
-      if (firstWork.media) {
-        if (firstWork.media.before) {
-          allFiles.push({
-            name: firstWork.media.before.name || 'before_media',
-            size: firstWork.media.before.size || 0,
-            type: firstWork.media.before.type || 'image/jpeg',
-            data: firstWork.media.before.data || '',
-            description: '작업 전 미디어',
-            category: 'before',
-            uploadDate: new Date().toISOString()
-          });
-        }
-        if (firstWork.media.after) {
-          allFiles.push({
-            name: firstWork.media.after.name || 'after_media',
-            size: firstWork.media.after.size || 0,
-            type: firstWork.media.after.type || 'image/jpeg',
-            data: firstWork.media.after.data || '',
-            description: '작업 후 미디어',
-            category: 'after',
-            uploadDate: new Date().toISOString()
-          });
-        }
-      }
-      
-      // 추가 미디어 파일들 (mediaFile1~5)
-      if (firstWork.files) {
-        for (let i = 1; i <= 5; i++) {
-          const mediaFile = (firstWork.files as any)[`mediaFile${i}`];
-          if (mediaFile && mediaFile.file) {
-            allFiles.push({
-              name: mediaFile.file.name || `media_${i}`,
-              size: mediaFile.file.size || 0,
-              type: mediaFile.file.type || 'image/jpeg',
-              data: mediaFile.file.data || '',
-              description: mediaFile.description || `미디어 파일 ${i}`,
-              category: `media${i}`,
-              uploadDate: new Date().toISOString()
-            });
-          }
-        }
-      }
-    }
-    
-    return {
+    // 1. 기본 정보 설정 (레코드의 최상위 데이터를 최우선으로 사용)
+    const processed = {
       ...record,
       customerName: customer?.name || '알 수 없음',
       equipmentType: equipment?.equipmentType || '알 수 없음',
       manufacturer: equipment?.manufacturer || '알 수 없음',
       model: equipment?.model || '알 수 없음',
       serial: equipment?.serialNumber || '',
-      ecuMaker,
-      ecuType,
-      ecuCategory,
-      connectionMethod: ecuConnectionMethod,
-      ecuTool,
-      ecuTuningWorks,
-      acuManufacturer,
-      acuModel,
-      acuCategory,
-      acuConnectionMethod,
-      acuTool,
-      acuTuningWorks,
-      tuningWork: record.workType,
-      customTuningWork: record.workType,
       registrationDate: record.workDate,
       price: record.totalPrice || 0,
-      files: allFiles
+      
+      // ECU 정보: record에 있는 값을 우선 사용, 없으면 빈 문자열
+      ecuMaker: record.ecuMaker || '',
+      ecuType: record.ecuModel || '',
+      ecuConnectionMethod: record.connectionMethod || '',
+      ecuTool: (record.toolsUsed || []).join(' / '),
+      ecuTuningWorks: (record.workType || '').split(',').map(w => w.trim()),
+
+      // ACU 정보: record에 있는 값을 우선 사용, 없으면 빈 문자열
+      acuManufacturer: record.acuManufacturer || '',
+      acuModel: record.acuModel || '',
+      acuConnectionMethod: record.connectionMethod || '',
+      acuTool: (record.toolsUsed || []).join(' / '),
     }
+
+    // 2. remappingWorks JSON 데이터에서 파일 정보 추출 (데이터 보충용)
+    let remappingWorksData = {}
+    if (typeof record.remappingWorks === 'string') {
+      try {
+        remappingWorksData = JSON.parse(record.remappingWorks)
+      } catch (error) {
+        console.warn('⚠️ remappingWorks JSON 파싱 오류:', error)
+        remappingWorksData = {}
+      }
+    } else if (typeof record.remappingWorks === 'object' && record.remappingWorks !== null) {
+      remappingWorksData = record.remappingWorks
+    }
+
+    const safeAccess = (obj: any, path: string[], defaultValue: any[] = []) => {
+        return path.reduce((xs, x) => (xs && xs[x] ? xs[x] : null), obj) || defaultValue
+    }
+
+    const ecuFiles = safeAccess(remappingWorksData, ['ecu', 'files']).map((f:any) => ({ ...f, category: 'ECU' }))
+    const acuFiles = safeAccess(remappingWorksData, ['acu', 'files']).map((f:any) => ({ ...f, category: 'ACU' }))
+    const mediaFiles = safeAccess(remappingWorksData, ['media', 'files']).map((f:any) => ({ ...f, category: 'Media' }))
+
+    const allFiles = [...(record.files || []), ...ecuFiles, ...acuFiles, ...mediaFiles]
+      .filter((file, index, self) => file && file.name && self.findIndex(f => f.name === file.name) === index)
+      .map(fileData => ({
+        name: fileData.name || 'N/A',
+        url: fileData.url || '',
+        category: fileData.category || 'General'
+      }));
+
+    return {
+      ...processed,
+      ecuFiles,
+      acuFiles,
+      mediaFiles,
+      files: allFiles
+    };
   }
 
   return (
@@ -1500,7 +1351,7 @@ export default function HistoryPage() {
                             </td>
                             {/* ACU/튜닝 칸 */}
                             <td className="px-3 py-4 whitespace-nowrap">
-                              {(record.acuManufacturer || record.acuModel || record.acuType || record.acuCategory || record.acuConnectionMethod) ? (
+                              {(record.acuManufacturer || record.acuModel || record.acuType || record.acuCategory || record.connectionMethod) ? (
                                 <>
                                   {/* 1. 제조사-모델명 (초록 박스) */}
                                   <div className="text-sm text-white mb-1">
@@ -1510,7 +1361,7 @@ export default function HistoryPage() {
                                   </div>
                                   {/* 2. 카테고리 - 연결방법 */}
                                   <div className="text-sm text-gray-300 mb-1">
-                                    {record.acuCategory || 'N/A'} - {record.acuConnectionMethod || record.connectionMethod || 'N/A'}
+                                    {record.acuCategory || 'N/A'} - {record.connectionMethod || 'N/A'}
                                   </div>
                                   {/* 3. 작업내용 */}
                                   <div className="text-xs text-gray-400">
@@ -1831,7 +1682,7 @@ export default function HistoryPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-400">연결 방법:</span>
-                        <span className="text-sm text-white font-medium">{selectedRecord.acuConnectionMethod || 'N/A'}</span>
+                        <span className="text-sm text-white font-medium">{selectedRecord.connectionMethod || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-400">사용 도구:</span>
@@ -1874,15 +1725,26 @@ export default function HistoryPage() {
               <div className="mt-6">
                 <div className="flex justify-between items-center border-b border-gray-600 pb-2 mb-3">
                   <h4 className="text-md font-medium text-white">첨부 파일</h4>
-                  <button
-                    onClick={() => handleCategoryDownload(selectedRecord.files, `${selectedRecord.customerName}_${selectedRecord.workDate}_전체파일`)}
-                    className="bg-purple-600 text-white text-sm px-3 py-1 rounded hover:bg-purple-700 transition-colors flex items-center space-x-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <span>📦 전체 파일 다운로드</span>
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleZipDownload(selectedRecord.files, `${selectedRecord.customerName}_${selectedRecord.workDate}_전체파일`)}
+                      className="bg-purple-600 text-white text-sm px-4 py-2 rounded-md hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      <span>📦 전체파일 ZIP 다운로드</span>
+                    </button>
+                    <button
+                      onClick={() => handleCategoryDownload(selectedRecord.files, `전체파일`)}
+                      className="bg-gray-600 text-white text-sm px-3 py-2 rounded-md hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span>📄 개별 다운로드</span>
+                    </button>
+                  </div>
                 </div>
                 
                 {/* 파일 카테고리별 분류 */}
@@ -1990,15 +1852,26 @@ export default function HistoryPage() {
                         <div className="flex justify-between items-center mb-4">
                           <h5 className="text-lg font-bold text-white">{title} ({allFiles.length}개)</h5>
                           {allFiles.length > 0 && (
-                            <button
-                              onClick={() => downloadHandler ? downloadHandler(allFiles) : handleCategoryDownload(allFiles, downloadAllLabel)}
-                              className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                              </svg>
-                              <span>📦 {downloadAllLabel} 전체 다운로드</span>
-                            </button>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleZipDownload(allFiles, `${selectedRecord.customerName}_${selectedRecord.workDate}_${downloadAllLabel}`)}
+                                className="bg-blue-600 text-white text-sm px-3 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span>📦 ZIP</span>
+                              </button>
+                              <button
+                                onClick={() => downloadHandler ? downloadHandler(allFiles) : handleCategoryDownload(allFiles, downloadAllLabel)}
+                                className="bg-gray-600 text-white text-sm px-3 py-2 rounded-md hover:bg-gray-700 transition-colors flex items-center space-x-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span>📄 개별</span>
+                              </button>
+                            </div>
                           )}
                         </div>
                         <div className="space-y-4">

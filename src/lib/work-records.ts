@@ -3,6 +3,7 @@
 import { supabase } from './supabase'
 // import { isPlaceholderEnvironment } from '../utils/helpers' // 더 이상 사용하지 않음
 import type { Database } from './database.types'
+import { CacheManager } from './cache-manager'
 
 // isPlaceholderEnvironment 함수를 이 파일 내부에 정의하거나, 항상 false를 반환하도록 수정
 const isPlaceholderEnvironment = () => {
@@ -77,6 +78,8 @@ export interface WorkRecordData {
   acuType?: string | null
   connectionMethod?: string | null
   toolsUsed?: string[] | null
+  files?: any[]
+  hasFiles?: boolean
 }
 
 // 데이터베이스 형식을 프론트엔드 형식으로 변환
@@ -108,6 +111,8 @@ const transformWorkRecordToDB = (record: Omit<WorkRecordData, 'id' | 'created_at
   work_type: record.workType,
   status: record.status,
 });
+
+const cacheManager = new CacheManager()
 
 // 모든 작업 기록 조회 (파일 데이터 제외)
 export const getAllWorkRecords = async (): Promise<WorkRecordData[]> => {
@@ -152,34 +157,34 @@ export const getWorkRecordWithFiles = async (id: number): Promise<WorkRecordData
 
 // 페이지네이션된 작업 기록 조회
 export const getWorkRecordsPaginated = async (
-  page: number = 1, 
+  page: number = 1,
   pageSize: number = 20,
-  includeFiles: boolean = false
-): Promise<{ data: WorkRecordData[], totalCount: number }> => {
-  const from = (page - 1) * pageSize
-  const to = from + pageSize - 1
-  
-  // 총 개수 조회
-  const { count } = await supabase
-    .from('work_records')
-    .select('*', { count: 'exact', head: true })
-  
-  // 페이지네이션된 데이터 조회 - ECU/ACU 정보를 위해 remapping_works와 ECU/ACU 컬럼들 포함
-  const selectFields = includeFiles 
-    ? '*' 
-    : 'id, customer_id, equipment_id, work_date, work_type, total_price, status, created_at, remapping_works, ecu_maker, ecu_model, acu_manufacturer, acu_model, acu_type, connection_method, tools_used'
-  
-  const { data, error } = await supabase
-    .from('work_records')
-    .select(selectFields)
-    .order('created_at', { ascending: false })
-    .range(from, to)
-  
-  if (error) {
-    console.error('Error fetching paginated work records:', error)
-    throw error
+  useCache: boolean = true
+): Promise<{ data: WorkRecordData[]; totalCount: number }> => {
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize - 1;
+  const cacheKey = `work_records_paginated:${page}:${pageSize}`;
+
+  if (useCache) {
+    const cachedData = await cacheManager.get(cacheKey);
+    if (cachedData && typeof cachedData === 'object' && 'data' in cachedData && 'totalCount' in cachedData) {
+      console.log('✅ 페이지네이션 데이터 캐시 반환:', cacheKey);
+      return cachedData as { data: WorkRecordData[]; totalCount: number };
+    }
   }
-  
+
+  console.log(`🔍 페이지네이션 데이터 DB 조회: ${page} 페이지, ${pageSize}개`);
+  const { data, count, error } = await supabase
+    .from('work_records')
+    .select('*, files', { count: 'exact' }) // files 컬럼을 명시적으로 포함
+    .range(start, end)
+    .order('work_date', { ascending: false });
+
+  if (error) {
+    console.error('❌ 페이지네이션 데이터 로드 실패:', error);
+    throw error;
+  }
+
   const workRecords = data.map((record: any) => {
     // remapping_works 처리 개선
     let remappingWorks = []
@@ -217,10 +222,16 @@ export const getWorkRecordsPaginated = async (
     }
   })
   
-  return {
+  const result = {
     data: workRecords,
     totalCount: count || 0
   }
+
+  if (useCache) {
+    await cacheManager.set(cacheKey, result);
+  }
+
+  return result;
 }
 
 // 특정 고객의 작업 기록 조회
