@@ -1275,7 +1275,7 @@ function HistoryPage() {
               <select
                 value={searchMode}
                 onChange={(e) => setSearchMode(e.target.value as 'normal' | 'fuzzy' | 'exact')}
-                className="bg-gray-700 border-gray-600 text-white text-sm rounded-md"
+                className="bg-gray-700 border-gray-600 text-white text-sm rounded-md px-3 py-3"
               >
                 <option value="fuzzy">스마트 검색</option>
                 <option value="exact">정확한 검색</option>
@@ -1294,7 +1294,7 @@ function HistoryPage() {
                   onChange={handleSearchInputChange}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
                   placeholder="고객명, 장비, 모델명, 작업내용 등 모든 정보를 검색..."
-                  className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 pl-10 pr-10"
+                  className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 pl-10 pr-10 py-3"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1360,7 +1360,7 @@ function HistoryPage() {
                 value={filters.customer}
                 onChange={handleFilterChange}
                 placeholder="고객명 검색"
-                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-3 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>
@@ -1369,7 +1369,7 @@ function HistoryPage() {
                 name="equipmentType"
                 value={filters.equipmentType}
                 onChange={handleFilterChange}
-                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-3 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">전체</option>
                 {EQUIPMENT_TYPES.map((type) => (

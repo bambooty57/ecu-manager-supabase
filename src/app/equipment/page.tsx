@@ -640,7 +640,7 @@ export default function EquipmentPage() {
               placeholder="고객명, 모델명, 기대번호 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-3 h-12 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
@@ -648,7 +648,7 @@ export default function EquipmentPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-3 h-12 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">모든 장비 종류</option>
               {EQUIPMENT_TYPES.map(type => (
@@ -661,7 +661,7 @@ export default function EquipmentPage() {
             <select
               value={filterManufacturer}
               onChange={(e) => setFilterManufacturer(e.target.value)}
-              className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-3 h-12 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">모든 제조사</option>
               {manufacturers.map(manufacturer => (
@@ -693,59 +693,59 @@ export default function EquipmentPage() {
             <table className="min-w-full divide-y divide-gray-700">
               <thead className="bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">고객명</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">장비 정보</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">제조사/모델</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">사용시간</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ECU 타입</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ACU 타입</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">등록일</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">작업</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">고객명</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">장비 정보</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">제조사/모델</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">사용시간</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">ECU 타입</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">ACU 타입</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">등록일</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">작업</th>
                 </tr>
               </thead>
               <tbody className="bg-gray-800 divide-y divide-gray-700">
                 {filteredEquipments.map((equipment) => (
                   <tr key={equipment.id} className="hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">{equipment.customerName}</div>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="text-base font-medium text-white">{equipment.customerName}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">{equipment.equipmentType}</div>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="text-base text-white">{equipment.equipmentType}</div>
                       <div className="text-sm text-gray-400">기대번호: {equipment.serialNumber}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">{equipment.manufacturer}</div>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="text-base text-white">{equipment.manufacturer}</div>
                       <div className="text-sm text-gray-400">{equipment.model}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">{equipment.usageHours.toLocaleString()}시간</div>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="text-base text-white">{equipment.usageHours.toLocaleString()}시간</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium bg-blue-600 text-blue-100 rounded-full">
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <span className="px-3 py-2 text-sm font-medium bg-blue-600 text-blue-100 rounded-full">
                         {equipment.ecuType}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium bg-green-600 text-green-100 rounded-full">
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <span className="px-3 py-2 text-sm font-medium bg-green-600 text-green-100 rounded-full">
                         {equipment.acuType}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                    <td className="px-6 py-5 whitespace-nowrap text-base text-gray-400">
                       {equipment.registrationDate}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <td className="px-6 py-5 whitespace-nowrap text-sm font-medium space-x-2">
                       <button
                         onClick={() => handleViewDetail(equipment)}
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-2 py-1 rounded transition-all duration-200 cursor-pointer"
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-3 py-2 rounded transition-all duration-200 cursor-pointer text-sm"
                       >
                         상세보기
                       </button>
                       <button
                         onClick={() => handleDelete(equipment.id)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-900 p-1 rounded transition-all duration-200 cursor-pointer"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900 p-2 rounded transition-all duration-200 cursor-pointer"
                         title="삭제"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>

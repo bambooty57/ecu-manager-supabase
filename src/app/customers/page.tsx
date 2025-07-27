@@ -353,6 +353,12 @@ export default function CustomersPage() {
         setSelectedCustomer({ ...selectedCustomer, ...editFormData })
         setIsEditMode(false)
         alert('고객 정보가 성공적으로 수정되었습니다.')
+        
+        // 수정 완료 후 모달 닫기
+        setTimeout(() => {
+          setIsDetailModalOpen(false)
+          setSelectedCustomer(null)
+        }, 100) // alert 확인 후 모달 닫기
       }
     } catch (error) {
       console.error('Failed to update customer:', error)
@@ -743,7 +749,7 @@ export default function CustomersPage() {
                   placeholder="고객명, 전화번호, 주소로 검색..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="bg-gray-700 text-white w-full pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                  className="bg-gray-700 text-white w-full pl-10 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
                 />
               </div>
             </div>

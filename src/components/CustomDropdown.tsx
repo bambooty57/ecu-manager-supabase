@@ -82,7 +82,7 @@ export default function CustomDropdown({
         type="button"
         onClick={toggleDropdown}
         disabled={disabled}
-        className={`w-full bg-gray-700 border border-gray-600 text-white rounded-md px-3 py-2 text-left shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+        className={`w-full bg-gray-700 border border-gray-600 text-white rounded-md px-3 py-3 text-left shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-600 cursor-pointer'
         }`}
       >

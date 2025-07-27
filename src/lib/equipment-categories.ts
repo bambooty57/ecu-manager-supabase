@@ -1,205 +1,332 @@
 import { supabase } from './supabase'
 
-// 장비 카테고리 타입 정의
 export interface EquipmentCategory {
   id: number
   name: string
-  type: 'ECU' | 'ACU' | 'BOTH'
+  type: 'ECU' | 'ACU'
   is_default: boolean
   created_at: string
   updated_at: string
 }
 
-// 장비 카테고리 생성 데이터
-export interface CreateEquipmentCategoryData {
+export interface Manufacturer {
+  id: number
   name: string
-  type: 'ECU' | 'ACU' | 'BOTH'
-  is_default?: boolean
+  type: 'ECU' | 'ACU'
+  is_default: boolean
+  created_at: string
+  updated_at: string
 }
 
-/**
- * 모든 장비 카테고리 조회
- */
-export const getAllEquipmentCategories = async (): Promise<EquipmentCategory[]> => {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('equipment_categories')
-      .select('*')
-      .order('is_default', { ascending: false })
-      .order('name', { ascending: true })
+export interface EquipmentModel {
+  id: number
+  manufacturer_id: number
+  name: string
+  type: 'ECU' | 'ACU'
+  is_default: boolean
+  created_at: string
+  updated_at: string
+}
 
-    if (error) {
-      console.error('장비 카테고리 조회 오류:', error)
-      throw error
-    }
+export interface EquipmentData {
+  category_name: string
+  equipment_type: 'ECU' | 'ACU'
+  manufacturer_name: string
+  model_name: string
+  category_id: number
+  manufacturer_id: number
+  model_id: number
+}
 
-    return data || []
-  } catch (error) {
-    console.error('getAllEquipmentCategories 오류:', error)
+// 장비 카테고리 관련 함수들
+export async function getEquipmentCategoriesByType(type: 'ECU' | 'ACU'): Promise<EquipmentCategory[]> {
+  const { data, error } = await supabase
+    .from('equipment_categories')
+    .select('*')
+    .eq('type', type)
+    .order('name')
+
+  if (error) {
+    console.error('Error fetching equipment categories:', error)
     throw error
   }
+
+  return data || []
 }
 
-/**
- * 특정 타입의 장비 카테고리 조회
- */
-export const getEquipmentCategoriesByType = async (type: 'ECU' | 'ACU' | 'BOTH'): Promise<EquipmentCategory[]> => {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('equipment_categories')
-      .select('*')
-      .or(`type.eq.${type},type.eq.BOTH`)
-      .order('is_default', { ascending: false })
-      .order('name', { ascending: true })
+export async function getEquipmentCategoryNames(type: 'ECU' | 'ACU'): Promise<string[]> {
+  const categories = await getEquipmentCategoriesByType(type)
+  return categories.map(cat => cat.name)
+}
 
-    if (error) {
-      console.error('타입별 장비 카테고리 조회 오류:', error)
-      throw error
-    }
+export async function createEquipmentCategory(category: {
+  name: string
+  type: 'ECU' | 'ACU'
+}): Promise<EquipmentCategory> {
+  // 중복 체크
+  const { data: existing } = await supabase
+    .from('equipment_categories')
+    .select('id')
+    .eq('name', category.name)
+    .eq('type', category.type)
+    .single()
 
-    return data || []
-  } catch (error) {
-    console.error('getEquipmentCategoriesByType 오류:', error)
+  if (existing) {
+    throw new Error(`${category.type} 카테고리 "${category.name}"가 이미 존재합니다.`)
+  }
+
+  const { data, error } = await supabase
+    .from('equipment_categories')
+    .insert([{
+      name: category.name,
+      type: category.type,
+      is_default: false
+    }])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating equipment category:', error)
     throw error
   }
+
+  return data
 }
 
-/**
- * 새로운 장비 카테고리 생성
- */
-export const createEquipmentCategory = async (categoryData: CreateEquipmentCategoryData): Promise<EquipmentCategory> => {
-  try {
-    // 중복 확인
-    const { data: existing } = await (supabase as any)
-      .from('equipment_categories')
-      .select('id')
-      .eq('name', categoryData.name.trim())
-      .single()
+// 제조사 관련 함수들
+export async function getManufacturersByType(type: 'ECU' | 'ACU'): Promise<Manufacturer[]> {
+  const { data, error } = await supabase
+    .from('manufacturers')
+    .select('*')
+    .eq('type', type)
+    .order('name')
 
-    if (existing) {
-      throw new Error('이미 존재하는 카테고리명입니다.')
-    }
-
-    const { data, error } = await (supabase as any)
-      .from('equipment_categories')
-      .insert([{
-        name: categoryData.name.trim(),
-        type: categoryData.type,
-        is_default: categoryData.is_default || false
-      }])
-      .select()
-      .single()
-
-    if (error) {
-      console.error('장비 카테고리 생성 오류:', error)
-      throw error
-    }
-
-    return data
-  } catch (error) {
-    console.error('createEquipmentCategory 오류:', error)
+  if (error) {
+    console.error('Error fetching manufacturers:', error)
     throw error
   }
+
+  return data || []
 }
 
-/**
- * 장비 카테고리 수정
- */
-export const updateEquipmentCategory = async (id: number, updates: Partial<CreateEquipmentCategoryData>): Promise<EquipmentCategory> => {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('equipment_categories')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single()
+export async function getManufacturerNames(type: 'ECU' | 'ACU'): Promise<string[]> {
+  const manufacturers = await getManufacturersByType(type)
+  return manufacturers.map(m => m.name)
+}
 
-    if (error) {
-      console.error('장비 카테고리 수정 오류:', error)
-      throw error
-    }
+export async function createManufacturer(manufacturer: {
+  name: string
+  type: 'ECU' | 'ACU'
+}): Promise<Manufacturer> {
+  // 중복 체크
+  const { data: existing } = await supabase
+    .from('manufacturers')
+    .select('id')
+    .eq('name', manufacturer.name)
+    .eq('type', manufacturer.type)
+    .single()
 
-    return data
-  } catch (error) {
-    console.error('updateEquipmentCategory 오류:', error)
+  if (existing) {
+    throw new Error(`${manufacturer.type} 제조사 "${manufacturer.name}"가 이미 존재합니다.`)
+  }
+
+  const { data, error } = await supabase
+    .from('manufacturers')
+    .insert([{
+      name: manufacturer.name,
+      type: manufacturer.type,
+      is_default: false
+    }])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating manufacturer:', error)
     throw error
   }
+
+  return data
 }
 
-/**
- * 장비 카테고리 삭제
- */
-export const deleteEquipmentCategory = async (id: number): Promise<void> => {
-  try {
-    // 기본 카테고리는 삭제 불가
-    const { data: category } = await (supabase as any)
-      .from('equipment_categories')
-      .select('is_default')
-      .eq('id', id)
-      .single()
+// 모델 관련 함수들
+export async function getModelsByManufacturer(manufacturerId: number): Promise<EquipmentModel[]> {
+  const { data, error } = await supabase
+    .from('equipment_models')
+    .select('*')
+    .eq('manufacturer_id', manufacturerId)
+    .order('name')
 
-    if (category?.is_default) {
-      throw new Error('기본 카테고리는 삭제할 수 없습니다.')
-    }
-
-    const { error } = await (supabase as any)
-      .from('equipment_categories')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      console.error('장비 카테고리 삭제 오류:', error)
-      throw error
-    }
-  } catch (error) {
-    console.error('deleteEquipmentCategory 오류:', error)
+  if (error) {
+    console.error('Error fetching models:', error)
     throw error
   }
+
+  return data || []
 }
 
-/**
- * 카테고리명으로 카테고리 정보 조회
- */
-export const getEquipmentCategoryByName = async (name: string): Promise<EquipmentCategory | null> => {
-  try {
-    const { data, error } = await (supabase as any)
-      .from('equipment_categories')
-      .select('*')
-      .eq('name', name)
-      .single()
+export async function getModelsByType(type: 'ECU' | 'ACU'): Promise<EquipmentModel[]> {
+  const { data, error } = await supabase
+    .from('equipment_models')
+    .select('*')
+    .eq('type', type)
+    .order('name')
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // 데이터가 없는 경우
-        return null
-      }
-      console.error('카테고리명으로 조회 오류:', error)
-      throw error
-    }
-
-    return data
-  } catch (error) {
-    console.error('getEquipmentCategoryByName 오류:', error)
-    return null
+  if (error) {
+    console.error('Error fetching models by type:', error)
+    throw error
   }
+
+  return data || []
 }
 
-/**
- * 카테고리명 배열을 반환 (드롭다운용)
- */
-export const getEquipmentCategoryNames = async (type?: 'ECU' | 'ACU' | 'BOTH'): Promise<string[]> => {
-  try {
-    let categories: EquipmentCategory[]
-    
-    if (type) {
-      categories = await getEquipmentCategoriesByType(type)
-    } else {
-      categories = await getAllEquipmentCategories()
-    }
+export async function getModelNamesByManufacturer(manufacturerName: string, type: 'ECU' | 'ACU'): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('equipment_models')
+    .select('name, manufacturers!inner(name)')
+    .eq('type', type)
+    .eq('manufacturers.name', manufacturerName)
+    .order('name')
 
-    return categories.map(category => category.name)
-  } catch (error) {
-    console.error('getEquipmentCategoryNames 오류:', error)
+  if (error) {
+    console.error('Error fetching model names by manufacturer:', error)
     return []
+  }
+
+  return data?.map(item => item.name) || []
+}
+
+export async function createModel(model: {
+  manufacturer_id: number
+  name: string
+  type: 'ECU' | 'ACU'
+}): Promise<EquipmentModel> {
+  // 중복 체크
+  const { data: existing } = await supabase
+    .from('equipment_models')
+    .select('id')
+    .eq('manufacturer_id', model.manufacturer_id)
+    .eq('name', model.name)
+    .single()
+
+  if (existing) {
+    throw new Error(`모델 "${model.name}"가 이미 존재합니다.`)
+  }
+
+  const { data, error } = await supabase
+    .from('equipment_models')
+    .insert([{
+      manufacturer_id: model.manufacturer_id,
+      name: model.name,
+      type: model.type,
+      is_default: false
+    }])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating model:', error)
+    throw error
+  }
+
+  return data
+}
+
+// 통합 조회 함수들
+export async function getAllEquipmentData(): Promise<EquipmentData[]> {
+  const { data, error } = await supabase
+    .from('v_equipment_data')
+    .select('*')
+
+  if (error) {
+    console.error('Error fetching equipment data:', error)
+    throw error
+  }
+
+  return data || []
+}
+
+export async function getEquipmentDataByType(type: 'ECU' | 'ACU'): Promise<EquipmentData[]> {
+  const { data, error } = await supabase
+    .from('v_equipment_data')
+    .select('*')
+    .eq('equipment_type', type)
+
+  if (error) {
+    console.error('Error fetching equipment data by type:', error)
+    throw error
+  }
+
+  return data || []
+}
+
+// 삭제 함수들
+export async function deleteEquipmentCategory(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('equipment_categories')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting equipment category:', error)
+    throw error
+  }
+}
+
+export async function deleteManufacturer(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('manufacturers')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting manufacturer:', error)
+    throw error
+  }
+}
+
+export async function deleteModel(id: number): Promise<void> {
+  const { error } = await supabase
+    .from('equipment_models')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting model:', error)
+    throw error
+  }
+}
+
+// 통계 및 유틸리티 함수들
+export async function getEquipmentStats(): Promise<{
+  ecuCategories: number
+  acuCategories: number
+  ecuManufacturers: number
+  acuManufacturers: number
+  ecuModels: number
+  acuModels: number
+}> {
+  const [
+    ecuCategories,
+    acuCategories,
+    ecuManufacturers,
+    acuManufacturers,
+    ecuModels,
+    acuModels
+  ] = await Promise.all([
+    getEquipmentCategoriesByType('ECU'),
+    getEquipmentCategoriesByType('ACU'),
+    getManufacturersByType('ECU'),
+    getManufacturersByType('ACU'),
+    getModelsByType('ECU'),
+    getModelsByType('ACU')
+  ])
+
+  return {
+    ecuCategories: ecuCategories.length,
+    acuCategories: acuCategories.length,
+    ecuManufacturers: ecuManufacturers.length,
+    acuManufacturers: acuManufacturers.length,
+    ecuModels: ecuModels.length,
+    acuModels: acuModels.length
   }
 } 

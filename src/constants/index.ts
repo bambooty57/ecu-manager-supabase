@@ -687,7 +687,35 @@ export const ENGINE_TYPES = [
   '기타'
 ] as const
 
-// 연결방법
+// 연결방법 - ECU 전용 (농기계/건설기계 ECU 연결방법)
+export const ECU_CONNECTION_METHODS = [
+  'OBD',       // On-Board Diagnostics - 표준 진단 포트
+  'BENCH',     // 벤치 연결 - ECU를 분리하여 작업
+  'BOOT',      // 부트 모드 - 복구 모드 연결
+  'BDM',       // Background Debug Mode - 개발자 모드
+  'JTAG',      // Joint Test Action Group - 디버깅 인터페이스
+  'ISP',       // In-System Programming - 시스템 내 프로그래밍
+  'K-LINE',    // ISO 9141-2 K-Line 통신
+  'CAN',       // Controller Area Network
+  'J1939',     // SAE J1939 - 상용차/농기계 표준
+  '직접연결'   // 기타 직접 연결 방식
+] as const
+
+// 연결방법 - ACU 전용 (후처리 시스템 연결방법)
+export const ACU_CONNECTION_METHODS = [
+  'BENCH',     // 벤치 연결 - ACU를 분리하여 작업
+  'OBD',       // On-Board Diagnostics
+  'CAN',       // Controller Area Network
+  'K-LINE',    // ISO 9141-2 K-Line 통신
+  'J1939',     // SAE J1939 - 상용차/농기계 표준
+  'LIN',       // Local Interconnect Network
+  'FlexRay',   // FlexRay 고속 네트워크
+  'UART',      // Universal Asynchronous Receiver-Transmitter
+  'SPI',       // Serial Peripheral Interface
+  '직접연결'   // 기타 직접 연결 방식
+] as const
+
+// 기존 호환성을 위한 통합 연결방법
 export const CONNECTION_METHODS = [
   'OBD',
   'BENCH',
@@ -695,11 +723,21 @@ export const CONNECTION_METHODS = [
   'BDM'
 ] as const
 
-// ECU 장비 카테고리
+// ECU 장비 카테고리 (ECU 전용)
 export const ECU_TOOL_CATEGORIES = [
   'FLEX 시리즈',
   'PAD Flash 시리즈',
   'KESS 시리즈',
+  'KTAG 시리즈',
+  'CMD Flash 시리즈',
+  '직접입력'
+] as const
+
+// ACU 장비 카테고리 (ACU 전용)
+export const ACU_TOOL_CATEGORIES = [
+  'FLEX 시리즈',
+  'PAD Flash 시리즈',
+  'ACU 전용 도구',
   '직접입력'
 ] as const
 
@@ -728,36 +766,56 @@ export const ECU_TOOLS = {
     'KESS Master',
     'KESS Clone'
   ],
-
-  '직접입력': [
+  'KTAG 시리즈': [
+    'KTAG',
+    'KTAG 2',
+    'KTAG 3',
+    'KTAG 5'
+  ],
+  'CMD Flash 시리즈': [
     'CMD Flash',
+    'CMD Flash Pro',
+    'CMD Flash Master'
+  ],
+  '직접입력': [
     'Galletto',
     'MPPS',
     'BDM100',
-    'KTAG',
     '기타'
   ]
 } as const
 
-// 호환성을 위한 기존 ECU_TOOLS (플랫 배열)
-export const ECU_TOOLS_FLAT = [
-  'FLEX Box',
-  'FLEX Pro', 
-  'FLEX Master',
-  'FLEX Ultimate',
-  'PAD Flash Pro',
-  'PAD Flash Master',
-  'PAD Flash Ultimate',
-  'KESS V2',
-  'KESS V3',
-  'KESS V5.017',
-  'CMD Flash',
-  'Galletto',
-  'MPPS',
-  'BDM100',
-  'KTAG',
-  '기타'
-] as const
+// ACU 장비 상세 목록
+export const ACU_TOOLS = {
+  'FLEX 시리즈': [
+    'FLEX Box',
+    'FLEX Pro',
+    'FLEX Master',
+    'FLEX Ultimate',
+    'FLEX OBD',
+    'FLEX BENCH'
+  ],
+  'PAD Flash 시리즈': [
+    'PAD Flash Pro',
+    'PAD Flash Master',
+    'PAD Flash Ultimate',
+    'PAD Flash OBD',
+    'PAD Flash BENCH',
+    'PAD Flash BDM'
+  ],
+  'ACU 전용 도구': [
+    'ACU Programmer',
+    'ACU Flash Tool',
+    'ACU Diagnostic Tool',
+    'ACU Bench Tool'
+  ],
+  '직접입력': [
+    'Galletto',
+    'MPPS',
+    'BDM100',
+    '기타'
+  ]
+} as const
 
 // 프로토콜
 export const PROTOCOLS = [
