@@ -17,6 +17,10 @@ interface CustomDropdownProps {
   maxHeight?: string
   name?: string
   required?: boolean
+  // 삭제 기능 관련 (선택사항)
+  onDelete?: (value: string) => void
+  deletableOptions?: string[]  // 삭제 가능한 옵션들의 값 배열
+  deleteButtonColor?: string
 }
 
 export default function CustomDropdown({
@@ -28,7 +32,10 @@ export default function CustomDropdown({
   className = "",
   maxHeight = "200px",
   name,
-  required = false
+  required = false,
+  onDelete,
+  deletableOptions = [],
+  deleteButtonColor = "text-red-400 hover:text-red-600"
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -124,18 +131,40 @@ export default function CustomDropdown({
             style={{ maxHeight }}
           >
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((option, index) => (
-                <button
-                  key={`${option.value}-${index}`}
-                  type="button"
-                  onClick={() => handleOptionClick(option.value)}
-                  className={`w-full text-left px-3 py-2 hover:bg-gray-600 focus:bg-gray-600 focus:outline-none ${
-                    option.value === value ? 'bg-blue-600 text-white' : 'text-gray-300'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))
+              filteredOptions.map((option, index) => {
+                const isDeletable = onDelete && deletableOptions.includes(option.value)
+                return (
+                  <div
+                    key={`${option.value}-${index}`}
+                    className={`w-full flex items-center hover:bg-gray-600 focus-within:bg-gray-600 ${
+                      option.value === value ? 'bg-blue-600 text-white' : 'text-gray-300'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleOptionClick(option.value)}
+                      className="flex-1 text-left px-3 py-2 focus:outline-none"
+                    >
+                      {option.label}
+                    </button>
+                    {isDeletable && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDelete(option.value)
+                        }}
+                        className={`px-2 py-2 ${deleteButtonColor} transition-colors`}
+                        title={`"${option.label}" 삭제`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )
+              })
             ) : (
               <div className="px-3 py-2 text-gray-400 text-sm">검색 결과가 없습니다</div>
             )}

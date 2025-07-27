@@ -730,7 +730,7 @@ export const ECU_TOOL_CATEGORIES = [
   'KESS 시리즈',
   'KTAG 시리즈',
   'CMD Flash 시리즈',
-  '직접입력'
+  '직접입력'  // 항상 마지막에 배치
 ] as const
 
 // ACU 장비 카테고리 (ACU 전용)

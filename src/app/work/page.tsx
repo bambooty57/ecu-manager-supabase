@@ -9,6 +9,7 @@ import { createWorkRecord, WorkRecordData } from '@/lib/work-records'
 import { getEquipmentCategoryNames, createEquipmentCategory } from '@/lib/equipment-categories'
 import { cacheManager, CacheKeys, CacheTTL } from '@/lib/cache-manager'
 import { generateOptimizedImageUrl, generateCacheHeaders } from '@/lib/cdn-utils'
+import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 import CustomDropdown from '@/components/CustomDropdown'
@@ -221,11 +222,20 @@ export default function WorkPage() {
         getEquipmentCategoryNames('ACU')
       ])
       const allCategories = [...ecuCategories, ...acuCategories]
-      setEcuCategories(allCategories.length > 0 ? allCategories : [...ECU_TOOL_CATEGORIES])
+      const categoriesWithFallback = allCategories.length > 0 ? allCategories : [...ECU_TOOL_CATEGORIES]
+      
+      // "직접입력"을 제일 하단으로 배치
+      const sortedCategories = categoriesWithFallback.filter(cat => cat !== '직접입력')
+      if (categoriesWithFallback.includes('직접입력')) {
+        sortedCategories.push('직접입력')
+      }
+      
+      setEcuCategories(sortedCategories)
     } catch (error) {
       console.error('장비 카테고리 로드 오류:', error)
-      // 오류 시 기본 카테고리 사용
-      setEcuCategories([...ECU_TOOL_CATEGORIES])
+      // 오류 시 기본 카테고리 사용 (직접입력 하단 배치)
+      const fallbackCategories = [...ECU_TOOL_CATEGORIES.filter(cat => cat !== '직접입력'), '직접입력']
+      setEcuCategories(fallbackCategories)
     } finally {
       setIsLoadingCategories(false)
     }
@@ -283,6 +293,8 @@ export default function WorkPage() {
   const [newEcuModel, setNewEcuModel] = useState('')
   const [newAcuType, setNewAcuType] = useState('')
 
+
+
   // ECU 모델 선택/해제
   const handleEcuModelSelect = (model: string) => {
     setSelectedEcuModels(prev => 
@@ -300,6 +312,8 @@ export default function WorkPage() {
         : [...prev, type]
     )
   }
+
+
 
   // 선택된 ECU 모델 삭제
   const deleteSelectedEcuModels = () => {
@@ -371,6 +385,39 @@ export default function WorkPage() {
     localStorage.setItem('acuTypes', JSON.stringify(newAcuTypes))
     setNewAcuType('')
     alert('새로운 ACU 타입이 추가되었습니다.')
+  }
+
+  // ECU 카테고리 삭제
+  const handleDeleteEcuCategory = async (categoryName: string) => {
+    if (categoryName === '직접입력') {
+      alert('"직접입력" 항목은 삭제할 수 없습니다.')
+      return
+    }
+
+    if (confirm(`"${categoryName}" 카테고리를 삭제하시겠습니까?`)) {
+      try {
+        // 데이터베이스에서 카테고리 삭제
+        const { data: category } = await (supabase as any)
+          .from('equipment_categories')
+          .select('id')
+          .eq('type', 'ECU')
+          .eq('name', categoryName)
+          .single()
+
+        if (category) {
+          await (supabase as any)
+            .from('equipment_categories')
+            .delete()
+            .eq('id', category.id)
+        }
+
+        await loadEquipmentCategories()
+        alert('카테고리가 삭제되었습니다.')
+      } catch (error) {
+        console.error('카테고리 삭제 오류:', error)
+        alert('카테고리 삭제 중 오류가 발생했습니다.')
+      }
+    }
   }
 
   // ACU 제조사별 사용 가능한 모델 목록 가져오기
@@ -1673,6 +1720,9 @@ export default function WorkPage() {
                       options={ecuCategories.map(category => ({ value: category, label: category }))}
                       placeholder="장비 카테고리를 선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteEcuCategory}
+                      deletableOptions={ecuCategories.filter(category => category !== '직접입력')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
                     
                     {/* 직접입력 선택 시 새 카테고리 추가 필드 */}
@@ -1834,6 +1884,9 @@ export default function WorkPage() {
                       options={ecuCategories.map(category => ({ value: category, label: category }))}
                       placeholder="장비 카테고리를 선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteEcuCategory}
+                      deletableOptions={ecuCategories.filter(category => category !== '직접입력')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
                     
                     {/* 직접입력 선택 시 새 카테고리 추가 필드 */}
@@ -2596,6 +2649,8 @@ export default function WorkPage() {
           </div>
         </div>
       </main>
+
+
 
       {/* ECU 모델 관리 모달 */}
       {showEcuManagement && (
