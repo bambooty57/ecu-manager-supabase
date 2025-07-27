@@ -40,7 +40,7 @@ export interface EquipmentData {
 
 // 장비 카테고리 관련 함수들
 export async function getEquipmentCategoriesByType(type: 'ECU' | 'ACU'): Promise<EquipmentCategory[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('equipment_categories')
     .select('*')
     .eq('type', type)
@@ -64,7 +64,7 @@ export async function createEquipmentCategory(category: {
   type: 'ECU' | 'ACU'
 }): Promise<EquipmentCategory> {
   // 중복 체크
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('equipment_categories')
     .select('id')
     .eq('name', category.name)
@@ -75,7 +75,7 @@ export async function createEquipmentCategory(category: {
     throw new Error(`${category.type} 카테고리 "${category.name}"가 이미 존재합니다.`)
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('equipment_categories')
     .insert([{
       name: category.name,
@@ -95,7 +95,7 @@ export async function createEquipmentCategory(category: {
 
 // 제조사 관련 함수들
 export async function getManufacturersByType(type: 'ECU' | 'ACU'): Promise<Manufacturer[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('manufacturers')
     .select('*')
     .eq('type', type)
@@ -119,7 +119,7 @@ export async function createManufacturer(manufacturer: {
   type: 'ECU' | 'ACU'
 }): Promise<Manufacturer> {
   // 중복 체크
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('manufacturers')
     .select('id')
     .eq('name', manufacturer.name)
@@ -130,7 +130,7 @@ export async function createManufacturer(manufacturer: {
     throw new Error(`${manufacturer.type} 제조사 "${manufacturer.name}"가 이미 존재합니다.`)
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('manufacturers')
     .insert([{
       name: manufacturer.name,
@@ -150,7 +150,7 @@ export async function createManufacturer(manufacturer: {
 
 // 모델 관련 함수들
 export async function getModelsByManufacturer(manufacturerId: number): Promise<EquipmentModel[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('equipment_models')
     .select('*')
     .eq('manufacturer_id', manufacturerId)
@@ -165,7 +165,7 @@ export async function getModelsByManufacturer(manufacturerId: number): Promise<E
 }
 
 export async function getModelsByType(type: 'ECU' | 'ACU'): Promise<EquipmentModel[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('equipment_models')
     .select('*')
     .eq('type', type)
@@ -180,7 +180,7 @@ export async function getModelsByType(type: 'ECU' | 'ACU'): Promise<EquipmentMod
 }
 
 export async function getModelNamesByManufacturer(manufacturerName: string, type: 'ECU' | 'ACU'): Promise<string[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('equipment_models')
     .select('name, manufacturers!inner(name)')
     .eq('type', type)
@@ -192,7 +192,7 @@ export async function getModelNamesByManufacturer(manufacturerName: string, type
     return []
   }
 
-  return data?.map(item => item.name) || []
+  return data?.map((item: any) => item.name) || []
 }
 
 export async function createModel(model: {
@@ -201,7 +201,7 @@ export async function createModel(model: {
   type: 'ECU' | 'ACU'
 }): Promise<EquipmentModel> {
   // 중복 체크
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('equipment_models')
     .select('id')
     .eq('manufacturer_id', model.manufacturer_id)
@@ -212,7 +212,7 @@ export async function createModel(model: {
     throw new Error(`모델 "${model.name}"가 이미 존재합니다.`)
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('equipment_models')
     .insert([{
       manufacturer_id: model.manufacturer_id,
@@ -233,7 +233,7 @@ export async function createModel(model: {
 
 // 통합 조회 함수들
 export async function getAllEquipmentData(): Promise<EquipmentData[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('v_equipment_data')
     .select('*')
 
@@ -246,7 +246,7 @@ export async function getAllEquipmentData(): Promise<EquipmentData[]> {
 }
 
 export async function getEquipmentDataByType(type: 'ECU' | 'ACU'): Promise<EquipmentData[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('v_equipment_data')
     .select('*')
     .eq('equipment_type', type)
@@ -261,7 +261,7 @@ export async function getEquipmentDataByType(type: 'ECU' | 'ACU'): Promise<Equip
 
 // 삭제 함수들
 export async function deleteEquipmentCategory(id: number): Promise<void> {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('equipment_categories')
     .delete()
     .eq('id', id)
@@ -273,7 +273,7 @@ export async function deleteEquipmentCategory(id: number): Promise<void> {
 }
 
 export async function deleteManufacturer(id: number): Promise<void> {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('manufacturers')
     .delete()
     .eq('id', id)
@@ -285,7 +285,7 @@ export async function deleteManufacturer(id: number): Promise<void> {
 }
 
 export async function deleteModel(id: number): Promise<void> {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('equipment_models')
     .delete()
     .eq('id', id)

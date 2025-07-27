@@ -785,6 +785,49 @@ export const ECU_TOOLS = {
   ]
 } as const
 
+// ECU 장비 평면 배열 (history 페이지 호환성)
+export const ECU_TOOLS_FLAT = [
+  // FLEX 시리즈
+  'FLEX Box',
+  'FLEX Pro',
+  'FLEX Master',
+  'FLEX Ultimate',
+  'FLEX OBD',
+  'FLEX BENCH',
+  
+  // PAD Flash 시리즈
+  'PAD Flash Pro',
+  'PAD Flash Master',
+  'PAD Flash Ultimate',
+  'PAD Flash OBD',
+  'PAD Flash BENCH',
+  'PAD Flash BDM',
+  
+  // KESS 시리즈
+  'KESS V2',
+  'KESS V3',
+  'KESS V5.017',
+  'KESS Master',
+  'KESS Clone',
+  
+  // KTAG 시리즈
+  'KTAG',
+  'KTAG 2',
+  'KTAG 3',
+  'KTAG 5',
+  
+  // CMD Flash 시리즈
+  'CMD Flash',
+  'CMD Flash Pro',
+  'CMD Flash Master',
+  
+  // 직접입력
+  'Galletto',
+  'MPPS',
+  'BDM100',
+  '기타'
+] as const
+
 // ACU 장비 상세 목록
 export const ACU_TOOLS = {
   'FLEX 시리즈': [
