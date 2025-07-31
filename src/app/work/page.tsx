@@ -1965,61 +1965,7 @@ export default function WorkPage() {
             <span>새로고침</span>
           </button>
 
-          {/* Supabase 연결 테스트 버튼 */}
-          <button
-            type="button"
-            onClick={async () => {
-              console.log('🧪 Supabase 연결 테스트 시작...')
-              try {
-                // 직접 Supabase 쿼리 테스트
-                console.log('🔍 connection_methods 테이블 직접 조회...')
-                const { data: methodsData, error: methodsError } = await supabase
-                  .from('connection_methods')
-                  .select('*')
-                  .order('name')
 
-                if (methodsError) {
-                  console.error('❌ connection_methods 오류:', methodsError)
-                  alert(`❌ 연결방법 테이블 오류: ${methodsError.message}`)
-                  return
-                }
-
-                console.log('✅ connection_methods 데이터:', methodsData)
-                
-                // 다른 테이블들도 테스트
-                const [manufacturersData, modelsData, statusData, ecuModelsData] = await Promise.all([
-                  supabase.from('manufacturers').select('*').eq('type', 'ECU'),
-                  supabase.from('equipment_models').select('*').eq('type', 'ECU'),
-                  supabase.from('work_status').select('*'),
-                  supabase.from('ecu_models').select('*')
-                ])
-
-                console.log('✅ manufacturers 데이터:', manufacturersData.data)
-                console.log('✅ equipment_models 데이터:', modelsData.data)
-                console.log('✅ work_status 데이터:', statusData.data)
-                console.log('✅ ecu_models 데이터:', ecuModelsData.data)
-
-                const methodNames = methodsData?.map((m: any) => m.name).join(', ') || '없음'
-                alert(`✅ Supabase 연결 성공!\n` +
-                     `연결방법: ${methodsData?.length || 0}개 [${methodNames}]\n` +
-                     `ECU제조사: ${manufacturersData.data?.length || 0}개\n` +
-                     `Equipment모델: ${modelsData.data?.length || 0}개\n` +
-                     `🔧 ECU모델(실제): ${ecuModelsData.data?.length || 0}개\n` +
-                     `작업상태: ${statusData.data?.length || 0}개`)
-
-              } catch (error) {
-                console.error('❌ Supabase 연결 테스트 실패:', error)
-                alert(`❌ Supabase 연결 테스트 실패: ${(error as any).message}`)
-              }
-            }}
-            className="flex items-center space-x-1 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded-md transition-colors"
-            title="Supabase 데이터베이스 연결을 직접 테스트합니다"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <span>DB테스트</span>
-          </button>
 
           {/* 완전한 페이지 새로고침 버튼 */}
           <button

@@ -3,21 +3,21 @@ import { supabase } from './supabase'
 export interface EcuModel {
   id: number
   name: string
-  category: string
-  series: string
-  is_default: boolean
-  created_at: string
-  updated_at: string
+  category: string | null
+  series: string | null
+  is_default: boolean | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface AcuModel {
   id: number
   name: string
-  manufacturer: string
-  series: string
-  is_default: boolean
-  created_at: string
-  updated_at: string
+  manufacturer: string | null
+  series: string | null
+  is_default: boolean | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 // ECU 모델 관련 함수들
@@ -266,8 +266,8 @@ export async function getEcuAcuStats(): Promise<{
     getAcuModels()
   ])
 
-  const ecuCategories = [...new Set(ecuModels.map(model => model.category))]
-  const acuManufacturers = [...new Set(acuModels.map(model => model.manufacturer))]
+  const ecuCategories = [...new Set(ecuModels.map(model => model.category).filter((cat): cat is string => cat !== null))]
+  const acuManufacturers = [...new Set(acuModels.map(model => model.manufacturer).filter((man): man is string => man !== null))]
 
   return {
     ecuModels: ecuModels.length,
