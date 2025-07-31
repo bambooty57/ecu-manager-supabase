@@ -2,17 +2,35 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ACU_TYPES, ACU_MANUFACTURERS, ACU_MODELS_BY_MANUFACTURER, ECU_MODELS, ECU_MAKERS, CONNECTION_METHODS, ECU_TOOL_CATEGORIES, ECU_TOOLS, ECU_TOOLS_FLAT, TUNING_WORKS, TUNING_CATEGORIES, TUNING_WORKS_BY_CATEGORY, WORK_STATUS } from '@/constants'
+import { ACU_TYPES, ACU_MODELS_BY_MANUFACTURER, ECU_TOOL_CATEGORIES, ECU_TOOLS, ECU_TOOLS_FLAT, TUNING_WORKS, TUNING_CATEGORIES, TUNING_WORKS_BY_CATEGORY, WORK_STATUS } from '@/constants'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getEquipmentByCustomerId, EquipmentData } from '@/lib/equipment'
 import { createWorkRecord, WorkRecordData } from '@/lib/work-records'
-import { getEquipmentCategoryNames, createEquipmentCategory } from '@/lib/equipment-categories'
+import { 
+  getEquipmentCategoryNames, 
+  createEquipmentCategory,
+  deleteEquipmentCategory,
+  getManufacturerNames,
+  createManufacturer,
+  deleteManufacturer,
+  getConnectionMethodNames,
+  createConnectionMethod,
+  deleteConnectionMethod,
+  getWorkStatusNames,
+  createWorkStatus,
+  deleteWorkStatus,
+  findConnectionMethodIdByName,
+  findManufacturerIdByName,
+  findWorkStatusIdByName,
+  findEquipmentCategoryIdByName
+} from '@/lib/equipment-categories'
 import { cacheManager, CacheKeys, CacheTTL } from '@/lib/cache-manager'
 import { generateOptimizedImageUrl, generateCacheHeaders } from '@/lib/cdn-utils'
 import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 import CustomDropdown from '@/components/CustomDropdown'
+import { findEcuModelIdByName, findAcuModelIdByName, getEcuModelNames, createEcuModel, deleteEcuModel } from '@/lib/ecu-acu-models'
 
 export default function WorkPage() {
   const router = useRouter()
@@ -35,26 +53,32 @@ export default function WorkPage() {
       toolCategory: string
       toolCategoryCustom?: string
       connectionMethod: string
+      connectionMethodCustom?: string
       maker: string
+      makerCustom?: string
       type: string
       typeCustom: string
       selectedWorks: string[]
       workDetails: string
       price: string
       status: string
+      statusCustom?: string
     }
     // ACU 정보
     acu: {
       toolCategory: string
       toolCategoryCustom?: string
       connectionMethod: string
+      connectionMethodCustom?: string
       manufacturer: string
+      manufacturerCustom?: string
       model: string
       modelCustom: string
       selectedWorks: string[]
       workDetails: string
       price: string
       status: string
+      statusCustom?: string
     }
     notes: string
     files: {
@@ -104,25 +128,31 @@ export default function WorkPage() {
       toolCategory: '',
       toolCategoryCustom: '',
       connectionMethod: '',
+      connectionMethodCustom: '',
       maker: '',
+      makerCustom: '',
       type: '',
       typeCustom: '',
       selectedWorks: [] as string[],
       workDetails: '',
       price: '',
-      status: '예약'
+      status: '예약',
+      statusCustom: ''
     },
     acu: {
       toolCategory: '',
       toolCategoryCustom: '',
       connectionMethod: '',
+      connectionMethodCustom: '',
       manufacturer: '',
+      manufacturerCustom: '',
       model: '',
       modelCustom: '',
       selectedWorks: [] as string[],
       workDetails: '',
       price: '',
-      status: '예약'
+      status: '예약',
+      statusCustom: ''
     },
     notes: '',
     files: {
@@ -176,9 +206,9 @@ export default function WorkPage() {
   const [ecuModels, setEcuModels] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('ecuModels')
-      return saved ? JSON.parse(saved) : [...ECU_MODELS]
+      return saved ? JSON.parse(saved) : []
     }
-    return [...ECU_MODELS]
+    return []
   })
 
   // 동적 ACU 타입 목록 (로컬 스토리지에서 가져오기) - 기존 호환성용
@@ -203,7 +233,127 @@ export default function WorkPage() {
   const [ecuCategories, setEcuCategories] = useState<string[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(true)
 
+  // 동적 드롭다운 목록들 (Supabase에서 가져오기)
+  const [connectionMethods, setConnectionMethods] = useState<string[]>([])
+  const [ecuMakers, setEcuMakers] = useState<string[]>([])
+  const [acuManufacturers, setAcuManufacturers] = useState<string[]>([])
+  const [workStatus, setWorkStatus] = useState<string[]>([])
+  const [isLoadingDropdowns, setIsLoadingDropdowns] = useState(true)
 
+  // 연결방법 데이터만 로드하는 전용 함수 (ECU 장비 카테고리와 동일한 패턴)
+  const loadConnectionMethods = async () => {
+    try {
+      const connectionMethodsData = await getConnectionMethodNames()
+      
+      console.log('🔍 Supabase 연결방법 데이터:', connectionMethodsData)
+      
+      // "직접입력"을 제일 하단으로 배치 (항상 추가)
+      const sortedMethods = connectionMethodsData.filter(method => method !== '직접입력')
+      sortedMethods.push('직접입력')
+      
+      console.log('✅ 최종 연결방법:', sortedMethods)
+      setConnectionMethods(sortedMethods)
+    } catch (error) {
+      console.error('❌ 연결방법 로드 오류:', error)
+      console.error('❌ 오류 상세:', error.message)
+      
+      // 오류 시에도 최소한 "직접입력"만 유지
+      console.log('⚠️ 오류 발생으로 직접입력만 유지')
+      setConnectionMethods(['직접입력'])
+    }
+  }
+
+  // ECU 제조사 데이터만 로드하는 전용 함수
+  const loadEcuMakers = async () => {
+    try {
+      const ecuMakersData = await getManufacturerNames('ECU')
+      
+      console.log('🔍 Supabase ECU 제조사 데이터:', ecuMakersData)
+      
+      // "직접입력"을 제일 하단으로 배치 (항상 추가)
+      const sortedMakers = ecuMakersData.filter(maker => maker !== '직접입력')
+      sortedMakers.push('직접입력')
+      
+      console.log('✅ 최종 ECU 제조사:', sortedMakers)
+      setEcuMakers(sortedMakers)
+    } catch (error) {
+      console.error('❌ ECU 제조사 로드 오류:', error)
+      console.error('❌ 오류 상세:', error.message)
+      
+      // 오류 시에도 최소한 "직접입력"만 유지
+      console.log('⚠️ 오류 발생으로 직접입력만 유지')
+      setEcuMakers(['직접입력'])
+    }
+  }
+
+  // ECU 모델 데이터만 로드하는 전용 함수
+  const loadEcuModels = async () => {
+    try {
+      const ecuModelNames = await getEcuModelNames()
+      
+      console.log('🔍 Supabase ECU 모델 데이터:', ecuModelNames)
+      
+      // "직접입력"을 제일 하단으로 배치 (항상 추가)
+      const sortedModels = ecuModelNames.filter(model => model !== '직접입력')
+      sortedModels.push('직접입력')
+      
+      console.log('✅ 최종 ECU 모델:', sortedModels)
+      setEcuModels(sortedModels)
+    } catch (error) {
+      console.error('❌ ECU 모델 로드 오류:', error)
+      console.error('❌ 오류 상세:', (error as any).message)
+      
+      // 오류 시에도 최소한 "직접입력"만 유지
+      console.log('⚠️ 오류 발생으로 직접입력만 유지')
+      setEcuModels(['직접입력'])
+    }
+  }
+
+  // ACU 제조사 데이터만 로드하는 전용 함수
+  const loadAcuManufacturers = async () => {
+    try {
+      const acuManufacturersData = await getManufacturerNames('ACU')
+      
+      console.log('🔍 Supabase ACU 제조사 데이터:', acuManufacturersData)
+      
+      // "직접입력"을 제일 하단으로 배치 (항상 추가)
+      const sortedManufacturers = acuManufacturersData.filter(manufacturer => manufacturer !== '직접입력')
+      sortedManufacturers.push('직접입력')
+      
+      console.log('✅ 최종 ACU 제조사:', sortedManufacturers)
+      setAcuManufacturers(sortedManufacturers)
+    } catch (error) {
+      console.error('❌ ACU 제조사 로드 오류:', error)
+      console.error('❌ 오류 상세:', error.message)
+      
+      // 오류 시에도 최소한 "직접입력"만 유지
+      console.log('⚠️ 오류 발생으로 직접입력만 유지')
+      setAcuManufacturers(['직접입력'])
+    }
+  }
+
+  // 작업상태 데이터만 로드하는 전용 함수
+  const loadWorkStatus = async () => {
+    try {
+      const workStatusData = await getWorkStatusNames()
+      
+      console.log('🔍 Supabase 작업상태 데이터:', workStatusData)
+      
+      // "직접입력"을 제일 하단으로 배치 (항상 추가)
+      const sortedStatus = workStatusData.filter(status => status !== '직접입력')
+      sortedStatus.push('직접입력')
+      
+      console.log('✅ 최종 작업상태:', sortedStatus)
+      setWorkStatus(sortedStatus)
+    } catch (error) {
+      console.error('❌ 작업상태 로드 오류:', error)
+      console.error('❌ 오류 상세:', error.message)
+      
+      // 오류 시에도 최소한 "직접입력"만 유지
+      console.log('⚠️ 오류 발생으로 직접입력만 유지')
+      setWorkStatus(['직접입력'])
+    }
+  }
 
   // 장비 카테고리 로드
   const loadEquipmentCategories = async () => {
@@ -213,45 +363,189 @@ export default function WorkPage() {
         getEquipmentCategoryNames('ECU'),
         getEquipmentCategoryNames('ACU')
       ])
+      
+      console.log('🔍 Supabase ECU 카테고리 데이터:', ecuCategories)
+      console.log('🔍 Supabase ACU 카테고리 데이터:', acuCategories)
+      
+      // Supabase 데이터를 그대로 사용 (빈 배열이어도 폴백하지 않음)
       const allCategories = [...ecuCategories, ...acuCategories]
-      const categoriesWithFallback = allCategories.length > 0 ? allCategories : [...ECU_TOOL_CATEGORIES]
       
-      // "직접입력"을 제일 하단으로 배치
-      const sortedCategories = categoriesWithFallback.filter(cat => cat !== '직접입력')
-      if (categoriesWithFallback.includes('직접입력')) {
-        sortedCategories.push('직접입력')
-      }
+      // "직접입력"을 제일 하단으로 배치 (항상 추가)
+      const sortedCategories = allCategories.filter(cat => cat !== '직접입력')
+      sortedCategories.push('직접입력')
       
+      console.log('✅ 최종 장비 카테고리:', sortedCategories)
       setEcuCategories(sortedCategories)
     } catch (error) {
-      console.error('장비 카테고리 로드 오류:', error)
-      // 오류 시 기본 카테고리 사용 (직접입력 하단 배치)
-      const fallbackCategories = [...ECU_TOOL_CATEGORIES.filter(cat => cat !== '직접입력'), '직접입력']
-      setEcuCategories(fallbackCategories)
+      console.error('❌ 장비 카테고리 로드 오류:', error)
+      console.error('❌ 오류 상세:', error.message)
+      
+      // 오류 시에도 최소한 "직접입력"만 유지
+      console.log('⚠️ 오류 발생으로 직접입력만 유지')
+      setEcuCategories(['직접입력'])
     } finally {
       setIsLoadingCategories(false)
+    }
+  }
+
+  // 모든 드롭다운 데이터 로드 (캐시 무효화 포함)
+  const loadAllDropdownData = async (forceRefresh: boolean = false) => {
+    try {
+      setIsLoadingDropdowns(true)
+      
+      // 캐시 무효화 (실시간 동기화 시 강제 새로고침)
+      if (forceRefresh) {
+        console.log('🗑️ 드롭다운 데이터 캐시 무효화 중...')
+        await cacheManager.deleteByPattern('dropdown_*')
+        await cacheManager.deleteByPattern('equipment_*')
+        console.log('✅ 드롭다운 데이터 캐시 무효화 완료')
+      }
+      
+      // 각 항목을 전용 함수로 처리 (작업금액 제외)
+      await Promise.all([
+        loadConnectionMethods(),
+        loadEcuMakers(),
+        loadEcuModels(),
+        loadAcuManufacturers(),
+        loadWorkStatus()
+      ])
+      
+      console.log('✅ 모든 드롭다운 데이터 로드 완료')
+      
+    } catch (error) {
+      console.error('❌ 드롭다운 데이터 로드 오류:', error)
+      console.error('❌ 오류 상세:', (error as any).message)
+      console.error('❌ 오류 스택:', (error as any).stack)
+      
+      // 오류 시에도 기존 데이터 유지 (기본값으로 덮어쓰지 않음)
+      console.log('⚠️ 오류 발생으로 기존 데이터 유지')
+      console.log('📊 현재 상태 - 연결방법:', connectionMethods.length)
+      console.log('📊 현재 상태 - ECU제조사:', ecuMakers.length)
+      console.log('📊 현재 상태 - ACU제조사:', acuManufacturers.length)
+      console.log('📊 현재 상태 - 작업상태:', workStatus.length)
+      console.log('📊 현재 상태 - ECU모델:', ecuModels.length)
+      
+      // 오류 시에도 최소한 "직접입력"만 유지
+      if (connectionMethods.length === 0) {
+        console.log('⚠️ 오류 발생으로 직접입력만 유지')
+        setConnectionMethods(['직접입력'])
+      }
+      if (ecuMakers.length === 0) {
+        console.log('⚠️ 오류 발생으로 직접입력만 유지')
+        setEcuMakers(['직접입력'])
+      }
+      if (acuManufacturers.length === 0) {
+        console.log('⚠️ 오류 발생으로 직접입력만 유지')
+        setAcuManufacturers(['직접입력'])
+      }
+      if (workStatus.length === 0) {
+        console.log('⚠️ 오류 발생으로 직접입력만 유지')
+        setWorkStatus(['직접입력'])
+      }
+      if (ecuModels.length === 0) {
+        console.log('⚠️ 오류 발생으로 직접입력만 유지')
+        setEcuModels(['직접입력'])
+      }
+    } finally {
+      setIsLoadingDropdowns(false)
     }
   }
 
   // 새로운 ECU 카테고리를 데이터베이스에 추가
   const addNewEcuCategory = async (newCategory: string) => {
     try {
-      if (!newCategory.trim() || ecuCategories.includes(newCategory.trim())) {
-        return
-      }
-
-      await createEquipmentCategory({
-        name: newCategory.trim(),
-        type: 'ECU'
-      })
-
-      // 카테고리 목록 새로고침
+      console.log('➕ 새로운 ECU 카테고리 추가 중:', newCategory)
+      await createEquipmentCategory({ name: newCategory, type: 'ECU' })
+      console.log('✅ ECU 카테고리 추가 완료')
+      
+      // 데이터 새로고침
       await loadEquipmentCategories()
     } catch (error) {
-      console.error('카테고리 추가 오류:', error)
-      alert(error instanceof Error ? error.message : '카테고리 추가 중 오류가 발생했습니다.')
+      console.error('❌ ECU 카테고리 추가 오류:', error)
+      alert('ECU 카테고리 추가 중 오류가 발생했습니다.')
     }
   }
+
+  // 새로운 연결방법을 데이터베이스에 추가
+  const addNewConnectionMethod = async (newMethod: string) => {
+    try {
+      console.log('➕ 새로운 연결방법 추가 중:', newMethod)
+      await createConnectionMethod({ name: newMethod })
+      console.log('✅ 연결방법 추가 완료')
+      
+      // 데이터 새로고침
+      await loadConnectionMethods()
+    } catch (error) {
+      console.error('❌ 연결방법 추가 오류:', error)
+      alert('연결방법 추가 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 새로운 ECU 제조사를 데이터베이스에 추가
+  const addNewEcuMaker = async (newMaker: string) => {
+    try {
+      console.log('➕ 새로운 ECU 제조사 추가 중:', newMaker)
+      await createManufacturer({ name: newMaker, type: 'ECU' })
+      console.log('✅ ECU 제조사 추가 완료')
+      
+      // 데이터 새로고침
+      await loadEcuMakers()
+    } catch (error) {
+      console.error('❌ ECU 제조사 추가 오류:', error)
+      alert('ECU 제조사 추가 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 새로운 ECU 모델을 데이터베이스에 추가
+  const addNewEcuModel = async (newModel: string) => {
+    try {
+      console.log('➕ 새로운 ECU 모델 추가 중:', newModel)
+      await createEcuModel({ 
+        name: newModel, 
+        category: '기타',
+        series: '기타'
+      })
+      console.log('✅ ECU 모델 추가 완료')
+      
+      // 데이터 새로고침
+      await loadEcuModels()
+    } catch (error) {
+      console.error('❌ ECU 모델 추가 오류:', error)
+      alert('ECU 모델 추가 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 새로운 ACU 제조사를 데이터베이스에 추가
+  const addNewAcuManufacturer = async (newManufacturer: string) => {
+    try {
+      console.log('➕ 새로운 ACU 제조사 추가 중:', newManufacturer)
+      await createManufacturer({ name: newManufacturer, type: 'ACU' })
+      console.log('✅ ACU 제조사 추가 완료')
+      
+      // 데이터 새로고침
+      await loadAcuManufacturers()
+    } catch (error) {
+      console.error('❌ ACU 제조사 추가 오류:', error)
+      alert('ACU 제조사 추가 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 새로운 작업상태를 데이터베이스에 추가
+  const addNewWorkStatus = async (newStatus: string) => {
+    try {
+      console.log('➕ 새로운 작업상태 추가 중:', newStatus)
+      await createWorkStatus({ name: newStatus })
+      console.log('✅ 작업상태 추가 완료')
+      
+      // 데이터 새로고침
+      await loadWorkStatus()
+    } catch (error) {
+      console.error('❌ 작업상태 추가 오류:', error)
+      alert('작업상태 추가 중 오류가 발생했습니다.')
+    }
+  }
+
+
 
 
 
@@ -267,57 +561,152 @@ export default function WorkPage() {
 
   // ECU 카테고리 삭제
   const handleDeleteEcuCategory = async (categoryName: string) => {
-    if (categoryName === '직접입력') {
-      alert('"직접입력" 항목은 삭제할 수 없습니다.')
-      return
-    }
-
-    if (confirm(`"${categoryName}" 카테고리를 삭제하시겠습니까?`)) {
-      try {
-        // 데이터베이스에서 카테고리 삭제
-        const { data: category } = await (supabase as any)
-          .from('equipment_categories')
-          .select('id')
-          .eq('type', 'ECU')
-          .eq('name', categoryName)
-          .single()
-
-        if (category) {
-          await (supabase as any)
-            .from('equipment_categories')
-            .delete()
-            .eq('id', category.id)
-        }
-
+    try {
+      console.log('🗑️ ECU 카테고리 삭제 중:', categoryName)
+      const categoryId = await findEquipmentCategoryIdByName(categoryName, 'ECU')
+      if (categoryId) {
+        await deleteEquipmentCategory(categoryId)
+        console.log('✅ ECU 카테고리 삭제 완료')
+        
+        // 데이터 새로고침
         await loadEquipmentCategories()
-        alert('카테고리가 삭제되었습니다.')
-      } catch (error) {
-        console.error('카테고리 삭제 오류:', error)
-        alert('카테고리 삭제 중 오류가 발생했습니다.')
       }
+    } catch (error) {
+      console.error('❌ ECU 카테고리 삭제 오류:', error)
+      alert('ECU 카테고리 삭제 중 오류가 발생했습니다.')
     }
   }
 
-  // ACU 제조사별 사용 가능한 모델 목록 가져오기
-  const getAvailableAcuModels = (manufacturer: string): string[] => {
-    return acuModelsByManufacturer[manufacturer] || []
+  // 연결방법 삭제
+  const handleDeleteConnectionMethod = async (methodName: string) => {
+    try {
+      console.log('🗑️ 연결방법 삭제 중:', methodName)
+      const methodId = await findConnectionMethodIdByName(methodName)
+      if (methodId) {
+        await deleteConnectionMethod(methodId)
+        console.log('✅ 연결방법 삭제 완료')
+        
+        // 데이터 새로고침
+        await loadConnectionMethods()
+      }
+    } catch (error) {
+      console.error('❌ 연결방법 삭제 오류:', error)
+      alert('연결방법 삭제 중 오류가 발생했습니다.')
+    }
+  }
+
+  // ECU 제조사 삭제
+  const handleDeleteEcuMaker = async (makerName: string) => {
+    try {
+      console.log('🗑️ ECU 제조사 삭제 중:', makerName)
+      const makerId = await findManufacturerIdByName(makerName, 'ECU')
+      if (makerId) {
+        await deleteManufacturer(makerId)
+        console.log('✅ ECU 제조사 삭제 완료')
+        
+        // 데이터 새로고침
+        await loadEcuMakers()
+      }
+    } catch (error) {
+      console.error('❌ ECU 제조사 삭제 오류:', error)
+      alert('ECU 제조사 삭제 중 오류가 발생했습니다.')
+    }
+  }
+
+  // ECU 모델 삭제
+  const handleDeleteEcuModel = async (modelName: string) => {
+    try {
+      console.log('🗑️ ECU 모델 삭제 중:', modelName)
+      const modelId = await findEcuModelIdByName(modelName)
+      if (modelId) {
+        await deleteEcuModel(modelId)
+        console.log('✅ ECU 모델 삭제 완료')
+        
+        // 데이터 새로고침
+        await loadEcuModels()
+      }
+    } catch (error) {
+      console.error('❌ ECU 모델 삭제 오류:', error)
+      alert('ECU 모델 삭제 중 오류가 발생했습니다.')
+    }
+  }
+
+  // ACU 제조사 삭제
+  const handleDeleteAcuManufacturer = async (manufacturerName: string) => {
+    try {
+      console.log('🗑️ ACU 제조사 삭제 중:', manufacturerName)
+      const manufacturerId = await findManufacturerIdByName(manufacturerName, 'ACU')
+      if (manufacturerId) {
+        await deleteManufacturer(manufacturerId)
+        console.log('✅ ACU 제조사 삭제 완료')
+        
+        // 데이터 새로고침
+        await loadAcuManufacturers()
+      }
+    } catch (error) {
+      console.error('❌ ACU 제조사 삭제 오류:', error)
+      alert('ACU 제조사 삭제 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 작업상태 삭제
+  const handleDeleteWorkStatus = async (statusName: string) => {
+    try {
+      console.log('🗑️ 작업상태 삭제 중:', statusName)
+      const statusId = await findWorkStatusIdByName(statusName)
+      if (statusId) {
+        await deleteWorkStatus(statusId)
+        console.log('✅ 작업상태 삭제 완료')
+        
+        // 데이터 새로고침
+        await loadWorkStatus()
+      }
+    } catch (error) {
+      console.error('❌ 작업상태 삭제 오류:', error)
+      alert('작업상태 삭제 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 모든 ACU 모델을 통합해서 보여주기
+  const getAllAcuModels = (): string[] => {
+    // ACU_MODELS_BY_MANUFACTURER의 모든 모델을 flat하게 합침
+    const allModels = Object.values(acuModelsByManufacturer).flat();
+    // 중복 제거
+    return Array.from(new Set(allModels));
   }
 
   // 고객 데이터 및 카테고리 로드
   useEffect(() => {
     loadCustomers()
     loadEquipmentCategories()
+    loadConnectionMethods() // 연결방법 전용 로드
+    loadEcuMakers() // ECU 제조사 전용 로드
+    loadEcuModels() // ECU 모델 전용 로드
+    loadAcuManufacturers() // ACU 제조사 전용 로드
+    loadWorkStatus() // 작업상태 전용 로드
   }, [])
 
-  // 페이지 포커스 시 고객 목록 새로고침
+  // 페이지 포커스 시 고객 목록 및 드롭다운 데이터 새로고침
   useEffect(() => {
     const handleFocus = () => {
       loadCustomers()
+      loadConnectionMethods() // 연결방법 전용 새로고침
+      loadEcuMakers() // ECU 제조사 전용 새로고침
+      loadEcuModels() // ECU 모델 전용 새로고침
+      loadAcuManufacturers() // ACU 제조사 전용 새로고침
+      loadWorkStatus() // 작업상태 전용 새로고침
+      loadAllDropdownData(true) // 강제 캐시 무효화와 함께 드롭다운 데이터 새로고침
     }
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         loadCustomers()
+        loadConnectionMethods() // 연결방법 전용 새로고침
+        loadEcuMakers() // ECU 제조사 전용 새로고침
+        loadEcuModels() // ECU 모델 전용 새로고침
+        loadAcuManufacturers() // ACU 제조사 전용 새로고침
+        loadWorkStatus() // 작업상태 전용 새로고침
+        loadAllDropdownData(true) // 강제 캐시 무효화와 함께 드롭다운 데이터 새로고침
       }
     }
 
@@ -327,6 +716,193 @@ export default function WorkPage() {
     return () => {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
+  // Supabase 실시간 구독 설정
+  useEffect(() => {
+    console.log('🔄 실시간 데이터 동기화 설정 중...')
+    
+    // 연결방법 테이블 실시간 구독 (ECU 장비 카테고리와 동일한 패턴)
+    const connectionMethodsSubscription = supabase
+      .channel('connection_methods_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'connection_methods' },
+        (payload: any) => {
+          console.log('📡 연결방법 데이터 변경 감지:', payload)
+          console.log('🔍 변경 유형:', payload.eventType)
+          console.log('🔍 변경된 데이터:', payload.new || payload.old)
+          
+          if (payload.eventType === 'DELETE') {
+            console.log('🗑️ 연결방법 삭제됨 - UI 즉시 업데이트')
+            // 삭제 시 즉시 상태 초기화 후 새로고침
+            setConnectionMethods(['직접입력'])
+          } else if (payload.eventType === 'INSERT') {
+            console.log('➕ 연결방법 추가됨 - UI 즉시 업데이트')
+          } else if (payload.eventType === 'UPDATE') {
+            console.log('✏️ 연결방법 수정됨 - UI 즉시 업데이트')
+          }
+          
+          // 모든 경우에 데이터 새로고침 (ECU 장비 카테고리와 동일한 패턴)
+          loadConnectionMethods()
+        }
+      )
+      .subscribe((status: any) => {
+        console.log('📡 연결방법 구독 상태:', status)
+      })
+
+    // 제조사 테이블 실시간 구독
+    const manufacturersSubscription = supabase
+      .channel('manufacturers_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'manufacturers' },
+        (payload: any) => {
+          console.log('📡 제조사 데이터 변경 감지:', payload)
+          console.log('🔍 변경 유형:', payload.eventType)
+          console.log('🔍 변경된 데이터:', payload.new || payload.old)
+          
+          if (payload.eventType === 'DELETE') {
+            console.log('🗑️ 제조사 삭제됨 - UI 즉시 업데이트')
+            // 삭제 시 즉시 상태 초기화 후 새로고침
+            setEcuMakers(['직접입력'])
+            setAcuManufacturers(['직접입력'])
+          } else if (payload.eventType === 'INSERT') {
+            console.log('➕ 제조사 추가됨 - UI 즉시 업데이트')
+          } else if (payload.eventType === 'UPDATE') {
+            console.log('✏️ 제조사 수정됨 - UI 즉시 업데이트')
+          }
+          
+          // 모든 경우에 데이터 새로고침
+          loadEcuMakers()
+          loadAcuManufacturers()
+        }
+      )
+      .subscribe((status: any) => {
+        console.log('📡 제조사 구독 상태:', status)
+      })
+
+    // 장비 모델 테이블 실시간 구독
+    const modelsSubscription = supabase
+      .channel('equipment_models_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'equipment_models' },
+        (payload: any) => {
+          console.log('📡 장비 모델 데이터 변경 감지:', payload)
+          console.log('🔍 변경 유형:', payload.eventType)
+          console.log('🔍 변경된 데이터:', payload.new || payload.old)
+          
+          if (payload.eventType === 'DELETE') {
+            console.log('🗑️ ECU 모델 삭제됨 - UI 즉시 업데이트')
+            // 삭제 시 즉시 상태 초기화 후 새로고침
+            setEcuModels(['직접입력'])
+          } else if (payload.eventType === 'INSERT') {
+            console.log('➕ ECU 모델 추가됨 - UI 즉시 업데이트')
+          } else if (payload.eventType === 'UPDATE') {
+            console.log('✏️ ECU 모델 수정됨 - UI 즉시 업데이트')
+          }
+          
+          // 모든 경우에 데이터 새로고침
+          loadEcuModels()
+        }
+      )
+      .subscribe((status: any) => {
+        console.log('📡 ECU 모델 구독 상태:', status)
+      })
+
+    // 작업 상태 테이블 실시간 구독
+    const workStatusSubscription = supabase
+      .channel('work_status_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'work_status' },
+        (payload: any) => {
+          console.log('📡 작업 상태 데이터 변경 감지:', payload)
+          console.log('🔍 변경 유형:', payload.eventType)
+          console.log('🔍 변경된 데이터:', payload.new || payload.old)
+          
+          if (payload.eventType === 'DELETE') {
+            console.log('🗑️ 작업상태 삭제됨 - UI 즉시 업데이트')
+            // 삭제 시 즉시 상태 초기화 후 새로고침
+            setWorkStatus(['직접입력'])
+          } else if (payload.eventType === 'INSERT') {
+            console.log('➕ 작업상태 추가됨 - UI 즉시 업데이트')
+          } else if (payload.eventType === 'UPDATE') {
+            console.log('✏️ 작업상태 수정됨 - UI 즉시 업데이트')
+          }
+          
+          // 모든 경우에 데이터 새로고침
+          loadWorkStatus()
+        }
+      )
+      .subscribe((status: any) => {
+        console.log('📡 작업상태 구독 상태:', status)
+      })
+
+    // 장비 카테고리 테이블 실시간 구독
+    const categoriesSubscription = supabase
+      .channel('equipment_categories_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'equipment_categories' },
+        (payload) => {
+          console.log('📡 장비 카테고리 데이터 변경 감지:', payload)
+          console.log('🔍 변경 유형:', payload.eventType)
+          console.log('🔍 변경된 데이터:', payload.new || payload.old)
+          
+          if (payload.eventType === 'DELETE') {
+            console.log('🗑️ 장비 카테고리 삭제됨 - UI 즉시 업데이트')
+            // 삭제 시 즉시 상태 초기화 후 새로고침
+            setEcuCategories(['직접입력'])
+          } else if (payload.eventType === 'INSERT') {
+            console.log('➕ 장비 카테고리 추가됨 - UI 즉시 업데이트')
+          } else if (payload.eventType === 'UPDATE') {
+            console.log('✏️ 장비 카테고리 수정됨 - UI 즉시 업데이트')
+          }
+          
+          // 모든 경우에 데이터 새로고침
+          loadEquipmentCategories()
+        }
+      )
+      .subscribe()
+
+    // ECU 모델 테이블 실시간 구독
+    const ecuModelsSubscription = supabase
+      .channel('ecu_models_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'ecu_models' },
+        (payload: any) => {
+          console.log('📡 ECU 모델 데이터 변경 감지:', payload)
+          console.log('🔍 변경 유형:', payload.eventType)
+          console.log('🔍 변경된 데이터:', payload.new || payload.old)
+          
+          if (payload.eventType === 'DELETE') {
+            console.log('🗑️ ECU 모델 삭제됨 - UI 즉시 업데이트')
+            // 삭제 시 즉시 상태 초기화 후 새로고침
+            setEcuModels(['직접입력'])
+          } else if (payload.eventType === 'INSERT') {
+            console.log('➕ ECU 모델 추가됨 - UI 즉시 업데이트')
+          } else if (payload.eventType === 'UPDATE') {
+            console.log('✏️ ECU 모델 수정됨 - UI 즉시 업데이트')
+          }
+          
+          // 모든 경우에 데이터 새로고침
+          loadEcuModels()
+        }
+      )
+      .subscribe((status: any) => {
+        console.log('📡 ECU 모델 구독 상태:', status)
+      })
+
+    console.log('✅ 실시간 데이터 동기화 설정 완료')
+
+    // 컴포넌트 언마운트 시 구독 해제
+    return () => {
+      console.log('🔌 실시간 구독 해제 중...')
+      connectionMethodsSubscription.unsubscribe()
+      manufacturersSubscription.unsubscribe()
+      modelsSubscription.unsubscribe()
+      workStatusSubscription.unsubscribe()
+      categoriesSubscription.unsubscribe()
+      ecuModelsSubscription.unsubscribe()
+      console.log('✅ 실시간 구독 해제 완료')
     }
   }, [])
 
@@ -525,25 +1101,31 @@ export default function WorkPage() {
         toolCategory: '',
         toolCategoryCustom: '',
         connectionMethod: '',
+        connectionMethodCustom: '',
         maker: '',
+        makerCustom: '',
         type: '',
         typeCustom: '',
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '예약',
+        statusCustom: ''
       },
       acu: {
         toolCategory: '',
         toolCategoryCustom: '',
         connectionMethod: '',
+        connectionMethodCustom: '',
         manufacturer: '',
+        manufacturerCustom: '',
         model: '',
         modelCustom: '',
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '예약',
+        statusCustom: ''
       },
       notes: '',
       files: {
@@ -589,25 +1171,31 @@ export default function WorkPage() {
         toolCategory: work.ecu.toolCategory,
         toolCategoryCustom: work.ecu.toolCategoryCustom || '',
         connectionMethod: work.ecu.connectionMethod,
+        connectionMethodCustom: work.ecu.connectionMethodCustom || '',
         maker: work.ecu.maker,
+        makerCustom: work.ecu.makerCustom || '',
         type: work.ecu.type,
         typeCustom: work.ecu.typeCustom,
         selectedWorks: work.ecu.selectedWorks,
         workDetails: work.ecu.workDetails,
         price: work.ecu.price,
-        status: work.ecu.status
+        status: work.ecu.status,
+        statusCustom: work.ecu.statusCustom || ''
       },
       acu: {
         toolCategory: work.acu.toolCategory,
         toolCategoryCustom: work.acu.toolCategoryCustom || '',
         connectionMethod: work.acu.connectionMethod,
+        connectionMethodCustom: work.acu.connectionMethodCustom || '',
         manufacturer: work.acu.manufacturer,
+        manufacturerCustom: work.acu.manufacturerCustom || '',
         model: work.acu.model || work.acu.modelCustom,
         modelCustom: work.acu.modelCustom,
         selectedWorks: work.acu.selectedWorks,
         workDetails: work.acu.workDetails,
         price: work.acu.price,
-        status: work.acu.status
+        status: work.acu.status,
+        statusCustom: work.acu.statusCustom || ''
       },
       notes: work.notes,
       files: work.files as any
@@ -637,25 +1225,31 @@ export default function WorkPage() {
         toolCategory: '',
         toolCategoryCustom: '',
         connectionMethod: '',
+        connectionMethodCustom: '',
         maker: '',
+        makerCustom: '',
         type: '',
         typeCustom: '',
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '예약',
+        statusCustom: ''
       },
       acu: {
         toolCategory: '',
         toolCategoryCustom: '',
         connectionMethod: '',
+        connectionMethodCustom: '',
         manufacturer: '',
+        manufacturerCustom: '',
         model: '',
         modelCustom: '',
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '예약',
+        statusCustom: ''
       },
       notes: '',
       files: {
@@ -940,12 +1534,11 @@ export default function WorkPage() {
           }
         }
 
+        // 모델명 → id 변환
+        const ecuModelId = await findEcuModelIdByName(remappingWork.ecu.type || remappingWork.ecu.typeCustom)
+        const acuModelId = await findAcuModelIdByName(remappingWork.acu.model || remappingWork.acu.modelCustom)
+
         // Supabase에 저장할 작업 기록 데이터 생성
-        const allSelectedWorks = [...remappingWork.ecu.selectedWorks, ...remappingWork.acu.selectedWorks]
-        const workDescription = allSelectedWorks.join(', ') + 
-          (remappingWork.ecu.workDetails ? ` - ECU: ${remappingWork.ecu.workDetails}` : '') +
-          (remappingWork.acu.workDetails ? ` - ACU: ${remappingWork.acu.workDetails}` : '')
-        
         const workRecordData: Omit<WorkRecordData, 'id' | 'created_at'> = {
           customerId: parseInt(formData.customerId),
           equipmentId: parseInt(formData.equipmentId),
@@ -953,41 +1546,14 @@ export default function WorkPage() {
           workType: 'ECU 튜닝',
           totalPrice: (parseFloat(remappingWork.ecu.price) || 0) + (parseFloat(remappingWork.acu.price) || 0),
           status: remappingWork.ecu.status || remappingWork.acu.status,
-          remappingWorks: [{
-            stage: 'stage1' as const,
-            // ECU 정보 추가
-            ecu: {
-              maker: remappingWork.ecu.maker,
-              type: remappingWork.ecu.type || remappingWork.ecu.typeCustom,
-              connectionMethod: remappingWork.ecu.connectionMethod,
-              toolCategory: remappingWork.ecu.toolCategory,
-              selectedWorks: remappingWork.ecu.selectedWorks,
-              workDetails: remappingWork.ecu.workDetails,
-              price: remappingWork.ecu.price,
-              status: remappingWork.ecu.status
-            },
-            // ACU 정보 추가
-            acu: {
-              manufacturer: remappingWork.acu.manufacturer,
-              model: remappingWork.acu.model || remappingWork.acu.modelCustom,
-              connectionMethod: remappingWork.acu.connectionMethod,
-              toolCategory: remappingWork.acu.toolCategory,
-              selectedWorks: remappingWork.acu.selectedWorks,
-              workDetails: remappingWork.acu.workDetails,
-              price: remappingWork.acu.price,
-              status: remappingWork.acu.status
-            },
-            files: {
-              original: remappingWork.files.originalFiles?.[0] ? { file: remappingWork.files.originalFiles[0], description: remappingWork.files.originalFileDescription || '' } : undefined,
-              read: remappingWork.files.stage1File ? { file: remappingWork.files.stage1File, description: remappingWork.files.stage1FileDescription || '' } : undefined,
-              modified: remappingWork.files.stage2File ? { file: remappingWork.files.stage2File, description: remappingWork.files.stage2FileDescription || '' } : undefined,
-              vr: remappingWork.files.stage3File ? { file: remappingWork.files.stage3File, description: remappingWork.files.stage3FileDescription || '' } : undefined
-            },
-            media: {
-              before: remappingWork.files.mediaFile1 || null,
-              after: remappingWork.files.mediaFile2 || null
+          ecu_model_id: ecuModelId,
+          acu_model_id: acuModelId,
+          remappingWorks: [
+            {
+              ...remappingWork, // RemappingWork 전체 구조(jsonb)
+              files // 파일 정보 포함
             }
-          }]
+          ]
         }
 
         // Supabase에 작업 기록 저장
@@ -1044,25 +1610,31 @@ export default function WorkPage() {
         toolCategory: '',
         toolCategoryCustom: '',
         connectionMethod: '',
+        connectionMethodCustom: '',
         maker: '',
+        makerCustom: '',
         type: '',
         typeCustom: '',
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '예약',
+        statusCustom: ''
       },
       acu: {
         toolCategory: '',
         toolCategoryCustom: '',
         connectionMethod: '',
+        connectionMethodCustom: '',
         manufacturer: '',
+        manufacturerCustom: '',
         model: '',
         modelCustom: '',
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약'
+        status: '예약',
+        statusCustom: ''
       },
       notes: '',
       files: {
@@ -1238,19 +1810,127 @@ export default function WorkPage() {
 
       {/* 최적화 상태 알림 */}
       <div className="mb-4 p-3 bg-green-900/20 border border-green-700 rounded-lg">
-        <div className="flex items-center space-x-2 text-sm text-green-300">
-          <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <span>
-            ⚡ 성능 최적화 활성화: 이미지 자동 압축, 캐시 시스템, 파일 크기 검증이 적용되어 업로드 속도가 향상되었습니다.
-          </span>
-          <a 
-            href="/optimization-dashboard" 
-            className="text-green-400 hover:text-green-300 underline ml-2"
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-sm text-green-300">
+            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>
+              ⚡ 성능 최적화 + 실시간 동기화 활성화: 이미지 자동 압축, 캐시 시스템, 데이터 실시간 반영이 적용되었습니다.
+            </span>
+            <a 
+              href="/optimization-dashboard" 
+              className="text-green-400 hover:text-green-300 underline ml-2"
+            >
+              관리 대시보드 →
+            </a>
+          </div>
+          
+          {/* 수동 새로고침 버튼 */}
+          <button
+            type="button"
+            onClick={async () => {
+              console.log('🔄 수동 데이터 새로고침 시작...')
+              
+              // 전체 캐시 강제 삭제
+              console.log('🗑️ 전체 캐시 강제 삭제 중...')
+              await cacheManager.clear()
+              
+              // 상태 초기화
+              console.log('🔄 상태 초기화 중...')
+              setConnectionMethods([])
+              setEcuMakers([])
+              setAcuManufacturers([])
+              setWorkStatus([])
+              setEcuModels([])
+              
+              // 데이터 강제 새로고침
+              await Promise.all([
+                loadAllDropdownData(true), // 강제 캐시 무효화
+                loadEquipmentCategories(),
+                loadCustomers()
+              ])
+              
+              console.log('✅ 수동 데이터 새로고침 완료')
+              alert('✅ 모든 데이터가 강제 새로고침되었습니다!\n캐시도 완전히 삭제되었습니다.')
+            }}
+            className="flex items-center space-x-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md transition-colors"
+            title="드롭다운 데이터를 즉시 새로고침합니다"
           >
-            관리 대시보드 →
-          </a>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>새로고침</span>
+          </button>
+
+          {/* Supabase 연결 테스트 버튼 */}
+          <button
+            type="button"
+            onClick={async () => {
+              console.log('🧪 Supabase 연결 테스트 시작...')
+              try {
+                // 직접 Supabase 쿼리 테스트
+                console.log('🔍 connection_methods 테이블 직접 조회...')
+                const { data: methodsData, error: methodsError } = await supabase
+                  .from('connection_methods')
+                  .select('*')
+                  .order('name')
+
+                if (methodsError) {
+                  console.error('❌ connection_methods 오류:', methodsError)
+                  alert(`❌ 연결방법 테이블 오류: ${methodsError.message}`)
+                  return
+                }
+
+                console.log('✅ connection_methods 데이터:', methodsData)
+                
+                // 다른 테이블들도 테스트
+                const [manufacturersData, modelsData, statusData] = await Promise.all([
+                  supabase.from('manufacturers').select('*').eq('type', 'ECU'),
+                  supabase.from('equipment_models').select('*').eq('type', 'ECU'),
+                  supabase.from('work_status').select('*')
+                ])
+
+                console.log('✅ manufacturers 데이터:', manufacturersData.data)
+                console.log('✅ equipment_models 데이터:', modelsData.data)
+                console.log('✅ work_status 데이터:', statusData.data)
+
+                const methodNames = methodsData?.map(m => m.name).join(', ') || '없음'
+                alert(`✅ Supabase 연결 성공!\n` +
+                     `연결방법: ${methodsData?.length || 0}개 [${methodNames}]\n` +
+                     `ECU제조사: ${manufacturersData.data?.length || 0}개\n` +
+                     `ECU모델: ${modelsData.data?.length || 0}개\n` +
+                     `작업상태: ${statusData.data?.length || 0}개`)
+
+              } catch (error) {
+                console.error('❌ Supabase 연결 테스트 실패:', error)
+                alert(`❌ Supabase 연결 테스트 실패: ${error.message}`)
+              }
+            }}
+            className="flex items-center space-x-1 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded-md transition-colors"
+            title="Supabase 데이터베이스 연결을 직접 테스트합니다"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span>DB테스트</span>
+          </button>
+
+          {/* 완전한 페이지 새로고침 버튼 */}
+          <button
+            type="button"
+            onClick={() => {
+              console.log('🔄 완전한 페이지 새로고침 실행...')
+              window.location.reload()
+            }}
+            className="flex items-center space-x-1 px-2 py-1 bg-orange-600 hover:bg-orange-700 text-white text-xs rounded-md transition-colors"
+            title="페이지 전체를 새로고침합니다 (확실한 방법)"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>새로고침</span>
+          </button>
         </div>
       </div>
 
@@ -1655,10 +2335,41 @@ export default function WorkPage() {
                     <CustomDropdown
                       value={currentRemappingWork.ecu.connectionMethod}
                       onChange={(value) => handleRemappingWorkInputChange('ecu', 'connectionMethod', value)}
-                      options={CONNECTION_METHODS.map(method => ({ value: method, label: method }))}
+                      options={connectionMethods.map(method => ({ value: method, label: method }))}
                       placeholder="연결 방법을 선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteConnectionMethod}
+                      deletableOptions={connectionMethods.filter(method => method !== '직접입력')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
+                    
+                    {/* 직접입력 선택 시 새 연결방법 추가 필드 */}
+                    {currentRemappingWork.ecu.connectionMethod === '직접입력' && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          value={currentRemappingWork.ecu.connectionMethodCustom || ''}
+                          onChange={(e) => handleRemappingWorkInputChange('ecu', 'connectionMethodCustom', e.target.value)}
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="새로운 연결방법을 입력하세요"
+                        />
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const customMethod = currentRemappingWork.ecu.connectionMethodCustom?.trim()
+                            if (customMethod) {
+                              await addNewConnectionMethod(customMethod)
+                              handleRemappingWorkInputChange('ecu', 'connectionMethod', customMethod)
+                              handleRemappingWorkInputChange('ecu', 'connectionMethodCustom', '')
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="연결방법 목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1668,10 +2379,41 @@ export default function WorkPage() {
                     <CustomDropdown
                       value={currentRemappingWork.ecu.maker}
                       onChange={(value) => handleRemappingWorkInputChange('ecu', 'maker', value)}
-                      options={ECU_MAKERS.map(maker => ({ value: maker, label: maker }))}
+                      options={ecuMakers.map(maker => ({ value: maker, label: maker }))}
                       placeholder="ECU 제조사를 선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteEcuMaker}
+                      deletableOptions={ecuMakers.filter(maker => maker !== '직접입력')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
+                    
+                    {/* 직접입력 선택 시 새 제조사 추가 필드 */}
+                    {currentRemappingWork.ecu.maker === '직접입력' && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          value={currentRemappingWork.ecu.makerCustom || ''}
+                          onChange={(e) => handleRemappingWorkInputChange('ecu', 'makerCustom', e.target.value)}
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="새로운 ECU 제조사를 입력하세요"
+                        />
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const customMaker = currentRemappingWork.ecu.makerCustom?.trim()
+                            if (customMaker) {
+                              await addNewEcuMaker(customMaker)
+                              handleRemappingWorkInputChange('ecu', 'maker', customMaker)
+                              handleRemappingWorkInputChange('ecu', 'makerCustom', '')
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="ECU 제조사 목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1679,7 +2421,6 @@ export default function WorkPage() {
                       <label className="block text-sm font-medium text-gray-700">
                         ECU 모델
                       </label>
-
                     </div>
                     <CustomDropdown
                       value={currentRemappingWork.ecu.type}
@@ -1687,8 +2428,38 @@ export default function WorkPage() {
                       options={ecuModels.map(type => ({ value: type, label: type }))}
                       placeholder="ECU 모델을 선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteEcuModel}
+                      deletableOptions={ecuModels.filter(model => model !== '직접입력')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
-
+                    
+                    {/* 직접입력 선택 시 새 모델 추가 필드 */}
+                    {currentRemappingWork.ecu.type === '직접입력' && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          value={currentRemappingWork.ecu.typeCustom || ''}
+                          onChange={(e) => handleRemappingWorkInputChange('ecu', 'typeCustom', e.target.value)}
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="새로운 ECU 모델을 입력하세요"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const customModel = currentRemappingWork.ecu.typeCustom?.trim()
+                            if (customModel) {
+                              addNewEcuModel(customModel)
+                              handleRemappingWorkInputChange('ecu', 'type', customModel)
+                              handleRemappingWorkInputChange('ecu', 'typeCustom', '')
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="ECU 모델 목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1698,10 +2469,41 @@ export default function WorkPage() {
                     <CustomDropdown
                       value={currentRemappingWork.ecu.status}
                       onChange={(value) => handleRemappingWorkInputChange('ecu', 'status', value)}
-                      options={WORK_STATUS.map(status => ({ value: status, label: status }))}
+                      options={workStatus.map(status => ({ value: status, label: status }))}
                       placeholder="작업 상태를 선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteWorkStatus}
+                      deletableOptions={workStatus.filter(status => status !== '직접입력')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
+                    
+                    {/* 직접입력 선택 시 새 상태 추가 필드 */}
+                    {currentRemappingWork.ecu.status === '직접입력' && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          value={currentRemappingWork.ecu.statusCustom || ''}
+                          onChange={(e) => handleRemappingWorkInputChange('ecu', 'statusCustom', e.target.value)}
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="새로운 작업 상태를 입력하세요"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const customStatus = currentRemappingWork.ecu.statusCustom?.trim()
+                            if (customStatus) {
+                              addNewWorkStatus(customStatus)
+                              handleRemappingWorkInputChange('ecu', 'status', customStatus)
+                              handleRemappingWorkInputChange('ecu', 'statusCustom', '')
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="작업 상태 목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1794,10 +2596,41 @@ export default function WorkPage() {
                     <CustomDropdown
                       value={currentRemappingWork.acu.connectionMethod}
                       onChange={(value) => handleRemappingWorkInputChange('acu', 'connectionMethod', value)}
-                      options={CONNECTION_METHODS.map(method => ({ value: method, label: method }))}
+                      options={connectionMethods.map(method => ({ value: method, label: method }))}
                       placeholder="연결 방법을 선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteConnectionMethod}
+                      deletableOptions={connectionMethods.filter(method => method !== '직접입력')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
+                    
+                    {/* 직접입력 선택 시 새 연결방법 추가 필드 */}
+                    {currentRemappingWork.acu.connectionMethod === '직접입력' && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          value={currentRemappingWork.acu.connectionMethodCustom || ''}
+                          onChange={(e) => handleRemappingWorkInputChange('acu', 'connectionMethodCustom', e.target.value)}
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          placeholder="새로운 연결방법을 입력하세요"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const customMethod = currentRemappingWork.acu.connectionMethodCustom?.trim()
+                            if (customMethod) {
+                              addNewConnectionMethod(customMethod)
+                              handleRemappingWorkInputChange('acu', 'connectionMethod', customMethod)
+                              handleRemappingWorkInputChange('acu', 'connectionMethodCustom', '')
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="연결방법 목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1807,10 +2640,41 @@ export default function WorkPage() {
                     <CustomDropdown
                       value={currentRemappingWork.acu.manufacturer}
                       onChange={(value) => handleRemappingWorkInputChange('acu', 'manufacturer', value)}
-                      options={ACU_MANUFACTURERS.map(manufacturer => ({ value: manufacturer, label: manufacturer }))}
+                      options={acuManufacturers.map(manufacturer => ({ value: manufacturer, label: manufacturer }))}
                       placeholder="ACU 제조사를 선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteAcuManufacturer}
+                      deletableOptions={acuManufacturers.filter(manufacturer => manufacturer !== '직접입력')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
+                    
+                    {/* 직접입력 선택 시 새 제조사 추가 필드 */}
+                    {currentRemappingWork.acu.manufacturer === '직접입력' && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          value={currentRemappingWork.acu.manufacturerCustom || ''}
+                          onChange={(e) => handleRemappingWorkInputChange('acu', 'manufacturerCustom', e.target.value)}
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          placeholder="새로운 ACU 제조사를 입력하세요"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const customManufacturer = currentRemappingWork.acu.manufacturerCustom?.trim()
+                            if (customManufacturer) {
+                              addNewAcuManufacturer(customManufacturer)
+                              handleRemappingWorkInputChange('acu', 'manufacturer', customManufacturer)
+                              handleRemappingWorkInputChange('acu', 'manufacturerCustom', '')
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="ACU 제조사 목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1823,12 +2687,9 @@ export default function WorkPage() {
                     <CustomDropdown
                       value={currentRemappingWork.acu.model}
                       onChange={(value) => handleRemappingWorkInputChange('acu', 'model', value)}
-                      options={currentRemappingWork.acu.manufacturer ? 
-                        getAvailableAcuModels(currentRemappingWork.acu.manufacturer).map(model => ({ value: model, label: model })) : 
-                        []
-                      }
-                      placeholder={currentRemappingWork.acu.manufacturer ? 'ACU 모델을 선택하세요' : '먼저 제조사를 선택하세요'}
-                      disabled={!currentRemappingWork.acu.manufacturer}
+                      options={getAllAcuModels().map(model => ({ value: model, label: model }))}
+                      placeholder={'ACU 모델을 선택하세요'}
+                      disabled={getAllAcuModels().length === 0}
                       maxHeight="250px"
                     />
 
@@ -1841,10 +2702,41 @@ export default function WorkPage() {
                     <CustomDropdown
                       value={currentRemappingWork.acu.status}
                       onChange={(value) => handleRemappingWorkInputChange('acu', 'status', value)}
-                      options={WORK_STATUS.map(status => ({ value: status, label: status }))}
+                      options={workStatus.map(status => ({ value: status, label: status }))}
                       placeholder="작업 상태를 선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteWorkStatus}
+                      deletableOptions={workStatus.filter(status => status !== '직접입력')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
+                    
+                    {/* 직접입력 선택 시 새 상태 추가 필드 */}
+                    {currentRemappingWork.acu.status === '직접입력' && (
+                      <div className="mt-2 flex space-x-2">
+                        <input
+                          type="text"
+                          value={currentRemappingWork.acu.statusCustom || ''}
+                          onChange={(e) => handleRemappingWorkInputChange('acu', 'statusCustom', e.target.value)}
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          placeholder="새로운 작업 상태를 입력하세요"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const customStatus = currentRemappingWork.acu.statusCustom?.trim()
+                            if (customStatus) {
+                              addNewWorkStatus(customStatus)
+                              handleRemappingWorkInputChange('acu', 'status', customStatus)
+                              handleRemappingWorkInputChange('acu', 'statusCustom', '')
+                            }
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          title="작업 상태 목록에 추가하고 선택"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
