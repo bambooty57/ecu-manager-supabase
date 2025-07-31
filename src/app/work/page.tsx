@@ -92,7 +92,6 @@ export default function WorkPage() {
     customerName: '',
     equipmentId: '',
     workDate: getTodayDate(),
-    price: '',
     status: '예약' // 기본값을 예약으로 설정
   })
 
@@ -701,13 +700,6 @@ export default function WorkPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     
-    // 금액 입력 시 만원 단위를 원 단위로 변환
-    if (name === 'price') {
-      const priceInWon = value ? parseFloat(value) * 10000 : ''
-      setFormData(prev => ({ ...prev, [name]: priceInWon.toString() }))
-      return
-    }
-    
     setFormData(prev => ({ ...prev, [name]: value }))
 
     // 고객명 검색 처리
@@ -1043,7 +1035,6 @@ export default function WorkPage() {
       customerName: '',
       equipmentId: '',
       workDate: getTodayDate(),
-      price: '',
       status: '예약'
     })
     
@@ -1375,6 +1366,30 @@ export default function WorkPage() {
                 required
               />
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                전체 작업 금액 (자동 계산)
+              </label>
+              <div className="w-full bg-gray-800 border-gray-600 text-gray-300 rounded-md px-3 py-3 text-center border-2 border-dashed">
+                {(() => {
+                  // 기존 등록된 작업들의 금액 합계
+                  const existingEcuTotal = remappingWorks.reduce((sum, work) => sum + (parseFloat(work.ecu.price) || 0), 0)
+                  const existingAcuTotal = remappingWorks.reduce((sum, work) => sum + (parseFloat(work.acu.price) || 0), 0)
+                  
+                  // 현재 입력 중인 작업의 금액
+                  const currentEcuPrice = parseFloat(currentRemappingWork.ecu.price) || 0
+                  const currentAcuPrice = parseFloat(currentRemappingWork.acu.price) || 0
+                  
+                  // 전체 합계
+                  const total = existingEcuTotal + existingAcuTotal + currentEcuPrice + currentAcuPrice
+                  return total > 0 ? `${Math.floor(total / 10000)}만원` : '0만원'
+                })()}
+              </div>
+              <div className="mt-1 text-xs text-gray-400 text-center">
+                ECU 금액 + ACU 금액의 합계
+              </div>
+            </div>
           </div>
 
           {/* 등록된 Remapping 작업 목록 */}
@@ -1694,14 +1709,18 @@ export default function WorkPage() {
                       ECU 작업 금액 (만원)
                     </label>
                     <input
-                      type="number"
-                      value={currentRemappingWork.ecu.price ? (parseFloat(currentRemappingWork.ecu.price) / 10000).toString() : ''}
-                      onChange={(e) => handleRemappingWorkInputChange('ecu', 'price', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="35 (35만원)"
-                      min="0"
-                      step="0.1"
+                      type="text"
+                      value={currentRemappingWork.ecu.price ? `${Math.floor(parseFloat(currentRemappingWork.ecu.price) / 10000)}(만원)` : ''}
+                      onChange={(e) => {
+                        const inputValue = e.target.value.replace(/[^\d]/g, '')
+                        handleRemappingWorkInputChange('ecu', 'price', inputValue)
+                      }}
+                      className="w-full h-12 bg-gray-600 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-300 px-3 py-3 text-center"
+                      placeholder="35(만원)"
                     />
+                    <div className="mt-1 text-xs text-gray-400 text-center">
+                      만원 단위 (예: 35 → 35만원)
+                    </div>
                   </div>
                 </div>
 
@@ -1833,14 +1852,18 @@ export default function WorkPage() {
                       ACU 작업 금액 (만원)
                     </label>
                     <input
-                      type="number"
-                      value={currentRemappingWork.acu.price ? (parseFloat(currentRemappingWork.acu.price) / 10000).toString() : ''}
-                      onChange={(e) => handleRemappingWorkInputChange('acu', 'price', e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                      placeholder="25 (25만원)"
-                      min="0"
-                      step="0.1"
+                      type="text"
+                      value={currentRemappingWork.acu.price ? `${Math.floor(parseFloat(currentRemappingWork.acu.price) / 10000)}(만원)` : ''}
+                      onChange={(e) => {
+                        const inputValue = e.target.value.replace(/[^\d]/g, '')
+                        handleRemappingWorkInputChange('acu', 'price', inputValue)
+                      }}
+                      className="w-full h-12 bg-gray-600 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-300 px-3 py-3 text-center"
+                      placeholder="25(만원)"
                     />
+                    <div className="mt-1 text-xs text-gray-400 text-center">
+                      만원 단위 (예: 25 → 25만원)
+                    </div>
                   </div>
                 </div>
 
