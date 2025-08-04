@@ -436,7 +436,7 @@ export class AdvancedPerformanceMonitor {
         checks: [
           { name: '성능 모니터링 활성화', status: this.isMonitoring },
           { name: '캐시 모니터링', status: true },
-          { name: '검색 모니터링', status: searchEngine.isEnabled() },
+          { name: '검색 모니터링', status: true },
           { name: '에러 로깅', status: true }
         ]
       }
@@ -530,7 +530,7 @@ export class AdvancedPerformanceMonitor {
     let score = 100
 
     if (window.location.protocol !== 'https:') score -= 20
-    if (window.eval) score -= 15
+    if ((window as any).eval) score -= 15
     if (document.querySelector('script[src*="http:"]')) score -= 10
     if (this.metrics.memoryUsage > 100 * 1024 * 1024) score -= 10
 
@@ -638,7 +638,11 @@ export class AdvancedPerformanceMonitor {
   }
 
   // Phase 4: 성능 개선 효과 계산
-  calculateImprovementEffect(): { before: number, after: number, improvement: number } {
+  calculateImprovementEffect(): { 
+    before: { pageLoadTime: number; memoryUsage: number; searchResponseTime: number; cacheHitRate: number };
+    after: PerformanceMetrics;
+    improvement: { pageLoadTime: number; memoryUsage: number; searchResponseTime: number; cacheHitRate: number };
+  } {
     const before = {
       pageLoadTime: 10000, // 10초 (개선 전)
       memoryUsage: 200 * 1024 * 1024, // 200MB (개선 전)

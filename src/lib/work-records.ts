@@ -4,6 +4,8 @@ import { supabase } from './supabase'
 // import { isPlaceholderEnvironment } from '../utils/helpers' // 더 이상 사용하지 않음
 import type { Database } from './database.types'
 import { CacheManager } from './cache-manager'
+import { CustomerData } from './customers'
+import { EquipmentData } from './equipment'
 
 // isPlaceholderEnvironment 함수를 이 파일 내부에 정의하거나, 항상 false를 반환하도록 수정
 const isPlaceholderEnvironment = () => {
@@ -240,7 +242,7 @@ export const getWorkRecordDetailsStable = async (recordId: number) => {
     }
     
     // 캐시에 저장 (30분 TTL)
-    await cacheManager.set(cacheKey, enrichedData, { ttl: 1800 })
+    await cacheManager.set(cacheKey, enrichedData, 1800)
     
     return enrichedData
   } catch (error) {
@@ -279,7 +281,13 @@ export const getWorkRecordsPaginatedStable = async (page: number = 1, pageSize: 
     const cacheKey = `work_records_page:${page}:${pageSize}`
     
     // 캐시 확인
-    const cached = await cacheManager.get(cacheKey)
+    const cached = await cacheManager.get<{
+      data: any[]
+      totalCount: number
+      currentPage: number
+      pageSize: number
+      totalPages: number
+    }>(cacheKey)
     if (cached) {
       return cached
     }
@@ -308,7 +316,7 @@ export const getWorkRecordsPaginatedStable = async (page: number = 1, pageSize: 
     }
     
     // 캐시에 저장 (5분 TTL)
-    await cacheManager.set(cacheKey, result, { ttl: 300 })
+    await cacheManager.set(cacheKey, result, 300)
     
     return result
   } catch (error) {
