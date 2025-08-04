@@ -25,6 +25,7 @@ import WorkDetailModal from '@/components/WorkDetailModal'
 import JSZip from 'jszip'
 import { FileDownloadSection } from '@/components/FileDownloadSection'
 import { LoadingSkeleton, WorkRecordSkeleton, DetailSkeleton } from '@/components/LoadingSkeleton'
+import { LoadingIndicator, DataLoadingIndicator, FileLoadingIndicator, SearchLoadingIndicator, SaveLoadingIndicator, DeleteLoadingIndicator } from '@/components/LoadingIndicator'
 
 function HistoryPage() {
   // ✅ 안정적인 상태 관리
@@ -71,6 +72,10 @@ function HistoryPage() {
   const [isOffline, setIsOffline] = useState(false)
   const [lastError, setLastError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
+  
+  // ✅ 로딩 상태 개선
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // ✅ 정렬 및 필터링 상태
   const [sortField, setSortField] = useState('created_at')
@@ -873,18 +878,21 @@ function HistoryPage() {
   const handleDeleteRecord = async (record: any) => {
     if (confirm(`'${record.customer?.name || '알 수 없음'}' 고객의 작업 기록(ID: ${record.id})을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
       try {
+        setIsDeleting(true)
         await deleteWorkRecord(record.id);
 
         // 성공적으로 삭제된 경우 UI 업데이트
         setWorkRecords(prev => prev.filter(r => r.id !== record.id));
-        alert('작업 기록이 성공적으로 삭제되었습니다.');
+        toast.success('작업 기록이 성공적으로 삭제되었습니다.');
 
         // 모달이 열려있다면 닫기
         closeModals();
         
       } catch (error) {
         console.error('Failed to delete work record:', error);
-        alert('작업 기록 삭제에 실패했습니다. 콘솔을 확인해주세요.');
+        toast.error('작업 기록 삭제에 실패했습니다.');
+      } finally {
+        setIsDeleting(false)
       }
     }
   };
@@ -896,6 +904,7 @@ function HistoryPage() {
 
   const handleSaveEdit = async () => {
     try {
+      setIsSaving(true)
       // Supabase에서 작업 기록 수정
       const updateData = {
         workDate: editFormData.workDate,
@@ -916,13 +925,15 @@ function HistoryPage() {
         setShowEditModal(false)
         setSelectedRecord(null)
         setEditFormData({})
-        alert('작업이 수정되었습니다.')
+        toast.success('작업이 수정되었습니다.')
       } else {
-        alert('작업 수정 중 오류가 발생했습니다.')
+        toast.error('작업 수정 중 오류가 발생했습니다.')
       }
     } catch (error) {
       console.error('Failed to update work record:', error)
-      alert('작업 수정 중 오류가 발생했습니다.')
+      toast.error('작업 수정 중 오류가 발생했습니다.')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -1252,6 +1263,14 @@ function HistoryPage() {
     <AuthGuard>
       <div className="min-h-screen bg-gray-900">
         <Navigation />
+        
+        {/* 전역 로딩 인디케이터들 */}
+        <DataLoadingIndicator isLoading={isLoadingRecords} />
+        <FileLoadingIndicator isLoading={isDownloading} />
+        <SearchLoadingIndicator isLoading={isSearching} />
+        <SaveLoadingIndicator isLoading={isSaving} />
+        <DeleteLoadingIndicator isLoading={isDeleting} />
+        
         <Toaster 
           position="top-right"
           toastOptions={{

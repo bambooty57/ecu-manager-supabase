@@ -3,10 +3,12 @@ import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import { FileDownloadManager, FileMetadata } from '@/lib/file-download-manager'
 import { supabase } from '@/lib/supabase'
+import { FileSkeleton } from '@/components/LoadingSkeleton'
 
 interface FileDownloadSectionProps {
   recordId: number
   files: FileMetadata[]
+  isLoading?: boolean
   onDownloadStart?: () => void
   onDownloadComplete?: () => void
   onDownloadError?: (error: string) => void
@@ -15,6 +17,7 @@ interface FileDownloadSectionProps {
 export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
   recordId,
   files,
+  isLoading = false,
   onDownloadStart,
   onDownloadComplete,
   onDownloadError
@@ -274,6 +277,15 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">📁 첨부 파일</h3>
+        <FileSkeleton rows={3} />
+      </div>
+    )
   }
 
   if (files.length === 0) {
