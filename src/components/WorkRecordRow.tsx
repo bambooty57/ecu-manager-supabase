@@ -14,10 +14,12 @@ interface WorkRecord {
   }
   ecu_maker?: string
   ecu_model?: string
+  tuning_stage?: string
   connection_method?: string
   acu_manufacturer?: string
   acu_model?: string
   acu_type?: string
+  is_active?: boolean
   status?: string
   total_price?: number
 }
@@ -87,25 +89,62 @@ const formatPrice = (price: number | null | undefined) => {
   }
 }
 
-// ✅ ECU 정보 컴포넌트
-const ECUInfoCell = ({ record }: { record: WorkRecord }) => {
-  const hasECUInfo = record.ecu_maker || record.ecu_model
+// ✅ 데이터 변환 로직 (Task #3 요구사항)
+const transformECUData = (record: WorkRecord) => {
+  return {
+    manufacturer: record.ecu_maker || 'Unknown',
+    model: record.ecu_model || 'Unknown Model',
+    tuning_stage: record.tuning_stage || extractTuningStageFromModel(record.ecu_model || '')
+  }
+}
 
-  if (!hasECUInfo) {
-    return <span className="text-gray-500 italic">N/A</span>
+const transformACUData = (record: WorkRecord) => {
+  return {
+    manufacturer: record.acu_manufacturer || 'Unknown',
+    model: record.acu_model || 'Unknown Model',
+    is_active: record.is_active || Boolean(
+      record.acu_type && 
+      record.acu_type !== 'N/A' && 
+      record.acu_type !== '' &&
+      record.acu_manufacturer &&
+      record.acu_model
+    )
+  }
+}
+
+// 튜닝 단계 추출 유틸리티 함수
+const extractTuningStageFromModel = (model: string): string | null => {
+  if (!model) return null
+  const stageMatch = model.match(/stage\s*(\d+)/i)
+  return stageMatch ? stageMatch[1] : null
+}
+
+// ✅ ECU 정보 컴포넌트 (Task #3 개선버전)
+const ECUInfoCell = ({ record }: { record: WorkRecord }) => {
+  // ECU 데이터 변환
+  const ecuData = transformECUData(record)
+  
+  // ECU 데이터가 없는 경우 처리
+  if (!record.ecu_maker && !record.ecu_model) {
+    return <span className="text-gray-400 italic">N/A</span>
   }
 
   return (
     <div className="flex flex-col">
       <div className="flex items-center">
         <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
-        <span className="font-medium text-blue-300">
-          {record.ecu_maker || 'Unknown'}
+        <span className="font-medium text-blue-700">
+          {ecuData.manufacturer}
         </span>
       </div>
-      <div className="text-sm text-gray-400 ml-4">
-        {record.ecu_model || 'Unknown Model'}
+      <div className="text-sm text-gray-600 ml-4">
+        {ecuData.model}
       </div>
+      {ecuData.tuning_stage && (
+        <div className="mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs inline-block ml-4">
+          Stage {ecuData.tuning_stage}
+        </div>
+      )}
       {record.connection_method && (
         <div className="mt-1 px-2 py-0.5 bg-blue-900 text-blue-300 rounded text-xs inline-block ml-4">
           {record.connection_method}
@@ -115,28 +154,34 @@ const ECUInfoCell = ({ record }: { record: WorkRecord }) => {
   )
 }
 
-// ✅ ACU 정보 컴포넌트
+// ✅ ACU 정보 컴포넌트 (Task #3 개선버전)
 const ACUInfoCell = ({ record }: { record: WorkRecord }) => {
-  const hasACUInfo = record.acu_manufacturer || record.acu_model
-
-  if (!hasACUInfo) {
-    return <span className="text-gray-500 italic">N/A</span>
+  // ACU 데이터 변환
+  const acuData = transformACUData(record)
+  
+  // ACU 데이터가 없는 경우 처리
+  if (!record.acu_manufacturer && !record.acu_model) {
+    return <span className="text-gray-400 italic">N/A</span>
   }
 
   return (
     <div className="flex flex-col">
       <div className="flex items-center">
         <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-        <span className="font-medium text-green-300">
-          {record.acu_manufacturer || 'Unknown'}
+        <span className="font-medium text-green-700">
+          {acuData.manufacturer}
         </span>
       </div>
-      <div className="text-sm text-gray-400 ml-4">
-        {record.acu_model || 'Unknown Model'}
+      <div className="text-sm text-gray-600 ml-4">
+        {acuData.model}
       </div>
       <div className="mt-1 ml-4">
-        <span className="px-2 py-0.5 rounded text-xs bg-green-900 text-green-300">
-          {record.acu_type ? '활성화' : '비활성화'}
+        <span className={`px-2 py-0.5 rounded text-xs ${
+          acuData.is_active 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-gray-100 text-gray-800'
+        }`}>
+          {acuData.is_active ? '활성화' : '비활성화'}
         </span>
       </div>
     </div>

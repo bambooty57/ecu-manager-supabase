@@ -293,7 +293,7 @@ Route (app)                             Size     First Load JS
 4. [ ] 문제 발견 시 수정 후 재빌드/재검토
 5. [ ] Playwright 검증 완료 후 브라우저 닫기
 6. [ ] Git 커밋 & 푸시 (검증된 코드만)
-7. [ ] Taskmaster에서 Task 상태를 'completed'로 업데이트
+7. [ ] Taskmaster에서 Task 상태를 'done'으로 업데이트 (`task-master set-status --id=N --status=done`)
 8. [ ] 다음 Task 자동 확인 및 진행
 
 ### ✅ 개발 환경 설정

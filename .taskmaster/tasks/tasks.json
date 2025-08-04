@@ -9,7 +9,7 @@
         "testStrategy": "1. 테이블 구조가 정확히 렌더링되는지 확인\n2. 반응형 디자인이 다양한 화면 크기에서 제대로 작동하는지 테스트\n3. 테이블 헤더가 명세에 맞게 정확히 표시되는지 확인\n4. 로딩 상태와 빈 데이터 상태가 적절히 표시되는지 검증",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -22,7 +22,7 @@
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -170,7 +170,7 @@
     ],
     "metadata": {
       "created": "2025-08-04T18:34:25.065Z",
-      "updated": "2025-08-04T18:34:25.065Z",
+      "updated": "2025-08-04T19:56:29.103Z",
       "description": "Tasks for work-history-improvement context"
     }
   },
