@@ -298,9 +298,9 @@ export const getWorkRecordsPaginatedStable = async (page: number = 1, pageSize: 
     const { data, count, error } = await supabase
       .from('work_records')
       .select(`
-        id, customer_name, work_date, vehicle_info, work_type, created_at, updated_at,
+        id, work_date, work_type, created_at, updated_at,
         customers:customer_id(id, name, phone),
-        equipment:equipment_id(id, type, manufacturer, model)
+        equipment:equipment_id(id, equipment_type, manufacturer, model)
       `, { count: 'exact' })
       .range(start, end)
       .order('work_date', { ascending: false })
