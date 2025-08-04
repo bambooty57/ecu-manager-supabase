@@ -88,7 +88,7 @@
         "dependencies": [
           6
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -170,7 +170,7 @@
     ],
     "metadata": {
       "created": "2025-08-04T18:34:25.065Z",
-      "updated": "2025-08-04T20:13:01.885Z",
+      "updated": "2025-08-04T20:19:53.412Z",
       "description": "Tasks for work-history-improvement context"
     }
   },
