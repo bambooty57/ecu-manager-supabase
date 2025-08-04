@@ -159,7 +159,7 @@ export default function WorkPage() {
     },
     notes: '',
     files: {
-      originalFiles: [] as File[],
+      originalFile: undefined,
       originalFileDescription: '',
       stage1File: undefined,
       stage1FileDescription: '',
@@ -167,7 +167,7 @@ export default function WorkPage() {
       stage2FileDescription: '',
       stage3File: undefined,
       stage3FileDescription: '',
-      acuOriginalFiles: [] as File[],
+      acuOriginalFile: undefined,
       acuOriginalFileDescription: '',
       acuStage1File: undefined,
       acuStage1FileDescription: '',
@@ -1288,7 +1288,7 @@ export default function WorkPage() {
       },
       notes: '',
       files: {
-        originalFiles: [] as File[],
+        originalFile: undefined,
         originalFileDescription: '',
         stage1File: undefined,
         stage1FileDescription: '',
@@ -1296,7 +1296,7 @@ export default function WorkPage() {
         stage2FileDescription: '',
         stage3File: undefined,
         stage3FileDescription: '',
-        acuOriginalFiles: [] as File[],
+        acuOriginalFile: undefined,
         acuOriginalFileDescription: '',
         acuStage1File: undefined,
         acuStage1FileDescription: '',
@@ -1412,7 +1412,7 @@ export default function WorkPage() {
       },
       notes: '',
       files: {
-        originalFiles: [] as File[],
+        originalFile: undefined,
         originalFileDescription: '',
         stage1File: undefined,
         stage1FileDescription: '',
@@ -1420,7 +1420,7 @@ export default function WorkPage() {
         stage2FileDescription: '',
         stage3File: undefined,
         stage3FileDescription: '',
-        acuOriginalFiles: [] as File[],
+        acuOriginalFile: undefined,
         acuOriginalFileDescription: '',
         acuStage1File: undefined,
         acuStage1FileDescription: '',
@@ -1793,7 +1793,7 @@ export default function WorkPage() {
       },
       notes: '',
       files: {
-        originalFiles: [] as File[],
+        originalFile: undefined,
         originalFileDescription: '',
         stage1File: undefined,
         stage1FileDescription: '',
@@ -1801,7 +1801,7 @@ export default function WorkPage() {
         stage2FileDescription: '',
         stage3File: undefined,
         stage3FileDescription: '',
-        acuOriginalFiles: [] as File[],
+        acuOriginalFile: undefined,
         acuOriginalFileDescription: '',
         acuStage1File: undefined,
         acuStage1FileDescription: '',
@@ -2437,13 +2437,13 @@ export default function WorkPage() {
                           <span className="font-medium text-gray-300">첨부 파일:</span>
                           <div className="flex flex-wrap gap-2 mt-1">
                             {/* ECU 파일들 */}
-                            {work.files.originalFiles && work.files.originalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900 text-blue-200">🔧 ECU원본({work.files.originalFiles.length})</span>}
+                            {work.files.originalFile && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900 text-blue-200">🔧 ECU원본</span>}
                             {work.files.stage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-800 text-blue-200">🔧 ECU Stage1</span>}
                             {work.files.stage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-700 text-blue-200">🔧 ECU Stage2</span>}
                             {work.files.stage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-600 text-blue-200">🔧 ECU Stage3</span>}
                             
                             {/* ACU 파일들 */}
-                            {work.files.acuOriginalFiles && work.files.acuOriginalFiles.length > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 text-green-200">⚙️ ACU원본({work.files.acuOriginalFiles.length})</span>}
+                            {work.files.acuOriginalFile && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 text-green-200">⚙️ ACU원본</span>}
                             {work.files.acuStage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-800 text-green-200">⚙️ ACU Stage1</span>}
                             {work.files.acuStage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-700 text-green-200">⚙️ ACU Stage2</span>}
                             {work.files.acuStage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-600 text-green-200">⚙️ ACU Stage3</span>}
