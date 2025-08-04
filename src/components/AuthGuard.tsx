@@ -12,11 +12,21 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
 
+  // 🔧 개발 모드에서 인증 우회 (환경변수로 제어)
+  const isDevelopment = process.env.NODE_ENV === 'development'
+  const skipAuth = process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === 'true'
+  
   useEffect(() => {
+    // 개발 모드에서 인증 우회가 활성화되어 있으면 로그인 페이지로 리다이렉트하지 않음
+    if (isDevelopment && skipAuth) {
+      console.log('🔧 개발 모드: 인증 우회 활성화됨')
+      return
+    }
+    
     if (!loading && !user) {
       router.push('/login')
     }
-  }, [user, loading, router])
+  }, [user, loading, router, isDevelopment, skipAuth])
 
   if (loading) {
     return (
@@ -27,6 +37,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         </div>
       </div>
     )
+  }
+
+  // 개발 모드에서 인증 우회가 활성화되어 있으면 바로 렌더링
+  if (isDevelopment && skipAuth) {
+    return <>{children}</>
   }
 
   if (!user) {

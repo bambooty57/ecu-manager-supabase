@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // 개발 모드 환경변수 설정
+  env: {
+    NEXT_PUBLIC_DEV_SKIP_AUTH: process.env.NODE_ENV === 'development' ? 'true' : 'false',
+  },
   webpack: (config, { isServer }) => {
     // xlsx 모듈을 위한 설정
     config.resolve.fallback = {
