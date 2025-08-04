@@ -1,5 +1,8 @@
 import React, { useState, useCallback } from 'react'
+import JSZip from 'jszip'
+import { saveAs } from 'file-saver'
 import { FileDownloadManager, FileMetadata } from '@/lib/file-download-manager'
+import { supabase } from '@/lib/supabase'
 
 interface FileDownloadSectionProps {
   recordId: number
@@ -20,6 +23,7 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [downloadStatus, setDownloadStatus] = useState('')
   const [currentDownloadFile, setCurrentDownloadFile] = useState<string>('')
+  const [isBulkDownloading, setIsBulkDownloading] = useState(false)
 
   // 파일 타입별 그룹화
   const groupedFiles = React.useMemo(() => {
@@ -48,6 +52,89 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
 
     return groups
   }, [files])
+
+  // ✅ 전체 파일 ZIP 다운로드 함수 (Task #7)
+  const handleBulkDownload = useCallback(async () => {
+    if (files.length === 0) {
+      onDownloadError?.('다운로드할 파일이 없습니다.')
+      return
+    }
+
+    try {
+      setIsBulkDownloading(true)
+      onDownloadStart?.()
+      setDownloadStatus('ZIP 파일 준비 중...')
+
+      const zip = new JSZip()
+      const downloadManager = new FileDownloadManager(supabase)
+      const promises: Promise<void>[] = []
+
+      // 각 파일에 대한 다운로드 Promise 생성
+      files.forEach((file, index) => {
+        const promise = new Promise<void>(async (resolve, reject) => {
+          try {
+            setDownloadStatus(`파일 처리 중: ${file.original_name} (${index + 1}/${files.length})`)
+            setDownloadProgress(((index) / files.length) * 100)
+
+            // 파일 다운로드 URL 생성 후 Blob 데이터 가져오기
+            const downloadUrl = await downloadManager.generateDownloadUrl(file.file_path, {
+              bucket: file.bucket
+            })
+            
+            const response = await fetch(downloadUrl)
+            if (!response.ok) {
+              throw new Error(`파일 다운로드 실패: ${response.statusText}`)
+            }
+            
+            const fileBlob = await response.blob()
+            
+            // ZIP에 파일 추가
+            zip.file(file.original_name, fileBlob)
+            resolve()
+          } catch (err) {
+            console.error(`파일 '${file.original_name}' 처리 오류:`, err)
+            // 개별 파일 오류는 무시하고 계속 진행
+            resolve()
+          }
+        })
+        promises.push(promise)
+      })
+
+      // 모든 파일 처리 완료 대기
+      await Promise.all(promises)
+
+      setDownloadStatus('ZIP 파일 생성 중...')
+      setDownloadProgress(90)
+
+      // ZIP 파일 생성 및 다운로드
+      const content = await zip.generateAsync({ 
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      })
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0]
+      const fileName = `work-files-${recordId}-${timestamp}.zip`
+      
+      saveAs(content, fileName)
+
+      setDownloadStatus(`ZIP 다운로드 완료: ${fileName}`)
+      setDownloadProgress(100)
+      onDownloadComplete?.()
+
+    } catch (err) {
+      console.error('전체 다운로드 오류:', err)
+      const errorMsg = '파일 전체 다운로드 중 오류가 발생했습니다.'
+      setDownloadStatus(errorMsg)
+      onDownloadError?.(errorMsg)
+    } finally {
+      setIsBulkDownloading(false)
+      setTimeout(() => {
+        setDownloadStatus('')
+        setDownloadProgress(0)
+      }, 3000)
+    }
+  }, [files, recordId, onDownloadStart, onDownloadComplete, onDownloadError])
 
   // 개별 파일 다운로드
   const handleSingleDownload = useCallback(async (file: FileMetadata) => {
@@ -308,6 +395,53 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
           )
         })}
       </div>
+
+      {/* 전체 파일 ZIP 다운로드 버튼 (Task #7) */}
+      {files.length > 1 && (
+        <div className="mt-6 pt-4 border-t border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-lg font-medium text-white mb-1">전체 파일 다운로드</h4>
+              <p className="text-sm text-gray-400">모든 파일을 ZIP 형식으로 일괄 다운로드</p>
+            </div>
+            <button
+              onClick={handleBulkDownload}
+              disabled={isBulkDownloading || isDownloading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-colors"
+            >
+              {isBulkDownloading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>ZIP 생성 중...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>전체 다운로드</span>
+                </>
+              )}
+            </button>
+          </div>
+          
+          {/* 전체 다운로드 진행 상태 */}
+          {isBulkDownloading && (
+            <div className="mt-4">
+              <div className="flex justify-between text-sm text-gray-300 mb-2">
+                <span>{downloadStatus}</span>
+                <span>{Math.round(downloadProgress)}%</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${downloadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 파일 통계 */}
       <div className="mt-6 pt-4 border-t border-gray-700">
