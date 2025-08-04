@@ -158,93 +158,163 @@ export const getWorkRecordWithFiles = async (id: number): Promise<WorkRecordData
   return data ? transformWorkRecordFromDB(data) : null
 }
 
-// 페이지네이션된 작업 기록 조회
-export const getWorkRecordsPaginated = async (
-  page: number = 1,
-  pageSize: number = 20,
-  includeFiles: boolean = false,
-  useCache: boolean = true
-): Promise<{ data: WorkRecordData[], totalCount: number }> => {
-  const from = (page - 1) * pageSize
-  const to = from + pageSize - 1
-  const cacheKey = `work_records_paginated:${page}:${pageSize}:${includeFiles}`;
-
-  if (useCache) {
-    const cachedData = await cacheManager.get(cacheKey);
-    if (cachedData && typeof cachedData === 'object' && 'data' in cachedData && 'totalCount' in cachedData) {
-      console.log('✅ 페이지네이션 데이터 캐시 반환:', cacheKey);
-      return cachedData as { data: WorkRecordData[]; totalCount: number };
-    }
-  }
-  
-  // 페이지네이션된 데이터 조회 - ECU/ACU 정보를 위해 remapping_works와 ECU/ACU 컬럼들 포함
-  const selectFields = includeFiles 
-    ? '*' 
-    : 'id, customer_id, equipment_id, work_date, work_type, total_price, status, created_at, remapping_works, ecu_maker, ecu_model, acu_manufacturer, acu_model, acu_type, connection_method, tools_used, work_description, price, user_id'
-  
-  const { data, count, error } = await supabase
-    .from('work_records')
-    .select(selectFields, { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(from, to)
-  
-  if (error) {
-    console.error('Error fetching paginated work records:', error)
-    throw error
-  }
-
-  console.log(`🔍 페이지네이션 데이터 DB 조회: ${page} 페이지, ${pageSize}개`);
-
-  const workRecords = data.map((record: any) => {
-    // remapping_works 처리 개선
-    let remappingWorks = []
-    if (record.remapping_works) {
-      try {
-        if (typeof record.remapping_works === 'string') {
-          remappingWorks = JSON.parse(record.remapping_works)
-        } else if (Array.isArray(record.remapping_works)) {
-          remappingWorks = record.remapping_works
-        }
-      } catch (error) {
-        console.warn('❌ remapping_works 파싱 실패:', error)
-        remappingWorks = []
-      }
-    }
+// ✅ 안정적인 상태 관리를 위한 개선된 함수들
+export const getWorkRecordsBasic = async (page: number = 1, pageSize: number = 20) => {
+  try {
+    const start = (page - 1) * pageSize
+    const end = start + pageSize - 1
+    
+    const { data, count, error } = await supabase
+      .from('work_records')
+      .select('id, customer_name, work_date, vehicle_info, work_type, created_at, updated_at', { count: 'exact' })
+      .range(start, end)
+      .order('work_date', { ascending: false })
+    
+    if (error) throw error
     
     return {
-      id: record.id,
-      customerId: record.customer_id,
-      equipmentId: record.equipment_id ?? undefined,
-      workDate: record.work_date,
-      workType: record.work_type,
-      totalPrice: record.total_price ?? undefined,
-      status: record.status || '',
-      remappingWorks: remappingWorks,
-      created_at: record.created_at,
-      // ECU/ACU 정보 추가 (데이터베이스 컬럼에서 직접 가져오기)
-      ecuMaker: record.ecu_maker,
-      ecuModel: record.ecu_model,
-      acuManufacturer: record.acu_manufacturer,
-      acuModel: record.acu_model,
-      acuType: record.acu_type,
-      connectionMethod: record.connection_method,
-      toolsUsed: record.tools_used,
-      workDescription: record.work_description,
-      price: record.price,
-      userId: record.user_id,
+      data: data || [],
+      totalCount: count || 0,
+      currentPage: page,
+      pageSize
     }
-  })
-  
-  const result = {
-    data: workRecords,
-    totalCount: count || 0
+  } catch (error) {
+    console.error('기본 작업 기록 로딩 실패:', error)
+    throw error
   }
+}
 
-  if (useCache) {
-    await cacheManager.set(cacheKey, result);
+export const enrichWorkRecordsData = async (basicData: any[], customers: CustomerData[], equipments: EquipmentData[]) => {
+  try {
+    // 기본 데이터에 고객 및 장비 정보 추가
+    const enrichedData = basicData.map(record => {
+      const customer = customers.find(c => c.id === record.customer_id)
+      const equipment = equipments.find(e => e.id === record.equipment_id)
+      
+      return {
+        ...record,
+        customer: customer || null,
+        equipment: equipment || null
+      }
+    })
+    
+    return enrichedData
+  } catch (error) {
+    console.error('작업 기록 데이터 보강 실패:', error)
+    return basicData // 실패 시 기본 데이터라도 반환
   }
+}
 
-  return result;
+// ✅ 메모리 누수 방지를 위한 안정적인 상세 데이터 로딩
+export const getWorkRecordDetailsStable = async (recordId: number) => {
+  try {
+    // 캐시 키 생성
+    const cacheKey = `work_record_details:${recordId}`
+    
+    // 캐시 확인
+    const cached = await cacheManager.get(cacheKey)
+    if (cached) {
+      console.log('캐시된 상세 데이터 사용:', recordId)
+      return cached
+    }
+    
+    // 상세 데이터 로드
+    const { data, error } = await supabase
+      .from('work_records')
+      .select(`
+        *,
+        customers:customer_id(id, name, phone, email, address),
+        equipment:equipment_id(id, type, manufacturer, model, year)
+      `)
+      .eq('id', recordId)
+      .single()
+    
+    if (error) throw error
+    
+    // 파일 메타데이터 로드
+    const fileMetadata = await getFileMetadataForRecord(recordId)
+    
+    const enrichedData = {
+      ...data,
+      files: fileMetadata
+    }
+    
+    // 캐시에 저장 (30분 TTL)
+    await cacheManager.set(cacheKey, enrichedData, { ttl: 1800 })
+    
+    return enrichedData
+  } catch (error) {
+    console.error('상세 데이터 로딩 실패:', error)
+    throw error
+  }
+}
+
+// ✅ 파일 메타데이터 조회 함수
+export const getFileMetadataForRecord = async (recordId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('file_metadata')
+      .select('*')
+      .eq('work_record_id', recordId)
+      .order('uploaded_at', { ascending: false })
+    
+    if (error) throw error
+    
+    return data || []
+  } catch (error) {
+    console.error('파일 메타데이터 로딩 실패:', error)
+    return []
+  }
+}
+
+// ✅ 안정적인 페이지네이션 데이터 로딩
+export const getWorkRecordsPaginatedStable = async (page: number = 1, pageSize: number = 20): Promise<{
+  data: any[]
+  totalCount: number
+  currentPage: number
+  pageSize: number
+  totalPages: number
+}> => {
+  try {
+    const cacheKey = `work_records_page:${page}:${pageSize}`
+    
+    // 캐시 확인
+    const cached = await cacheManager.get(cacheKey)
+    if (cached) {
+      return cached
+    }
+    
+    const start = (page - 1) * pageSize
+    const end = start + pageSize - 1
+    
+    const { data, count, error } = await supabase
+      .from('work_records')
+      .select(`
+        id, customer_name, work_date, vehicle_info, work_type, created_at, updated_at,
+        customers:customer_id(id, name, phone),
+        equipment:equipment_id(id, type, manufacturer, model)
+      `, { count: 'exact' })
+      .range(start, end)
+      .order('work_date', { ascending: false })
+    
+    if (error) throw error
+    
+    const result = {
+      data: data || [],
+      totalCount: count || 0,
+      currentPage: page,
+      pageSize,
+      totalPages: Math.ceil((count || 0) / pageSize)
+    }
+    
+    // 캐시에 저장 (5분 TTL)
+    await cacheManager.set(cacheKey, result, { ttl: 300 })
+    
+    return result
+  } catch (error) {
+    console.error('페이지네이션 데이터 로딩 실패:', error)
+    throw error
+  }
 }
 
 // 특정 고객의 작업 기록 조회

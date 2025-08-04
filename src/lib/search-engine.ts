@@ -1,585 +1,413 @@
 // 전문 검색 엔진 및 인덱싱 시스템
-import { supabase } from './supabase'
-import { cacheManager, CacheKeys, CacheTTL } from './cache-manager'
+import { WorkRecordData } from './work-records'
 
-// 검색 가능한 필드 정의
-export interface SearchableFields {
-  // 기본 정보
-  customerName?: string
-  vehicleModel?: string
-  licenseNumber?: string
-  engineCode?: string
-  
-  // 작업 정보
-  workType?: string
-  description?: string
-  notes?: string
-  tuningStage?: string
-  
-  // ECU 정보
-  ecuMaker?: string
-  ecuModel?: string
-  swVersion?: string
-  hwVersion?: string
-  
-  // 날짜 정보
-  workDate?: string
-  createdAt?: string
-}
-
-// 검색 결과 타입
 export interface SearchResult {
-  id: number
+  record: WorkRecordData
   score: number
-  matchedFields: string[]
-  highlightedContent: Record<string, string>
-  originalData: any
+  matches: Array<{ field: string; token: string }>
+  type: 'keyword' | 'fuzzy' | 'ngram'
 }
 
-// 검색 인덱스 항목
-interface IndexedDocument {
-  id: number
-  content: string
-  fields: SearchableFields
-  keywords: string[]
-  ngrams: string[]
-  createdAt: Date
-  updatedAt: Date
+export interface SearchOptions {
+  limit?: number
+  field?: string
+  fuzzy?: boolean
+  ngram?: boolean
 }
 
-// 검색 엔진 클래스
 export class SearchEngine {
-  private index: Map<number, IndexedDocument> = new Map()
-  private invertedIndex: Map<string, Set<number>> = new Map()
-  private ngramIndex: Map<string, Set<number>> = new Map()
-  private initialized = false
-
-  // 초기화
-  async initialize(): Promise<void> {
-    if (this.initialized) return
-
-    console.log('🔍 검색 엔진 초기화 시작...')
-    
-    try {
-      // 캐시에서 인덱스 복원
-      const cachedIndex = await cacheManager.get<any>('search_index')
-      if (cachedIndex) {
-        this.restoreFromCache(cachedIndex)
-        console.log('📦 캐시에서 검색 인덱스 복원 완료')
-      } else {
-        // 전체 데이터 인덱싱
-        await this.rebuildIndex()
-      }
-
-      this.initialized = true
-      console.log('✅ 검색 엔진 초기화 완료')
-    } catch (error) {
-      console.error('❌ 검색 엔진 초기화 실패:', error)
-    }
+  private index = new Map<string, any[]>()
+  private searchableFields = {
+    customer_name: { weight: 3, searchable: true, fuzzy: true },
+    equipment_type: { weight: 2, searchable: true, fuzzy: true },
+    manufacturer: { weight: 2, searchable: true, fuzzy: true },
+    model: { weight: 2, searchable: true, fuzzy: true },
+    work_type: { weight: 1, searchable: true, fuzzy: false },
+    ecu_maker: { weight: 2, searchable: true, fuzzy: true },
+    ecu_model: { weight: 2, searchable: true, fuzzy: true },
+    acu_manufacturer: { weight: 2, searchable: true, fuzzy: true },
+    acu_model: { weight: 2, searchable: true, fuzzy: true },
+    work_description: { weight: 1, searchable: true, fuzzy: true },
+    notes: { weight: 1, searchable: true, fuzzy: true }
   }
 
-  // 전체 인덱스 재구축
-  async rebuildIndex(): Promise<void> {
-    console.log('🔨 검색 인덱스 재구축 시작...')
-    
-    try {
-      // 기존 인덱스 초기화
-      this.index.clear()
-      this.invertedIndex.clear()
-      this.ngramIndex.clear()
-
-      // 모든 작업 기록 조회
-      const { data: workRecords, error } = await supabase
-        .from('work_records')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      // 각 레코드 인덱싱
-      for (const record of workRecords || []) {
-        await this.indexDocument(record)
-      }
-
-      // 인덱스를 캐시에 저장
-      await this.saveToCache()
-      
-      console.log(`✅ 검색 인덱스 재구축 완료: ${this.index.size}개 문서`)
-    } catch (error) {
-      console.error('❌ 인덱스 재구축 실패:', error)
-    }
+  // ✅ 검색 엔진 초기화
+  async initialize() {
+    console.log('🔍 검색 엔진 초기화 시작')
+    // 초기화 로직은 buildIndex에서 처리됨
+    console.log('✅ 검색 엔진 초기화 완료')
   }
 
-  // 문서 인덱싱
-  async indexDocument(data: any): Promise<void> {
-    try {
-      const fields = this.extractSearchableFields(data)
-      const content = this.buildSearchableContent(fields)
-      const keywords = this.extractKeywords(content)
-      const ngrams = this.generateNgrams(content)
-
-      const document: IndexedDocument = {
-        id: data.id,
-        content,
-        fields,
-        keywords,
-        ngrams,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date()
-      }
-
-      // 메인 인덱스에 저장
-      this.index.set(data.id, document)
-
-      // 역 인덱스 구축 (키워드 → 문서 ID)
-      keywords.forEach(keyword => {
-        if (!this.invertedIndex.has(keyword)) {
-          this.invertedIndex.set(keyword, new Set())
+  // ✅ 검색 인덱스 구축
+  async buildIndex(records: WorkRecordData[]) {
+    console.log('🔍 검색 인덱스 구축 시작:', records.length, '개 레코드')
+    
+    // 기존 인덱스 초기화
+    this.index.clear()
+    
+    records.forEach(record => {
+      // 각 검색 가능 필드에 대해 인덱스 생성
+      Object.entries(this.searchableFields).forEach(([field, config]) => {
+        if (config.searchable && record[field as keyof WorkRecordData]) {
+          const value = record[field as keyof WorkRecordData]?.toString().toLowerCase() || ''
+          if (value.trim()) {
+            const tokens = this.tokenize(value)
+            
+            tokens.forEach(token => {
+              if (!this.index.has(token)) {
+                this.index.set(token, [])
+              }
+              this.index.get(token)!.push({
+                record,
+                field,
+                weight: config.weight,
+                exact: token === value,
+                fuzzy: config.fuzzy
+              })
+            })
+          }
         }
-        this.invertedIndex.get(keyword)!.add(data.id)
       })
-
-      // N-gram 인덱스 구축
-      ngrams.forEach(ngram => {
-        if (!this.ngramIndex.has(ngram)) {
-          this.ngramIndex.set(ngram, new Set())
-        }
-        this.ngramIndex.get(ngram)!.add(data.id)
-      })
-
-    } catch (error) {
-      console.error(`문서 인덱싱 실패 (ID: ${data.id}):`, error)
-    }
-  }
-
-  // 검색 실행
-  async search(
-    query: string,
-    options: {
-      limit?: number
-      offset?: number
-      fields?: (keyof SearchableFields)[]
-      fuzzy?: boolean
-      exact?: boolean
-      dateRange?: { from: Date, to: Date }
-    } = {}
-  ): Promise<{ results: SearchResult[], total: number, took: number }> {
-    const startTime = Date.now()
+    })
     
-    if (!this.initialized) {
-      await this.initialize()
-    }
-
-    const {
-      limit = 20,
-      offset = 0,
-      fields,
-      fuzzy = true,
-      exact = false,
-      dateRange
-    } = options
-
-    try {
-      // 캐시 확인
-      const cacheKey = CacheKeys.SEARCH_RESULTS(JSON.stringify({ query, options }))
-      const cached = await cacheManager.get<any>(cacheKey)
-      if (cached) {
-        return {
-          ...cached,
-          took: Date.now() - startTime
-        }
-      }
-
-      let candidateIds: Set<number> = new Set()
-
-      if (exact) {
-        // 정확한 매칭 검색
-        candidateIds = this.exactSearch(query)
-      } else if (fuzzy) {
-        // 퍼지 검색 (오타 허용)
-        candidateIds = this.fuzzySearch(query)
-      } else {
-        // 일반 키워드 검색
-        candidateIds = this.keywordSearch(query)
-      }
-
-      // 필드 필터링
-      if (fields && fields.length > 0) {
-        candidateIds = this.filterByFields(candidateIds, fields)
-      }
-
-      // 날짜 범위 필터링
-      if (dateRange) {
-        candidateIds = this.filterByDateRange(candidateIds, dateRange)
-      }
-
-      // 스코어링 및 정렬
-      const scoredResults = this.scoreAndRank(Array.from(candidateIds), query)
-
-      // 페이지네이션
-      const paginatedResults = scoredResults.slice(offset, offset + limit)
-
-      // 하이라이팅
-      const resultsWithHighlights = paginatedResults.map(result => ({
-        ...result,
-        highlightedContent: this.highlightMatches(result.originalData, query)
-      }))
-
-      const searchResult = {
-        results: resultsWithHighlights,
-        total: scoredResults.length,
-        took: Date.now() - startTime
-      }
-
-      // 결과 캐싱
-      await cacheManager.set(cacheKey, searchResult, CacheTTL.SHORT)
-
-      return searchResult
-
-    } catch (error) {
-      console.error('검색 실행 오류:', error)
-      return {
-        results: [],
-        total: 0,
-        took: Date.now() - startTime
-      }
-    }
+    console.log('✅ 검색 인덱스 구축 완료:', this.index.size, '개 토큰')
   }
 
-  // 자동완성 제안
-  async suggest(
-    query: string,
-    limit: number = 10
-  ): Promise<string[]> {
-    if (!this.initialized) {
-      await this.initialize()
-    }
-
-    const suggestions = new Set<string>()
-    const normalizedQuery = this.normalizeText(query).toLowerCase()
-
-    // 키워드에서 제안 찾기
-    for (const keyword of this.invertedIndex.keys()) {
-      if (keyword.toLowerCase().startsWith(normalizedQuery)) {
-        suggestions.add(keyword)
-        if (suggestions.size >= limit) break
-      }
-    }
-
-    // N-gram에서 추가 제안 찾기
-    if (suggestions.size < limit) {
-      for (const ngram of this.ngramIndex.keys()) {
-        if (ngram.includes(normalizedQuery)) {
-          // 원본 키워드 복원 로직 (간단화)
-          suggestions.add(ngram)
-          if (suggestions.size >= limit) break
-        }
-      }
-    }
-
-    return Array.from(suggestions).slice(0, limit)
-  }
-
-  // 검색 가능한 필드 추출
-  private extractSearchableFields(data: any): SearchableFields {
-    const remappingWork = data.remapping_works?.[0] || {}
-    
-    return {
-      customerName: data.customer_name,
-      vehicleModel: data.vehicle_model,
-      licenseNumber: data.license_number,
-      engineCode: data.engine_code,
-      workType: data.work_type,
-      description: data.description,
-      notes: data.notes,
-      tuningStage: remappingWork.tuning_stage,
-      ecuMaker: remappingWork.ecu_maker,
-      ecuModel: remappingWork.ecu_model,
-      swVersion: remappingWork.sw_version,
-      hwVersion: remappingWork.hw_version,
-      workDate: data.work_date,
-      createdAt: data.created_at
-    }
-  }
-
-  // 검색 가능한 컨텐츠 생성
-  private buildSearchableContent(fields: SearchableFields): string {
-    return Object.values(fields)
-      .filter(value => value != null)
-      .join(' ')
-      .toLowerCase()
-  }
-
-  // 키워드 추출
-  private extractKeywords(text: string): string[] {
-    // 텍스트 정규화
-    const normalized = this.normalizeText(text)
-    
-    // 단어 분리 (공백, 특수문자 기준)
-    const words = normalized
-      .toLowerCase()
-      .split(/[\s\-_.,!?;:()[\]{}'"]+/)
-      .filter(word => word.length >= 2) // 2글자 이상만
-      .filter(word => !/^\d+$/.test(word)) // 숫자만인 경우 제외
-
-    // 중복 제거
-    return Array.from(new Set(words))
-  }
-
-  // N-gram 생성 (한글/영문 부분 문자열 검색용)
-  private generateNgrams(text: string, n: number = 3): string[] {
-    const ngrams: string[] = []
-    const cleanText = this.normalizeText(text).replace(/\s+/g, '')
-
-    for (let i = 0; i <= cleanText.length - n; i++) {
-      const ngram = cleanText.slice(i, i + n)
-      if (ngram.length === n) {
-        ngrams.push(ngram)
-      }
-    }
-
-    return Array.from(new Set(ngrams))
-  }
-
-  // 텍스트 정규화
-  private normalizeText(text: string): string {
+  // ✅ 토큰화 함수
+  private tokenize(text: string): string[] {
+    // 한글, 영문, 숫자 토큰화
     return text
-      .trim()
-      .replace(/\s+/g, ' ') // 연속 공백을 하나로
-      .replace(/[^\w\sㄱ-ㅎㅏ-ㅣ가-힣]/g, ' ') // 특수문자 제거
+      .split(/[\s,.-]+/)
+      .filter(token => token.length >= 2)
+      .map(token => token.toLowerCase())
+      .filter(token => token.length > 0)
   }
 
-  // 정확한 매칭 검색
-  private exactSearch(query: string): Set<number> {
-    const results = new Set<number>()
-    const normalizedQuery = this.normalizeText(query).toLowerCase()
-
-    for (const [id, doc] of this.index) {
-      if (doc.content.includes(normalizedQuery)) {
-        results.add(id)
-      }
-    }
-
-    return results
-  }
-
-  // 키워드 검색
-  private keywordSearch(query: string): Set<number> {
-    const keywords = this.extractKeywords(query)
-    const results = new Set<number>()
-
-    keywords.forEach(keyword => {
-      const docIds = this.invertedIndex.get(keyword)
-      if (docIds) {
-        docIds.forEach(id => results.add(id))
-      }
-    })
-
-    return results
-  }
-
-  // 퍼지 검색 (오타 허용)
-  private fuzzySearch(query: string): Set<number> {
-    const results = new Set<number>()
-    const ngrams = this.generateNgrams(query)
-
-    ngrams.forEach(ngram => {
-      const docIds = this.ngramIndex.get(ngram)
-      if (docIds) {
-        docIds.forEach(id => results.add(id))
-      }
-    })
-
-    return results
-  }
-
-  // 필드별 필터링
-  private filterByFields(candidateIds: Set<number>, fields: (keyof SearchableFields)[]): Set<number> {
-    const filtered = new Set<number>()
-
-    candidateIds.forEach(id => {
-      const doc = this.index.get(id)
-      if (doc) {
-        const hasMatchInFields = fields.some(field => 
-          doc.fields[field] != null && doc.fields[field] !== ''
-        )
-        if (hasMatchInFields) {
-          filtered.add(id)
-        }
-      }
-    })
-
-    return filtered
-  }
-
-  // 날짜 범위 필터링
-  private filterByDateRange(candidateIds: Set<number>, dateRange: { from: Date, to: Date }): Set<number> {
-    const filtered = new Set<number>()
-
-    candidateIds.forEach(id => {
-      const doc = this.index.get(id)
-      if (doc && doc.createdAt >= dateRange.from && doc.createdAt <= dateRange.to) {
-        filtered.add(id)
-      }
-    })
-
-    return filtered
-  }
-
-  // 스코어링 및 순위 매기기
-  private scoreAndRank(candidateIds: number[], query: string): SearchResult[] {
-    const keywords = this.extractKeywords(query)
+  // ✅ 통합 검색
+  async search(query: string, options: SearchOptions = {}): Promise<SearchResult[]> {
+    const startTime = performance.now()
     
-    return candidateIds
-      .map(id => {
-        const doc = this.index.get(id)!
-        const score = this.calculateScore(doc, keywords)
-        
-        return {
-          id,
-          score,
-          matchedFields: this.getMatchedFields(doc, keywords),
-          highlightedContent: {},
-          originalData: doc
+    if (!query.trim()) {
+      return []
+    }
+
+    const tokens = this.tokenize(query)
+    const results = new Map<number, SearchResult>()
+    
+    // 1. 키워드 검색
+    const keywordResults = await this.keywordSearch(tokens, options)
+    keywordResults.forEach(result => {
+      results.set(result.record.id, {
+        ...result,
+        score: result.score * 1.0,
+        type: 'keyword'
+      })
+    })
+    
+    // 2. 퍼지 검색 (옵션)
+    if (options.fuzzy !== false) {
+      const fuzzyResults = await this.fuzzySearch(tokens, options)
+      fuzzyResults.forEach(result => {
+        const existing = results.get(result.record.id)
+        if (existing) {
+          existing.score += result.score * 0.8
+          existing.matches.push(...result.matches)
+        } else {
+          results.set(result.record.id, {
+            ...result,
+            score: result.score * 0.8,
+            type: 'fuzzy'
+          })
         }
       })
+    }
+    
+    // 3. N-gram 검색 (옵션)
+    if (options.ngram !== false) {
+      const ngramResults = await this.ngramSearch(tokens, options)
+      ngramResults.forEach(result => {
+        const existing = results.get(result.record.id)
+        if (existing) {
+          existing.score += result.score * 0.6
+          existing.matches.push(...result.matches)
+        } else {
+          results.set(result.record.id, {
+            ...result,
+            score: result.score * 0.6,
+            type: 'ngram'
+          })
+        }
+      })
+    }
+    
+    // 중복 제거 및 점수 기반 정렬
+    const sortedResults = Array.from(results.values())
       .sort((a, b) => b.score - a.score)
+      .slice(0, options.limit || 50)
+    
+    const endTime = performance.now()
+    console.log(`🔍 검색 완료: ${sortedResults.length}개 결과 (${(endTime - startTime).toFixed(2)}ms)`)
+    
+    return sortedResults
   }
 
-  // 점수 계산
-  private calculateScore(doc: IndexedDocument, keywords: string[]): number {
-    let score = 0
-
-    keywords.forEach(keyword => {
-      // 키워드 빈도
-      const frequency = (doc.content.match(new RegExp(keyword, 'gi')) || []).length
-      score += frequency * 1
-
-      // 필드별 가중치
-      Object.entries(doc.fields).forEach(([field, value]) => {
-        if (value && value.toLowerCase().includes(keyword)) {
-          // 중요한 필드에 높은 점수
-          const fieldWeight = this.getFieldWeight(field)
-          score += fieldWeight
+  // ✅ 키워드 검색
+  private async keywordSearch(tokens: string[], options: SearchOptions): Promise<SearchResult[]> {
+    const results = new Map<number, SearchResult>()
+    
+    tokens.forEach(token => {
+      const matches = this.index.get(token) || []
+      
+      matches.forEach(match => {
+        if (options.field && match.field !== options.field) return
+        
+        const existing = results.get(match.record.id)
+        const score = match.weight * (match.exact ? 2 : 1)
+        
+        if (existing) {
+          existing.score += score
+          existing.matches.push({ field: match.field, token })
+        } else {
+          results.set(match.record.id, {
+            record: match.record,
+            score,
+            matches: [{ field: match.field, token }],
+            type: 'keyword'
+          })
         }
       })
     })
-
-    // 문서 나이에 따른 가중치 (최신 문서 우선)
-    const daysSinceCreated = (Date.now() - doc.createdAt.getTime()) / (1000 * 60 * 60 * 24)
-    const recencyBonus = Math.max(0, 30 - daysSinceCreated) * 0.1
-
-    return score + recencyBonus
+    
+    return Array.from(results.values())
   }
 
-  // 필드별 가중치
-  private getFieldWeight(field: string): number {
-    const weights: Record<string, number> = {
-      customerName: 5,
-      vehicleModel: 4,
-      licenseNumber: 5,
-      ecuMaker: 3,
-      ecuModel: 3,
-      workType: 2,
-      description: 1,
-      notes: 1
-    }
-    return weights[field] || 1
-  }
-
-  // 매칭된 필드 찾기
-  private getMatchedFields(doc: IndexedDocument, keywords: string[]): string[] {
-    const matchedFields: string[] = []
-
-    Object.entries(doc.fields).forEach(([field, value]) => {
-      if (value) {
-        const hasMatch = keywords.some(keyword => 
-          value.toLowerCase().includes(keyword)
-        )
-        if (hasMatch) {
-          matchedFields.push(field)
-        }
-      }
-    })
-
-    return matchedFields
-  }
-
-  // 검색어 하이라이팅
-  private highlightMatches(data: any, query: string): Record<string, string> {
-    const keywords = this.extractKeywords(query)
-    const highlighted: Record<string, string> = {}
-
-    const fields = this.extractSearchableFields(data)
-    Object.entries(fields).forEach(([field, value]) => {
-      if (value) {
-        let highlightedValue = value
-        keywords.forEach(keyword => {
-          const regex = new RegExp(`(${keyword})`, 'gi')
-          highlightedValue = highlightedValue.replace(regex, '<mark>$1</mark>')
+  // ✅ 퍼지 검색
+  private async fuzzySearch(tokens: string[], options: SearchOptions): Promise<SearchResult[]> {
+    const results = new Map<number, SearchResult>()
+    
+    tokens.forEach(token => {
+      // 유사한 토큰 찾기 (편집 거리 기반)
+      const similarTokens = this.findSimilarTokens(token, 2)
+      
+      similarTokens.forEach(similarToken => {
+        const matches = this.index.get(similarToken) || []
+        
+        matches.forEach(match => {
+          if (options.field && match.field !== options.field) return
+          if (!match.fuzzy) return
+          
+          const existing = results.get(match.record.id)
+          const similarity = this.calculateSimilarity(token, similarToken)
+          const score = match.weight * similarity * 0.8
+          
+          if (existing) {
+            existing.score += score
+            existing.matches.push({ field: match.field, token: similarToken })
+          } else {
+            results.set(match.record.id, {
+              record: match.record,
+              score,
+              matches: [{ field: match.field, token: similarToken }],
+              type: 'fuzzy'
+            })
+          }
         })
-        if (highlightedValue !== value) {
-          highlighted[field] = highlightedValue
-        }
-      }
+      })
     })
-
-    return highlighted
+    
+    return Array.from(results.values())
   }
 
-  // 캐시에 저장
-  private async saveToCache(): Promise<void> {
-    try {
-      const cacheData = {
-        index: Array.from(this.index.entries()),
-        invertedIndex: Array.from(this.invertedIndex.entries()).map(([k, v]) => [k, Array.from(v)]),
-        ngramIndex: Array.from(this.ngramIndex.entries()).map(([k, v]) => [k, Array.from(v)])
+  // ✅ N-gram 검색
+  private async ngramSearch(tokens: string[], options: SearchOptions): Promise<SearchResult[]> {
+    const results = new Map<number, SearchResult>()
+    
+    tokens.forEach(token => {
+      const ngrams = this.generateNGrams(token, 2)
+      
+      ngrams.forEach(ngram => {
+        const matches = this.index.get(ngram) || []
+        
+        matches.forEach(match => {
+          if (options.field && match.field !== options.field) return
+          
+          const existing = results.get(match.record.id)
+          const score = match.weight * 0.6
+          
+          if (existing) {
+            existing.score += score
+            existing.matches.push({ field: match.field, token: ngram })
+          } else {
+            results.set(match.record.id, {
+              record: match.record,
+              score,
+              matches: [{ field: match.field, token: ngram }],
+              type: 'ngram'
+            })
+          }
+        })
+      })
+    })
+    
+    return Array.from(results.values())
+  }
+
+  // ✅ 유사한 토큰 찾기
+  private findSimilarTokens(token: string, maxDistance: number): string[] {
+    const similarTokens: string[] = []
+    
+    for (const [indexToken] of this.index) {
+      const distance = this.levenshteinDistance(token, indexToken)
+      if (distance <= maxDistance && distance > 0) {
+        similarTokens.push(indexToken)
       }
-      await cacheManager.set('search_index', cacheData, CacheTTL.VERY_LONG)
-    } catch (error) {
-      console.error('검색 인덱스 캐시 저장 실패:', error)
     }
+    
+    return similarTokens
   }
 
-  // 캐시에서 복원
-  private restoreFromCache(cacheData: any): void {
-    try {
-      // 메인 인덱스 복원
-      this.index = new Map(cacheData.index)
-
-      // 역 인덱스 복원  
-      this.invertedIndex = new Map(
-        cacheData.invertedIndex.map(([k, v]: [string, number[]]) => [k, new Set(v)])
-      )
-
-      // N-gram 인덱스 복원
-      this.ngramIndex = new Map(
-        cacheData.ngramIndex.map(([k, v]: [string, number[]]) => [k, new Set(v)])
-      )
-    } catch (error) {
-      console.error('검색 인덱스 캐시 복원 실패:', error)
+  // ✅ 편집 거리 계산
+  private levenshteinDistance(str1: string, str2: string): number {
+    const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null))
+    
+    for (let i = 0; i <= str1.length; i++) matrix[0][i] = i
+    for (let j = 0; j <= str2.length; j++) matrix[j][0] = j
+    
+    for (let j = 1; j <= str2.length; j++) {
+      for (let i = 1; i <= str1.length; i++) {
+        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1,
+          matrix[j - 1][i] + 1,
+          matrix[j - 1][i - 1] + indicator
+        )
+      }
     }
+    
+    return matrix[str2.length][str1.length]
   }
 
-  // 인덱스 통계
-  getStats(): {
-    totalDocuments: number
-    totalKeywords: number
-    totalNgrams: number
-    indexSize: number
-  } {
+  // ✅ 유사도 계산
+  private calculateSimilarity(str1: string, str2: string): number {
+    const distance = this.levenshteinDistance(str1, str2)
+    const maxLength = Math.max(str1.length, str2.length)
+    return maxLength === 0 ? 1 : (maxLength - distance) / maxLength
+  }
+
+  // ✅ N-gram 생성
+  private generateNGrams(text: string, n: number): string[] {
+    const ngrams: string[] = []
+    for (let i = 0; i <= text.length - n; i++) {
+      ngrams.push(text.substring(i, i + n))
+    }
+    return ngrams
+  }
+
+  // ✅ 자동완성 제안
+  async generateSuggestions(query: string, limit: number = 5): Promise<Suggestion[]> {
+    const suggestions: Suggestion[] = []
+    
+    if (!query.trim()) return suggestions
+    
+    const tokens = this.tokenize(query)
+    const results = new Map<string, { count: number; type: string }>()
+    
+    tokens.forEach(token => {
+      const matches = this.index.get(token) || []
+      
+      matches.forEach(match => {
+        const value = match.record[match.field as keyof WorkRecordData]?.toString() || ''
+        if (value && value.toLowerCase().includes(query.toLowerCase())) {
+          const key = `${match.field}:${value}`
+          const existing = results.get(key)
+          
+          if (existing) {
+            existing.count++
+          } else {
+            results.set(key, {
+              count: 1,
+              type: this.getFieldType(match.field)
+            })
+          }
+        }
+      })
+    })
+    
+    // 점수 기반 정렬
+    const sortedSuggestions = Array.from(results.entries())
+      .map(([key, data]) => ({
+        text: key.split(':')[1],
+        type: data.type,
+        count: data.count
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+    
+    return sortedSuggestions.map(suggestion => ({
+      text: suggestion.text,
+      type: suggestion.type,
+      icon: this.getFieldIcon(suggestion.type)
+    }))
+  }
+
+  // ✅ 필드 타입 반환
+  private getFieldType(field: string): string {
+    const fieldTypes: Record<string, string> = {
+      customer_name: 'customer',
+      equipment_type: 'equipment',
+      manufacturer: 'manufacturer',
+      model: 'model',
+      work_type: 'work',
+      ecu_maker: 'ecu',
+      ecu_model: 'ecu',
+      acu_manufacturer: 'acu',
+      acu_model: 'acu',
+      work_description: 'description',
+      notes: 'note'
+    }
+    return fieldTypes[field] || 'other'
+  }
+
+  // ✅ 필드 아이콘 반환
+  private getFieldIcon(type: string): string {
+    const icons: Record<string, string> = {
+      customer: '👤',
+      equipment: '🚗',
+      manufacturer: '🏭',
+      model: '📋',
+      work: '🔧',
+      ecu: '⚙️',
+      acu: '🔧',
+      description: '📝',
+      note: '📄',
+      other: '📁'
+    }
+    return icons[type] || '📁'
+  }
+
+  // ✅ 검색 결과 하이라이팅
+  highlightSearchTerm(text: string, searchTerm: string): string {
+    if (!searchTerm.trim()) return text
+    
+    const regex = new RegExp(`(${searchTerm})`, 'gi')
+    return text.replace(regex, '<mark class="bg-yellow-200 text-black px-1 rounded">$1</mark>')
+  }
+
+  // ✅ 검색 통계
+  getSearchStats(): { indexSize: number; tokenCount: number; fieldCount: number } {
     return {
-      totalDocuments: this.index.size,
-      totalKeywords: this.invertedIndex.size,
-      totalNgrams: this.ngramIndex.size,
-      indexSize: JSON.stringify({
-        index: Array.from(this.index.entries()),
-        invertedIndex: Array.from(this.invertedIndex.entries()),
-        ngramIndex: Array.from(this.ngramIndex.entries())
-      }).length
+      indexSize: this.index.size,
+      tokenCount: Array.from(this.index.values()).flat().length,
+      fieldCount: Object.keys(this.searchableFields).length
     }
   }
 }
 
-// 글로벌 검색 엔진 인스턴스
+export interface Suggestion {
+  text: string
+  type: string
+  icon: string
+}
+
+// 싱글톤 인스턴스
 export const searchEngine = new SearchEngine() 

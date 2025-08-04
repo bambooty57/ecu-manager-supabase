@@ -25,6 +25,8 @@ export default function Navigation() {
     { name: '장비 관리', href: '/equipment', current: pathname === '/equipment' },
     { name: '작업 등록', href: '/work', current: pathname === '/work' },
     { name: '작업 이력', href: '/history', current: pathname === '/history' },
+    { name: '성능 모니터링', href: '/performance-monitoring', current: pathname === '/performance-monitoring' },
+    { name: '최적화 대시보드', href: '/optimization-dashboard', current: pathname === '/optimization-dashboard' },
   ]
 
   return (

@@ -2,8 +2,9 @@
 
 ## 📖 문서 정보
 - **문서명**: 작업이력페이지 수정계획 PRD
-- **버전**: 1.0
+- **버전**: 1.1
 - **작성일**: 2024년 12월 19일
+- **수정일**: 2024년 12월 19일
 - **작성자**: AI Assistant
 - **프로젝트**: ECU Manager Supabase
 - **우선순위**: 🔥 **긴급**
@@ -65,6 +66,35 @@ graph TD
 - ❌ **스크롤 이벤트 비효율**: 과도한 이벤트 발생
 - ❌ **로딩 상태 관리 부족**: 중복 요청 방지 안됨
 - ❌ **메모리 누수 가능성**: 이벤트 리스너 정리 부족
+
+### 2.3 🔥 **긴급 수정 필요 문제점**
+
+#### 2.3.1 데이터 표시 불안정성
+- ❌ **작업목록 데이터 시간 경과 사라짐**: 고객, ECU튜닝, ACU튜닝 리스트가 처음에는 표시되지만 시간이 지나면서 사라짐
+- ❌ **상세보기 기본정보 시간 경과 사라짐**: 작업상세보기 화면에서 기본정보가 처음에는 표시되지만 시간이 지나면서 사라짐
+- ❌ **메모리 누수 및 상태 관리 문제**: React 상태 관리 미흡과 메모리 누수로 인한 데이터 지속성 문제
+
+#### 2.3.2 파일 다운로드 기능 부재
+- ❌ **파일 다운로드 기능 없음**: 상세보기에서 업로드한 파일들을 다운로드할 수 있는 기능이 없음
+- ❌ **파일 접근성 문제**: 사용자가 업로드된 파일에 접근할 수 없음
+- ❌ **사용자 경험 저하**: 중요한 파일 다운로드 기능 부재
+
+#### 2.3.3 데이터 지속성 문제
+```mermaid
+graph TD
+    A[현재 데이터 지속성 문제] --> B[문제점]
+    B --> C[초기 데이터 표시]
+    B --> D[시간 경과]
+    B --> E[메모리 누수/상태 초기화]
+    
+    C --> F[사용자에게 데이터 표시]
+    D --> G[시간 경과]
+    E --> H[데이터 사라짐]
+    
+    F --> I[사용자 혼란]
+    G --> I
+    H --> I
+```
 
 ---
 
@@ -153,9 +183,307 @@ class EnhancedCacheManager {
 }
 ```
 
-### 3.2 UI/UX 최적화
+### 3.2 🔥 **긴급 수정 전략**
 
-#### 3.2.1 스켈레톤 로딩 구현
+#### 3.2.1 데이터 지속성 개선
+```typescript
+// ✅ 안정적인 상태 관리 (메모리 누수 방지)
+const useStableWorkRecords = () => {
+  const [records, setRecords] = useState<WorkRecord[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now())
+  
+  // 메모리 누수 방지를 위한 cleanup 함수
+  const cleanup = useCallback(() => {
+    // 이벤트 리스너 정리
+    // 타이머 정리
+    // 구독 해제
+  }, [])
+  
+  // 데이터 로딩 시 지속성 보장
+  const loadRecords = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      // 1단계: 기본 메타데이터 로드
+      const basicData = await getWorkRecordsBasic()
+      setRecords(basicData) // 즉시 표시
+      setLastUpdateTime(Date.now())
+      
+      // 2단계: 추가 데이터 로드 (백그라운드)
+      const enrichedData = await enrichWorkRecordsData(basicData)
+      setRecords(enrichedData) // 완전한 데이터로 업데이트
+      setLastUpdateTime(Date.now())
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '데이터 로딩 실패')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+  
+  // 주기적 데이터 갱신 (메모리 누수 방지)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const timeSinceLastUpdate = Date.now() - lastUpdateTime
+      // 5분마다 데이터 갱신 (메모리 누수 방지)
+      if (timeSinceLastUpdate > 300000) {
+        loadRecords()
+      }
+    }, 60000) // 1분마다 체크
+    
+    return () => {
+      clearInterval(interval)
+      cleanup()
+    }
+  }, [loadRecords, lastUpdateTime, cleanup])
+  
+  return { records, isLoading, error, refetch: loadRecords }
+}
+
+// ✅ 상세보기 지속성 개선 (메모리 누수 방지)
+const useStableWorkRecordDetails = (recordId: number) => {
+  const [details, setDetails] = useState<WorkRecordDetails | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now())
+  
+  // 메모리 누수 방지를 위한 cleanup 함수
+  const cleanup = useCallback(() => {
+    // 이벤트 리스너 정리
+    // 타이머 정리
+    // 구독 해제
+  }, [])
+  
+  useEffect(() => {
+    let isMounted = true // 컴포넌트 마운트 상태 추적
+    
+    const loadDetails = async () => {
+      try {
+        if (!isMounted) return
+        setIsLoading(true)
+        
+        // 캐시된 데이터 우선 사용
+        const cached = await cacheManager.get(`work_record_details:${recordId}`)
+        if (cached && isMounted) {
+          setDetails(cached)
+          setLastUpdateTime(Date.now())
+          setIsLoading(false)
+        }
+        
+        // 최신 데이터 로드
+        const freshData = await getWorkRecordDetails(recordId)
+        if (isMounted) {
+          setDetails(freshData)
+          setLastUpdateTime(Date.now())
+          await cacheManager.set(`work_record_details:${recordId}`, freshData, 'details')
+        }
+        
+      } catch (error) {
+        console.error('상세 데이터 로딩 실패:', error)
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+    
+    if (recordId) {
+      loadDetails()
+    }
+    
+    // 주기적 데이터 갱신 (메모리 누수 방지)
+    const interval = setInterval(() => {
+      const timeSinceLastUpdate = Date.now() - lastUpdateTime
+      // 3분마다 데이터 갱신 (메모리 누수 방지)
+      if (timeSinceLastUpdate > 180000 && isMounted) {
+        loadDetails()
+      }
+    }, 60000) // 1분마다 체크
+    
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      cleanup()
+    }
+  }, [recordId, lastUpdateTime, cleanup])
+  
+  return { details, isLoading }
+}
+```
+
+#### 3.2.2 파일 다운로드 기능 구현
+```typescript
+// ✅ 파일 다운로드 시스템
+class FileDownloadManager {
+  private supabase: SupabaseClient
+  
+  constructor(supabase: SupabaseClient) {
+    this.supabase = supabase
+  }
+  
+  // 파일 다운로드 URL 생성
+  async generateDownloadUrl(filePath: string, bucket: string = 'work-files'): Promise<string> {
+    const { data, error } = await this.supabase.storage
+      .from(bucket)
+      .createSignedUrl(filePath, 3600) // 1시간 유효
+    
+    if (error) throw new Error(`다운로드 URL 생성 실패: ${error.message}`)
+    return data.signedUrl
+  }
+  
+  // 파일 다운로드 실행
+  async downloadFile(filePath: string, fileName: string, bucket: string = 'work-files'): Promise<void> {
+    try {
+      const downloadUrl = await this.generateDownloadUrl(filePath, bucket)
+      
+      // 브라우저 다운로드 실행
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = fileName
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+    } catch (error) {
+      console.error('파일 다운로드 실패:', error)
+      throw new Error('파일 다운로드에 실패했습니다.')
+    }
+  }
+  
+  // 다중 파일 다운로드 (ZIP)
+  async downloadMultipleFiles(files: Array<{path: string, name: string}>, zipName: string = 'files.zip'): Promise<void> {
+    try {
+      const JSZip = (await import('jszip')).default
+      const zip = new JSZip()
+      
+      // 각 파일을 ZIP에 추가
+      for (const file of files) {
+        const downloadUrl = await this.generateDownloadUrl(file.path)
+        const response = await fetch(downloadUrl)
+        const blob = await response.blob()
+        zip.file(file.name, blob)
+      }
+      
+      // ZIP 파일 생성 및 다운로드
+      const zipBlob = await zip.generateAsync({ type: 'blob' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(zipBlob)
+      link.download = zipName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+    } catch (error) {
+      console.error('다중 파일 다운로드 실패:', error)
+      throw new Error('파일 다운로드에 실패했습니다.')
+    }
+  }
+}
+
+// ✅ 파일 다운로드 컴포넌트
+const FileDownloadSection = ({ recordId, files }: { recordId: number, files: FileMetadata[] }) => {
+  const [isDownloading, setIsDownloading] = useState(false)
+  const downloadManager = useMemo(() => new FileDownloadManager(supabase), [])
+  
+  const handleSingleDownload = async (file: FileMetadata) => {
+    try {
+      setIsDownloading(true)
+      await downloadManager.downloadFile(file.path, file.originalName, file.bucket)
+    } catch (error) {
+      toast.error('파일 다운로드에 실패했습니다.')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+  
+  const handleBulkDownload = async () => {
+    try {
+      setIsDownloading(true)
+      const fileList = files.map(file => ({
+        path: file.path,
+        name: file.originalName
+      }))
+      await downloadManager.downloadMultipleFiles(fileList, `work_record_${recordId}_files.zip`)
+    } catch (error) {
+      toast.error('파일 다운로드에 실패했습니다.')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+  
+  return (
+    <div className="bg-gray-800 rounded-lg p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-white">📁 첨부 파일</h3>
+        {files.length > 1 && (
+          <button
+            onClick={handleBulkDownload}
+            disabled={isDownloading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isDownloading ? '다운로드 중...' : '전체 다운로드'}
+          </button>
+        )}
+      </div>
+      
+      <div className="space-y-2">
+        {files.map((file, index) => (
+          <div key={index} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <span className="text-2xl">
+                {getFileIcon(file.originalName)}
+              </span>
+              <div>
+                <p className="text-white font-medium">{file.originalName}</p>
+                <p className="text-gray-400 text-sm">
+                  {formatFileSize(file.size)} • {formatDate(file.uploadedAt)}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleSingleDownload(file)}
+              disabled={isDownloading}
+              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+            >
+              다운로드
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// 파일 아이콘 및 유틸리티 함수
+const getFileIcon = (fileName: string): string => {
+  const ext = fileName.split('.').pop()?.toLowerCase()
+  const iconMap: Record<string, string> = {
+    pdf: '📄',
+    doc: '📝', docx: '📝',
+    xls: '📊', xlsx: '📊',
+    jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️',
+    mp4: '🎥', avi: '🎥', mov: '🎥',
+    zip: '📦', rar: '📦',
+    txt: '📄'
+  }
+  return iconMap[ext || ''] || '📄'
+}
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+```
+
+### 3.3 UI/UX 최적화
+
+#### 3.3.1 스켈레톤 로딩 구현
 ```typescript
 // ✅ 개선된 스켈레톤 컴포넌트
 const EnhancedLoadingSkeleton = ({ rows = 5, viewMode = 'list' }: { rows?: number, viewMode?: 'list' | 'grid' }) => (
@@ -183,7 +511,7 @@ const EnhancedLoadingSkeleton = ({ rows = 5, viewMode = 'list' }: { rows?: numbe
 )
 ```
 
-#### 3.2.2 무한 스크롤 최적화
+#### 3.3.2 무한 스크롤 최적화
 ```typescript
 // ✅ 개선된 무한 스크롤 훅
 const useOptimizedInfiniteScroll = (loadMore: () => Promise<void>) => {
@@ -228,9 +556,9 @@ const useOptimizedInfiniteScroll = (loadMore: () => Promise<void>) => {
 }
 ```
 
-### 3.3 검색 시스템 개선
+### 3.4 검색 시스템 개선
 
-#### 3.3.1 검색 인덱스 구현
+#### 3.4.1 검색 인덱스 구현
 ```typescript
 // ✅ 검색 인덱스 시스템
 class SearchIndex {
@@ -311,7 +639,7 @@ class SearchIndex {
 }
 ```
 
-#### 3.3.2 자동완성 시스템
+#### 3.4.2 자동완성 시스템
 ```typescript
 // ✅ 자동완성 시스템
 class AutocompleteSystem {
@@ -355,9 +683,9 @@ class AutocompleteSystem {
 }
 ```
 
-### 3.4 이미지 최적화
+### 3.5 이미지 최적화
 
-#### 3.4.1 이미지 압축 및 최적화
+#### 3.5.1 이미지 압축 및 최적화
 ```typescript
 // ✅ 이미지 최적화 시스템
 class ImageOptimizer {
@@ -428,7 +756,7 @@ class ImageOptimizer {
 }
 ```
 
-#### 3.4.2 레이지 로딩 구현
+#### 3.5.2 레이지 로딩 구현
 ```typescript
 // ✅ 이미지 레이지 로딩
 class LazyImageLoader {
@@ -476,9 +804,33 @@ class LazyImageLoader {
 
 ## 📅 구현 계획
 
-### 4.1 Phase 1: 긴급 개선 (1-2일)
+### 4.1 🔥 **Phase 0: 긴급 수정 (즉시)**
 
-#### 4.1.1 데이터 로딩 최적화
+#### 4.1.1 데이터 지속성 수정
+- [ ] **메모리 누수 방지**
+  - React 상태 관리 최적화
+  - 컴포넌트 언마운트 시 cleanup 로직 구현
+  - 이벤트 리스너 및 타이머 정리
+
+- [ ] **상세보기 지속성 개선**
+  - 상세보기 데이터 로딩 최적화
+  - 기본정보 표시 지속성 확보
+  - 주기적 데이터 갱신 시스템 구현
+
+#### 4.1.2 파일 다운로드 기능 구현
+- [ ] **파일 다운로드 시스템**
+  - Supabase Storage 다운로드 URL 생성
+  - 개별 파일 다운로드 기능
+  - 다중 파일 ZIP 다운로드 기능
+
+- [ ] **파일 다운로드 UI**
+  - 파일 목록 표시 컴포넌트
+  - 다운로드 버튼 및 진행률 표시
+  - 파일 타입별 아이콘 표시
+
+### 4.2 Phase 1: 긴급 개선 (1-2일)
+
+#### 4.2.1 데이터 로딩 최적화
 - [ ] **지연 로딩 구현**
   - 메타데이터 우선 로딩
   - 상세 데이터 필요시 로딩
@@ -494,7 +846,7 @@ class LazyImageLoader {
   - 데이터 프리로딩
   - 무한 스크롤 최적화
 
-#### 4.1.2 UI/UX 개선
+#### 4.2.2 UI/UX 개선
 - [ ] **스켈레톤 로딩 구현**
   - 리스트/그리드 모드별 스켈레톤
   - 애니메이션 효과
@@ -510,9 +862,9 @@ class LazyImageLoader {
   - 재시도 기능
   - 폴백 UI
 
-### 4.2 Phase 2: 성능 최적화 (3-5일)
+### 4.3 Phase 2: 성능 최적화 (3-5일)
 
-#### 4.2.1 검색 시스템 개선
+#### 4.3.1 검색 시스템 개선
 - [ ] **검색 인덱스 구현**
   - 인메모리 인덱스 구축
   - 토큰화 시스템
@@ -528,7 +880,7 @@ class LazyImageLoader {
   - 검색 결과 요약
   - 필터링 옵션
 
-#### 4.2.2 이미지 최적화
+#### 4.3.2 이미지 최적화
 - [ ] **자동 압축 시스템**
   - 업로드 시 자동 압축
   - 품질 설정
@@ -544,9 +896,9 @@ class LazyImageLoader {
   - 폴백 이미지
   - 점진적 향상
 
-### 4.3 Phase 3: 고급 기능 (1주일)
+### 4.4 Phase 3: 고급 기능 (1주일)
 
-#### 4.3.1 성능 모니터링
+#### 4.4.1 성능 모니터링
 - [ ] **실시간 성능 메트릭**
   - 로딩 시간 측정
   - 메모리 사용량 모니터링
@@ -557,7 +909,7 @@ class LazyImageLoader {
   - 최적화 제안
   - 자동 캐시 정리
 
-#### 4.3.2 고급 검색 기능
+#### 4.4.2 고급 검색 기능
 - [ ] **필터링 시스템 개선**
   - 다중 필터 조합
   - 필터 히스토리
@@ -581,6 +933,8 @@ class LazyImageLoader {
 | **검색 응답 시간** | 2-5초 | 0.1초 | **99%** |
 | **페이지 전환 시간** | 3-8초 | 0.5초 | **93%** |
 | **이미지 로딩 시간** | 5-15초 | 1-3초 | **80%** |
+| **데이터 지속성** | 0% | 100% | **신규** |
+| **파일 다운로드 기능** | 0% | 100% | **신규** |
 
 ### 5.2 정성적 목표
 
@@ -588,16 +942,23 @@ class LazyImageLoader {
   - 로딩 중 스켈레톤 표시
   - 부드러운 애니메이션
   - 직관적인 인터페이스
+  - 지속적인 데이터 표시
+  - 완전한 파일 다운로드 기능
 
 - [ ] **안정성 개선**
   - 에러 처리 강화
   - 폴백 메커니즘
   - 데이터 무결성 보장
+  - 메모리 누수 완전 방지
+  - 데이터 지속성 보장
 
 - [ ] **접근성 향상**
   - 키보드 네비게이션
   - 스크린 리더 지원
   - 반응형 디자인
+  - 지속적인 데이터 표시
+  - 완전한 파일 다운로드 기능
+  - 파일 접근성 개선
 
 ---
 
@@ -618,6 +979,7 @@ class LazyImageLoader {
 - **Webpack**: 번들 최적화
 - **Lighthouse**: 성능 측정
 - **React DevTools**: 디버깅
+- **JSZip**: 다중 파일 다운로드
 
 ---
 
@@ -644,11 +1006,25 @@ class LazyImageLoader {
   - 작업 이력 조회
   - 검색 및 필터링
   - 상세 정보 확인
+  - 파일 다운로드 기능
+  - 파일 다운로드 기능
 
 - [ ] **접근성 테스트**
   - 키보드 네비게이션
   - 스크린 리더 호환성
   - 색상 대비 검사
+
+### 7.3 🔥 **긴급 수정 테스트**
+- [ ] **데이터 지속성 테스트**
+  - 메모리 누수 방지 확인
+  - 상세보기 지속성 검증
+  - 상태 관리 최적화 확인
+
+- [ ] **파일 다운로드 기능 테스트**
+  - 개별 파일 다운로드
+  - 다중 파일 ZIP 다운로드
+  - 다양한 파일 형식 지원
+  - 다운로드 진행률 표시
 
 ---
 
@@ -658,11 +1034,13 @@ class LazyImageLoader {
 - **데이터 손실 위험**: 백업 전략 수립
 - **성능 저하**: 점진적 배포 및 롤백 계획
 - **호환성 문제**: 브라우저 지원 범위 확인
+- **파일 다운로드 보안**: 다운로드 URL 보안 검증
 
 ### 8.2 대응 방안
 - **단계적 배포**: 기능별 점진적 배포
 - **모니터링 강화**: 실시간 성능 모니터링
 - **롤백 계획**: 문제 발생 시 즉시 롤백
+- **보안 검증**: 파일 다운로드 권한 검증
 
 ---
 
@@ -673,23 +1051,28 @@ class LazyImageLoader {
 - **메모리 사용량**: 90% 이상 감소
 - **검색 성능**: 99% 이상 개선
 - **사용자 만족도**: 95% 이상 달성
+- **데이터 지속성**: 100% 달성
+- **파일 다운로드 기능**: 100% 구현
 
 ### 9.2 정성적 지표
 - **사용자 피드백**: 긍정적 피드백 90% 이상
 - **버그 리포트**: 50% 이상 감소
 - **지원 요청**: 70% 이상 감소
+- **메모리 누수**: 완전 방지
+- **파일 접근성**: 완전 구현
 
 ---
 
 ## 📝 결론
 
-이 PRD는 작업이력페이지의 성능 문제를 체계적으로 해결하여, 사용자 경험을 크게 개선하는 것을 목표로 합니다. 
+이 PRD는 작업이력페이지의 성능 문제와 사용자 경험 저하를 체계적으로 해결하여, 빠르고 효율적인 작업 이력 관리 시스템을 구축하는 것을 목표로 합니다.
 
 **핵심 성공 요인:**
 1. **지연 로딩**: 필요한 데이터만 로드하여 초기 성능 개선
 2. **캐싱 시스템**: 반복 요청 최소화로 성능 향상
 3. **검색 최적화**: 빠른 검색으로 사용자 편의성 증대
 4. **UI/UX 개선**: 직관적이고 반응성 좋은 인터페이스
+5. **🔥 긴급 수정**: 데이터 지속성 및 파일 다운로드 기능 완전 구현
 
 **"성능 최적화는 선택이 아닌 필수입니다!"** 🚀
 
