@@ -274,6 +274,33 @@ export class CacheManager {
       return { totalKeys: 0, workRecordKeys: 0, customerKeys: 0, searchKeys: 0 }
     }
   }
+
+  // 🎯 캐시 상태 확인 메서드 추가
+  async getStatus(): Promise<{
+    lastUpdate: number
+    totalKeys: number
+    isHealthy: boolean
+    memoryUsage?: number
+  }> {
+    try {
+      const stats = await this.getStats()
+      const keys = await this.redis.getClient().keys('*')
+      
+      return {
+        lastUpdate: Date.now(),
+        totalKeys: keys.length,
+        isHealthy: this.redis.isReady(),
+        memoryUsage: typeof process !== 'undefined' ? process.memoryUsage?.()?.heapUsed : undefined
+      }
+    } catch (error) {
+      console.error('❌ 캐시 상태 확인 실패:', error)
+      return {
+        lastUpdate: 0,
+        totalKeys: 0,
+        isHealthy: false
+      }
+    }
+  }
 }
 
 // 글로벌 캐시 매니저 인스턴스

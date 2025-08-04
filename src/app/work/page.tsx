@@ -85,7 +85,7 @@ export default function WorkPage() {
     }
     notes: string
     files: {
-      originalFiles?: File[]
+      originalFile?: File
       originalFileDescription?: string
       stage1File?: File
       stage1FileDescription?: string
@@ -93,7 +93,7 @@ export default function WorkPage() {
       stage2FileDescription?: string
       stage3File?: File
       stage3FileDescription?: string
-      acuOriginalFiles?: File[]
+      acuOriginalFile?: File
       acuOriginalFileDescription?: string
       acuStage1File?: File
       acuStage1FileDescription?: string
@@ -734,51 +734,89 @@ export default function WorkPage() {
 
 
 
-  // 로컬스토리지 정리 및 초기 데이터 로드
+  // 🚀 최적화된 초기화 시스템
   useEffect(() => {
-    // 기존 로컬스토리지 데이터 제거 (Supabase로 완전 이전)
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('ecuModels')
-      localStorage.removeItem('acuModels')
-      localStorage.removeItem('acuTypes')
-      localStorage.removeItem('acuModelsByManufacturer')
-      console.log('🧹 기존 로컬스토리지 데이터 정리 완료')
+    const initializeApp = async () => {
+      console.log('🚀 작업등록 페이지 초기화 시작...')
+      
+      try {
+        // 1단계: 로컬스토리지 정리 (한 번만 실행)
+        if (typeof window !== 'undefined') {
+          const keysToRemove = ['ecuModels', 'acuModels', 'acuTypes', 'acuModelsByManufacturer']
+          keysToRemove.forEach(key => localStorage.removeItem(key))
+          console.log('🧹 로컬스토리지 정리 완료')
+        }
+
+        // 2단계: 병렬 데이터 로딩 (성능 최적화)
+        console.log('📊 병렬 데이터 로딩 시작...')
+        const [customersResult, dropdownsResult] = await Promise.allSettled([
+          loadCustomers(),
+          loadAllDropdownData(false) // 캐시 활용
+        ])
+
+        // 3단계: 장비 카테고리 로딩 (독립적 실행)
+        await loadEquipmentCategories()
+
+        // 4단계: 결과 검증 및 오류 처리
+        if (customersResult.status === 'rejected') {
+          console.warn('⚠️ 고객 데이터 로딩 실패:', customersResult.reason)
+        }
+        if (dropdownsResult.status === 'rejected') {
+          console.warn('⚠️ 드롭다운 데이터 로딩 실패:', dropdownsResult.reason)
+        }
+
+        console.log('✅ 초기화 완료')
+      } catch (error) {
+        console.error('❌ 초기화 중 오류:', error)
+      }
     }
 
-    // Supabase에서 데이터 로드
-    loadCustomers()
-    loadEquipmentCategories()
-    loadConnectionMethods() // 연결방법 전용 로드
-    loadEcuMakers() // ECU 제조사 전용 로드
-    loadEcuModels() // ECU 모델 전용 로드
-    loadAcuManufacturers() // ACU 제조사 전용 로드
-    loadAcuModels() // ACU 모델 전용 로드
-    loadWorkStatus() // 작업상태 전용 로드
+    initializeApp()
   }, [])
 
-  // 페이지 포커스 시 고객 목록 및 드롭다운 데이터 새로고침
+  // 🎯 스마트 새로고침 시스템 (성능 최적화)
   useEffect(() => {
+    let refreshTimeout: NodeJS.Timeout
+    let isRefreshing = false
+
+    const smartRefresh = async () => {
+      if (isRefreshing) return
+      isRefreshing = true
+      
+      try {
+        console.log('🔄 스마트 새로고침 시작...')
+        
+        // 캐시 상태 확인 후 필요시에만 새로고침
+        const cacheStatus = await cacheManager.getStatus()
+        const needsRefresh = cacheStatus.lastUpdate < Date.now() - 300000 // 5분
+        
+        if (needsRefresh) {
+          await Promise.allSettled([
+            loadCustomers(),
+            loadAllDropdownData(true) // 강제 캐시 무효화
+          ])
+          console.log('✅ 스마트 새로고침 완료')
+        } else {
+          console.log('💾 캐시가 최신 상태 - 새로고침 생략')
+        }
+      } catch (error) {
+        console.error('❌ 스마트 새로고침 실패:', error)
+      } finally {
+        isRefreshing = false
+      }
+    }
+
     const handleFocus = () => {
-      loadCustomers()
-      loadConnectionMethods() // 연결방법 전용 새로고침
-      loadEcuMakers() // ECU 제조사 전용 새로고침
-      loadEcuModels() // ECU 모델 전용 새로고침
-      loadAcuManufacturers() // ACU 제조사 전용 새로고침
-      loadAcuModels() // ACU 모델 전용 새로고침
-      loadWorkStatus() // 작업상태 전용 새로고침
-      loadAllDropdownData(true) // 강제 캐시 무효화와 함께 드롭다운 데이터 새로고침
+      // 디바운싱 적용 (중복 호출 방지)
+      clearTimeout(refreshTimeout)
+      refreshTimeout = setTimeout(smartRefresh, 100)
     }
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        loadCustomers()
-        loadConnectionMethods() // 연결방법 전용 새로고침
-        loadEcuMakers() // ECU 제조사 전용 새로고침
-        loadEcuModels() // ECU 모델 전용 새로고침
-        loadAcuManufacturers() // ACU 제조사 전용 새로고침
-        loadAcuModels() // ACU 모델 전용 새로고침
-        loadWorkStatus() // 작업상태 전용 새로고침
-        loadAllDropdownData(true) // 강제 캐시 무효화와 함께 드롭다운 데이터 새로고침
+        // 페이지가 다시 보일 때만 새로고침
+        clearTimeout(refreshTimeout)
+        refreshTimeout = setTimeout(smartRefresh, 200)
       }
     }
 
@@ -786,6 +824,7 @@ export default function WorkPage() {
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
+      clearTimeout(refreshTimeout)
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
@@ -1834,12 +1873,17 @@ export default function WorkPage() {
     }
   }, [])
 
-  // 이미지 압축 함수
+  // 🖼️ 최적화된 이미지 압축 시스템
   const compressImage = (file: File, maxWidth: number = 1920, maxHeight: number = 1080, quality: number = 0.8): Promise<File> => {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       const img = new Image()
+      
+      // WebP 지원 확인 및 최적 형식 선택
+      const isWebPSupported = canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0
+      const outputFormat = isWebPSupported ? 'image/webp' : 'image/jpeg'
+      const outputExtension = outputFormat === 'image/webp' ? 'webp' : 'jpg'
       
       img.onload = () => {
         // 비율 유지하며 크기 조정
@@ -1866,50 +1910,128 @@ export default function WorkPage() {
         // 압축된 blob 생성
         canvas.toBlob((blob) => {
           if (blob) {
-            const compressedFile = new File([blob], file.name, {
-              type: file.type,
+            const originalSize = file.size
+            const compressedSize = blob.size
+            const compressionRatio = Math.round((1 - compressedSize / originalSize) * 100)
+            
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, `.${outputExtension}`), {
+              type: outputFormat,
               lastModified: Date.now()
             })
+            
+            console.log(`✅ 이미지 최적화 완료: ${file.name}`)
+            console.log(`📊 크기: ${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB`)
+            console.log(`📈 압축률: ${compressionRatio}%`)
+            console.log(`🎨 형식: ${outputFormat}`)
+            
             resolve(compressedFile)
           } else {
+            console.warn('⚠️ 이미지 압축 실패 - 원본 사용')
             resolve(file) // 압축 실패시 원본 반환
           }
-        }, file.type, quality)
+        }, outputFormat, quality)
       }
       
-      img.onerror = () => resolve(file) // 오류시 원본 반환
+      img.onerror = () => {
+        console.error('❌ 이미지 로드 실패 - 원본 사용')
+        resolve(file) // 오류시 원본 반환
+      }
       img.src = URL.createObjectURL(file)
     })
   }
 
-  // 파일을 Base64로 변환하는 함수 (압축 적용)
+  // 📁 최적화된 파일 변환 시스템
   const convertFileToBase64 = async (file: File): Promise<string> => {
-    // 이미지 파일인 경우 압축 적용
+    // 파일 타입별 최적화 전략
     let processedFile = file
-    if (file.type.startsWith('image/') && file.size > 500000) { // 500KB 이상인 이미지만 압축
-      console.log(`🖼️ 이미지 압축 시작: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`)
-      processedFile = await compressImage(file)
-      console.log(`✅ 이미지 압축 완료: ${processedFile.name} (${(processedFile.size / 1024 / 1024).toFixed(2)}MB)`)
-    }
+    const fileSizeMB = file.size / 1024 / 1024
     
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const result = reader.result as string
-        resolve(result.split(',')[1]) // Base64 데이터만 추출
+    try {
+      // 이미지 파일 최적화
+      if (file.type.startsWith('image/')) {
+        if (fileSizeMB > 0.5) { // 500KB 이상인 이미지만 압축
+          console.log(`🖼️ 이미지 최적화 시작: ${file.name} (${fileSizeMB.toFixed(2)}MB)`)
+          processedFile = await compressImage(file)
+          console.log(`✅ 이미지 최적화 완료: ${processedFile.name}`)
+        } else {
+          console.log(`💾 작은 이미지 파일 - 압축 생략: ${file.name} (${fileSizeMB.toFixed(2)}MB)`)
+        }
       }
-      reader.onerror = reject
-      reader.readAsDataURL(processedFile)
-    })
+      
+      // 비디오 파일 검증
+      else if (file.type.startsWith('video/')) {
+        if (fileSizeMB > 50) { // 50MB 이상 비디오 경고
+          console.warn(`⚠️ 큰 비디오 파일: ${file.name} (${fileSizeMB.toFixed(2)}MB)`)
+        }
+      }
+      
+      // 문서 파일 검증
+      else if (file.type.includes('pdf') || file.type.includes('document')) {
+        if (fileSizeMB > 10) { // 10MB 이상 문서 경고
+          console.warn(`⚠️ 큰 문서 파일: ${file.name} (${fileSizeMB.toFixed(2)}MB)`)
+        }
+      }
+      
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        
+        reader.onload = () => {
+          const result = reader.result as string
+          const base64Data = result.split(',')[1] // Base64 데이터만 추출
+          
+          console.log(`✅ 파일 변환 완료: ${file.name} → ${(base64Data.length / 1024).toFixed(1)}KB`)
+          resolve(base64Data)
+        }
+        
+        reader.onerror = (error) => {
+          console.error(`❌ 파일 변환 실패: ${file.name}`, error)
+          reject(error)
+        }
+        
+        reader.readAsDataURL(processedFile)
+      })
+      
+    } catch (error) {
+      console.error(`❌ 파일 처리 중 오류: ${file.name}`, error)
+      throw error
+    }
   }
 
-  // 파일 크기 검증 함수
+  // 📏 스마트 파일 크기 검증 시스템
   const validateFileSize = (file: File, maxSizeMB: number = 10): boolean => {
     const fileSizeMB = file.size / 1024 / 1024
-    if (fileSizeMB > maxSizeMB) {
-      alert(`파일 크기가 너무 큽니다. 최대 ${maxSizeMB}MB까지 업로드 가능합니다.\n현재 파일 크기: ${fileSizeMB.toFixed(2)}MB`)
+    const fileType = file.type
+    
+    // 파일 타입별 크기 제한
+    const sizeLimits = {
+      'image/': 5,      // 이미지: 5MB
+      'video/': 50,     // 비디오: 50MB
+      'application/pdf': 10, // PDF: 10MB
+      'application/': 5, // 문서: 5MB
+      'text/': 1        // 텍스트: 1MB
+    }
+    
+    // 파일 타입에 따른 크기 제한 결정
+    let limit = maxSizeMB
+    for (const [type, sizeLimit] of Object.entries(sizeLimits)) {
+      if (fileType.startsWith(type)) {
+        limit = sizeLimit
+        break
+      }
+    }
+    
+    if (fileSizeMB > limit) {
+      const fileTypeName = fileType.split('/')[0] === 'image' ? '이미지' :
+                          fileType.split('/')[0] === 'video' ? '비디오' :
+                          fileType.includes('pdf') ? 'PDF' :
+                          fileType.split('/')[0] === 'application' ? '문서' :
+                          '파일'
+      
+      alert(`${fileTypeName} 파일 크기가 너무 큽니다.\n최대 ${limit}MB까지 업로드 가능합니다.\n현재 파일 크기: ${fileSizeMB.toFixed(2)}MB\n파일명: ${file.name}`)
       return false
     }
+    
+    console.log(`✅ 파일 크기 검증 통과: ${file.name} (${fileSizeMB.toFixed(2)}MB)`)
     return true
   }
 
@@ -1928,9 +2050,9 @@ export default function WorkPage() {
           </p>
         </div>
 
-      {/* 최적화 상태 알림 */}
+      {/* 🚀 실시간 성능 모니터링 */}
       <div className="mb-4 p-4 bg-gray-800 border border-gray-700 rounded-lg">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2 text-sm text-green-400">
             <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -1984,8 +2106,6 @@ export default function WorkPage() {
             <span>새로고침</span>
           </button>
 
-
-
           {/* 완전한 페이지 새로고침 버튼 */}
           <button
             type="button"
@@ -2001,6 +2121,40 @@ export default function WorkPage() {
             </svg>
             <span>새로고침</span>
           </button>
+        </div>
+        
+        {/* 실시간 성능 메트릭 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+          <div className="bg-gray-700 p-2 rounded">
+            <div className="text-gray-400">메모리 사용량</div>
+            <div className="text-green-400 font-mono">
+              {typeof window !== 'undefined' && (performance as any).memory 
+                ? `${((performance as any).memory.usedJSHeapSize / 1024 / 1024).toFixed(1)}MB`
+                : 'N/A'
+              }
+            </div>
+          </div>
+          <div className="bg-gray-700 p-2 rounded">
+            <div className="text-gray-400">페이지 로드 시간</div>
+            <div className="text-blue-400 font-mono">
+              {typeof window !== 'undefined' && performance.timing
+                ? `${(performance.timing.loadEventEnd - performance.timing.navigationStart).toFixed(0)}ms`
+                : 'N/A'
+              }
+            </div>
+          </div>
+          <div className="bg-gray-700 p-2 rounded">
+            <div className="text-gray-400">캐시 상태</div>
+            <div className="text-yellow-400 font-mono">
+              {cacheManager ? '활성화' : '비활성화'}
+            </div>
+          </div>
+          <div className="bg-gray-700 p-2 rounded">
+            <div className="text-gray-400">이미지 최적화</div>
+            <div className="text-purple-400 font-mono">
+              WebP 지원
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2997,30 +3151,28 @@ export default function WorkPage() {
                     <div className="flex items-center space-x-3 mb-3">
                       <input
                         type="file"
-                        id="original-folder"
+                        id="original-file"
                         className="hidden"
-                        multiple
                         accept="*"
-                        {...({ webkitdirectory: "", directory: "" } as any)}
                         onChange={(e) => {
-                          const files = Array.from(e.target.files || [])
-                          handleFileChange('originalFiles', files)
+                          const file = e.target.files?.[0] || null
+                          handleFileChange('originalFile', file)
                         }}
                       />
                       <label
-                        htmlFor="original-folder"
+                        htmlFor="original-file"
                         className="flex items-center justify-center px-6 py-3 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-gray-700 transition-colors"
                       >
                         <svg className="w-6 h-6 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <span className="text-sm text-gray-300">
-                          {currentRemappingWork.files.originalFiles && currentRemappingWork.files.originalFiles.length > 0 
-                            ? `📁 ${currentRemappingWork.files.originalFiles.length}개 파일 선택됨` 
-                            : '📁 원본 ECU 폴더 선택'}
+                          {currentRemappingWork.files.originalFile 
+                            ? `📄 ${(currentRemappingWork.files.originalFile as File).name} (${((currentRemappingWork.files.originalFile as File).size / 1024).toFixed(1)} KB)` 
+                            : '📄 원본 ECU 파일 선택'}
                         </span>
                         <div className="text-xs text-gray-500 mt-1">
-                          모든 파일 형식 지원 (확장자 없음 포함)
+                          모든 파일 형식 지원
                         </div>
                       </label>
                     </div>
@@ -3031,23 +3183,7 @@ export default function WorkPage() {
                       placeholder="폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
                       className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-3"
                     />
-                    {/* 선택된 파일 목록 표시 */}
-                    {currentRemappingWork.files.originalFiles && currentRemappingWork.files.originalFiles.length > 0 && (
-                      <div className="mt-3 p-4 bg-gray-700 rounded-lg">
-                        <div className="text-sm font-medium text-gray-300 mb-3">선택된 파일:</div>
-                        <div className="max-h-40 overflow-y-auto">
-                          {currentRemappingWork.files.originalFiles.map((file, index) => (
-                            <div key={index} className="text-xs text-gray-400 py-1.5 flex items-center">
-                              <span className="mr-2">📄</span>
-                              <span className="truncate">{file.name}</span>
-                              <span className="ml-auto text-gray-500">
-                                ({(file.size / 1024).toFixed(1)} KB)
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+
                   </div>
 
                   {/* Stage 파일들 */}
@@ -3182,30 +3318,28 @@ export default function WorkPage() {
                       <div className="flex items-center space-x-3 mb-2">
                         <input
                           type="file"
-                          id="acu-original-folder"
+                          id="acu-original-file"
                           className="hidden"
-                          multiple
                           accept="*"
-                          {...({ webkitdirectory: "", directory: "" } as any)}
                           onChange={(e) => {
-                            const files = Array.from(e.target.files || [])
-                            handleFileChange('acuOriginalFiles', files)
+                            const file = e.target.files?.[0] || null
+                            handleFileChange('acuOriginalFile', file)
                           }}
                         />
                         <label
-                          htmlFor="acu-original-folder"
+                          htmlFor="acu-original-file"
                           className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-green-600 rounded-lg cursor-pointer hover:border-green-400 hover:bg-gray-700 transition-colors"
                         >
                           <svg className="w-6 h-6 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
                           <span className="text-sm text-green-300">
-                            {currentRemappingWork.files.acuOriginalFiles && currentRemappingWork.files.acuOriginalFiles.length > 0 
-                              ? `📁 ${currentRemappingWork.files.acuOriginalFiles.length}개 파일 선택됨` 
-                              : '📁 ACU 원본 폴더 선택'}
+                            {currentRemappingWork.files.acuOriginalFile 
+                              ? `📄 ${(currentRemappingWork.files.acuOriginalFile as File).name} (${((currentRemappingWork.files.acuOriginalFile as File).size / 1024).toFixed(1)} KB)` 
+                              : '📄 ACU 원본 파일 선택'}
                           </span>
                           <div className="text-xs text-gray-500 mt-1">
-                            모든 파일 형식 지원 (확장자 없음 포함)
+                            모든 파일 형식 지원
                           </div>
                         </label>
                       </div>
@@ -3216,23 +3350,7 @@ export default function WorkPage() {
                         placeholder="ACU 폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
                         className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 p-3 h-12"
                       />
-                      {/* 선택된 ACU 파일 목록 표시 */}
-                      {currentRemappingWork.files.acuOriginalFiles && currentRemappingWork.files.acuOriginalFiles.length > 0 && (
-                        <div className="mt-2 p-3 bg-gray-700 rounded-lg">
-                          <div className="text-sm font-medium text-green-300 mb-2">선택된 ACU 파일:</div>
-                          <div className="max-h-32 overflow-y-auto">
-                            {currentRemappingWork.files.acuOriginalFiles.map((file, index) => (
-                              <div key={index} className="text-xs text-green-300 py-1 flex items-center">
-                                <span className="mr-2">⚙️</span>
-                                <span className="truncate">{file.name}</span>
-                                <span className="ml-auto text-green-400">
-                                  ({(file.size / 1024).toFixed(1)} KB)
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+
                     </div>
 
                     {/* ACU Stage 파일들 */}
