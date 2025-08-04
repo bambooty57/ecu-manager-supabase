@@ -36,22 +36,22 @@ const getStatusColor = (status: string) => {
   const statusLower = status.toLowerCase()
   
   if (statusLower.includes('완료') || statusLower.includes('complete')) {
-    return 'bg-green-100 text-green-800 border-green-200'
+    return 'bg-success-100 text-success-800 border-success-200 dark:bg-success-900 dark:text-success-200'
   }
   if (statusLower.includes('진행') || statusLower.includes('progress')) {
-    return 'bg-blue-100 text-blue-800 border-blue-200'
+    return 'bg-primary-100 text-primary-800 border-primary-200 dark:bg-primary-900 dark:text-primary-200'
   }
   if (statusLower.includes('대기') || statusLower.includes('pending')) {
-    return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    return 'bg-warning-100 text-warning-800 border-warning-200 dark:bg-warning-900 dark:text-warning-200'
   }
   if (statusLower.includes('취소') || statusLower.includes('cancel')) {
-    return 'bg-red-100 text-red-800 border-red-200'
+    return 'bg-danger-100 text-danger-800 border-danger-200 dark:bg-danger-900 dark:text-danger-200'
   }
   if (statusLower.includes('검토') || statusLower.includes('review')) {
-    return 'bg-purple-100 text-purple-800 border-purple-200'
+    return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-200'
   }
   
-  return 'bg-gray-100 text-gray-800 border-gray-200'
+  return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-200'
 }
 
 // ✅ 날짜 포맷팅 함수
@@ -98,188 +98,239 @@ const transformECUData = (record: WorkRecord) => {
   }
 }
 
-const transformACUData = (record: WorkRecord) => {
-  return {
-    manufacturer: record.acu_manufacturer || 'Unknown',
-    model: record.acu_model || 'Unknown Model',
-    is_active: record.is_active || Boolean(
-      record.acu_type && 
-      record.acu_type !== 'N/A' && 
-      record.acu_type !== '' &&
-      record.acu_manufacturer &&
-      record.acu_model
-    )
-  }
-}
-
-// 튜닝 단계 추출 유틸리티 함수
+// ✅ ECU 모델에서 튜닝 스테이지 추출
 const extractTuningStageFromModel = (model: string): string | null => {
-  if (!model) return null
-  const stageMatch = model.match(/stage\s*(\d+)/i)
-  return stageMatch ? stageMatch[1] : null
+  const stagePatterns = [
+    { pattern: /stage\s*(\d+)/i, name: 'Stage' },
+    { pattern: /tune\s*(\d+)/i, name: 'Tune' },
+    { pattern: /level\s*(\d+)/i, name: 'Level' }
+  ]
+  
+  for (const { pattern, name } of stagePatterns) {
+    const match = model.match(pattern)
+    if (match) {
+      return `${name} ${match[1]}`
+    }
+  }
+  
+  return null
 }
 
-// ✅ ECU 정보 컴포넌트 (Task #3 개선버전)
+// ✅ ECU 정보 셀 컴포넌트
 const ECUInfoCell = ({ record }: { record: WorkRecord }) => {
-  // ECU 데이터 변환
   const ecuData = transformECUData(record)
   
-  // ECU 데이터가 없는 경우 처리
-  if (!record.ecu_maker && !record.ecu_model) {
-    return <span className="text-gray-400 italic">N/A</span>
-  }
-
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center">
-        <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
-        <span className="font-medium text-blue-700">
-          {ecuData.manufacturer}
-        </span>
+    <div className="space-y-1">
+      <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
+        {ecuData.manufacturer}
       </div>
-      <div className="text-sm text-gray-600 ml-4">
+      <div className="text-xs text-gray-600 dark:text-gray-400">
         {ecuData.model}
       </div>
       {ecuData.tuning_stage && (
-        <div className="mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs inline-block ml-4">
-          Stage {ecuData.tuning_stage}
-        </div>
-      )}
-      {record.connection_method && (
-        <div className="mt-1 px-2 py-0.5 bg-blue-900 text-blue-300 rounded text-xs inline-block ml-4">
-          {record.connection_method}
+        <div className="text-xs text-primary-600 dark:text-primary-400">
+          {ecuData.tuning_stage}
         </div>
       )}
     </div>
   )
 }
 
-// ✅ ACU 정보 컴포넌트 (Task #3 개선버전)
+// ✅ ACU 정보 셀 컴포넌트
 const ACUInfoCell = ({ record }: { record: WorkRecord }) => {
-  // ACU 데이터 변환
-  const acuData = transformACUData(record)
-  
-  // ACU 데이터가 없는 경우 처리
-  if (!record.acu_manufacturer && !record.acu_model) {
-    return <span className="text-gray-400 italic">N/A</span>
+  if (!record.acu_manufacturer && !record.acu_model && !record.acu_type) {
+    return (
+      <div className="text-gray-500 dark:text-gray-400 text-sm">
+        ACU 정보 없음
+      </div>
+    )
   }
-
+  
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center">
-        <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-        <span className="font-medium text-green-700">
-          {acuData.manufacturer}
-        </span>
-      </div>
-      <div className="text-sm text-gray-600 ml-4">
-        {acuData.model}
-      </div>
-      <div className="mt-1 ml-4">
-        <span className={`px-2 py-0.5 rounded text-xs ${
-          acuData.is_active 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-gray-100 text-gray-800'
-        }`}>
-          {acuData.is_active ? '활성화' : '비활성화'}
-        </span>
-      </div>
+    <div className="space-y-1">
+      {record.acu_manufacturer && (
+        <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
+          {record.acu_manufacturer}
+        </div>
+      )}
+      {record.acu_model && (
+        <div className="text-xs text-gray-600 dark:text-gray-400">
+          {record.acu_model}
+        </div>
+      )}
+      {record.acu_type && (
+        <div className="text-xs text-secondary-600 dark:text-secondary-400">
+          {record.acu_type}
+        </div>
+      )}
     </div>
   )
 }
 
 export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: WorkRecordRowProps) {
   const [isHovered, setIsHovered] = useState(false)
-
-  // ✅ 안전한 클릭 핸들러
+  
   const handleRowClick = (e: React.MouseEvent) => {
-    // 버튼 클릭 시에는 행 클릭 이벤트 무시
-    if ((e.target as Element).closest('button')) {
-      return
-    }
+    e.preventDefault()
     onRowClick(record)
   }
-
-  // ✅ 버튼 클릭 핸들러 (이벤트 전파 중단)
+  
   const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation()
     action()
   }
-
+  
+  const formattedDate = formatDate(record.work_date)
+  const statusColor = getStatusColor(record.status || '')
+  const formattedPrice = formatPrice(record.total_price)
+  
   return (
     <tr 
-      className={`cursor-pointer border-b border-gray-700 transition-colors duration-150 ${
-        isHovered ? 'bg-gray-700' : 'hover:bg-gray-700'
-      }`}
+      className={`
+        border-b border-gray-200 dark:border-gray-700 
+        hover:bg-gray-50 dark:hover:bg-gray-800 
+        transition-all duration-200 ease-in-out
+        cursor-pointer
+        ${isHovered ? 'transform scale-[1.01] shadow-md' : ''}
+      `}
       onClick={handleRowClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      role="row"
+      aria-label={`작업 기록: ${record.customer?.name || '알 수 없음'} - ${formattedDate}`}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onRowClick(record)
+        }
+      }}
     >
-      {/* 작업일 */}
-      <td className="py-3 px-4">
-        <span className="text-white">
-          {formatDate(record.work_date)}
-        </span>
+      {/* 작업일 - 모바일에서도 항상 표시 */}
+      <td 
+        className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100"
+        role="cell"
+        aria-label={`작업일: ${formattedDate}`}
+      >
+        <div className="font-medium">{formattedDate}</div>
       </td>
-
-      {/* 고객/장비 */}
-      <td className="py-3 px-4">
-        <div className="font-medium text-white">
-          {record.customer?.name || '알 수 없음'}
-        </div>
-        <div className="text-sm text-gray-400">
-          {record.equipment?.model || record.equipment?.type || 'N/A'}
+      
+      {/* 고객/차량 정보 - 모바일에서도 항상 표시 */}
+      <td 
+        className="py-3 px-4"
+        role="cell"
+        aria-label={`고객: ${record.customer?.name || '알 수 없음'}, 차량: ${record.equipment?.model || '알 수 없음'}`}
+      >
+        <div className="space-y-1">
+          <div className="font-medium text-gray-900 dark:text-gray-100">
+            {record.customer?.name || '알 수 없음'}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            {record.equipment?.model || '모델 정보 없음'}
+          </div>
+          {record.equipment?.type && (
+            <div className="text-xs text-gray-500 dark:text-gray-500">
+              {record.equipment.type}
+            </div>
+          )}
         </div>
       </td>
-
-      {/* ECU 정보 (파란색 계열) */}
-      <td className="py-3 px-4">
+      
+      {/* ECU 정보 - 태블릿 이상에서만 표시 */}
+      <td 
+        className="py-3 px-4 hidden md:table-cell"
+        role="cell"
+        aria-label="ECU 정보"
+      >
         <ECUInfoCell record={record} />
       </td>
-
-      {/* ACU 정보 (초록색 계열) */}
-      <td className="py-3 px-4">
+      
+      {/* ACU 정보 - 태블릿 이상에서만 표시 */}
+      <td 
+        className="py-3 px-4 hidden md:table-cell"
+        role="cell"
+        aria-label="ACU 정보"
+      >
         <ACUInfoCell record={record} />
       </td>
-
-      {/* 상태 */}
-      <td className="py-3 px-4">
-        <span className={`px-2 py-1 rounded-full text-xs border ${getStatusColor(record.status || '진행중')}`}>
-          {record.status || '진행중'}
+      
+      {/* 상태 - 모바일에서도 항상 표시 */}
+      <td 
+        className="py-3 px-4"
+        role="cell"
+        aria-label={`상태: ${record.status || '알 수 없음'}`}
+      >
+        <span className={`
+          inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
+          ${statusColor}
+        `}>
+          {record.status || '알 수 없음'}
         </span>
       </td>
-
-      {/* 금액 */}
-      <td className="py-3 px-4">
-        <span className="text-white font-medium">
-          {formatPrice(record.total_price)}
-        </span>
+      
+      {/* 금액 - 작은 모바일에서는 숨김 */}
+      <td 
+        className="py-3 px-4 hidden sm:table-cell"
+        role="cell"
+        aria-label={`금액: ${formattedPrice}`}
+      >
+        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {formattedPrice}
+        </div>
       </td>
-
-      {/* 작업 버튼들 */}
-      <td className="py-3 px-4">
-        <div className="flex space-x-1">
+      
+      {/* 액션 버튼 - 모바일에서도 항상 표시 */}
+      <td 
+        className="py-3 px-4"
+        role="cell"
+        aria-label="작업 버튼"
+      >
+        <div className="flex items-center space-x-2">
           <button
             onClick={(e) => handleButtonClick(e, () => onRowClick(record))}
-            className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
-            title="상세보기"
+            className="
+              text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300
+              font-medium text-sm transition-colors duration-200
+              focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+              dark:focus:ring-offset-gray-800
+            "
+            aria-label="상세보기"
           >
-            상세
+            상세보기
           </button>
-          <button
-            onClick={(e) => handleButtonClick(e, () => onEdit(record))}
-            className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
-            title="수정"
-          >
-            수정
-          </button>
-          <button
-            onClick={(e) => handleButtonClick(e, () => onDelete(record))}
-            className="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
-            title="삭제"
-          >
-            삭제
-          </button>
+          
+          <div className="flex space-x-1">
+            <button
+              onClick={(e) => handleButtonClick(e, () => onEdit(record))}
+              className="
+                p-1 text-accent-600 hover:text-accent-800 dark:text-accent-400 dark:hover:text-accent-300
+                transition-colors duration-200 rounded
+                focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2
+                dark:focus:ring-offset-gray-800
+              "
+              aria-label="수정"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            
+            <button
+              onClick={(e) => handleButtonClick(e, () => onDelete(record))}
+              className="
+                p-1 text-danger-600 hover:text-danger-800 dark:text-danger-400 dark:hover:text-danger-300
+                transition-colors duration-200 rounded
+                focus:outline-none focus:ring-2 focus:ring-danger-500 focus:ring-offset-2
+                dark:focus:ring-offset-gray-800
+              "
+              aria-label="삭제"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </td>
     </tr>

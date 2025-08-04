@@ -26,6 +26,7 @@ import JSZip from 'jszip'
 import { FileDownloadSection } from '@/components/FileDownloadSection'
 import { LoadingSkeleton, WorkRecordSkeleton, DetailSkeleton } from '@/components/LoadingSkeleton'
 import { LoadingIndicator, DataLoadingIndicator, FileLoadingIndicator, SearchLoadingIndicator, SaveLoadingIndicator, DeleteLoadingIndicator } from '@/components/LoadingIndicator'
+import DarkModeToggle from '@/components/DarkModeToggle'
 
 function HistoryPage() {
   // ✅ 안정적인 상태 관리
@@ -1297,6 +1298,9 @@ function HistoryPage() {
           }}
         />
         <main className="pt-20">
+          {/* 다크 모드 토글 */}
+          <DarkModeToggle />
+          
           {/* 홈으로 돌아가기 버튼 */}
           <div className="mb-6">
             <button
@@ -1330,21 +1334,21 @@ function HistoryPage() {
           <PerformanceMetrics />
 
           {/* 필터 섹션 */}
-          <div className="bg-gray-800 rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold text-white mb-4">🔍 필터 및 검색</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6 shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">🔍 필터 및 검색</h2>
             
             {/* 검색 입력 */}
             <div className="mb-4">
               <input
                 type="text"
                 placeholder="고객명, 차종, 작업내용으로 검색..."
-                className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
                 // 검색 기능은 나중에 구현
               />
             </div>
 
             {/* 필터 옵션들 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* 날짜 필터 */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">시작일</label>
@@ -1416,7 +1420,7 @@ function HistoryPage() {
                   tuningWork: '',
                   status: ''
                 })}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
               >
                 필터 초기화
               </button>
@@ -1424,10 +1428,10 @@ function HistoryPage() {
           </div>
 
           {/* 테이블 컨트롤 */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center space-x-4">
-              <h2 className="text-xl font-semibold text-white">📊 작업 이력 테이블</h2>
-              <span className="text-gray-400 text-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">📊 작업 이력 테이블</h2>
+              <span className="text-gray-600 dark:text-gray-400 text-sm">
                 총 {pagination.totalItems}개 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
                 {pagination.totalPages > 1 && ` (${pagination.currentPage}/${pagination.totalPages} 페이지)`}
               </span>
@@ -1435,11 +1439,11 @@ function HistoryPage() {
 
             {/* 페이지 크기 선택 */}
             <div className="flex items-center space-x-2">
-              <span className="text-gray-400 text-sm">페이지당 항목:</span>
+              <span className="text-gray-600 dark:text-gray-400 text-sm">페이지당 항목:</span>
               <select
                 value={pagination.itemsPerPage}
                 onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                className="p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                className="p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
               >
                 <option value={2}>2개</option>
                 <option value={5}>5개</option>
@@ -1454,107 +1458,128 @@ function HistoryPage() {
           {/* 작업 기록 테이블 */}
           <div className="mb-6">
             {renderLoadingSkeleton() || (
-              <div className="overflow-x-auto shadow rounded-lg">
-                <table className="min-w-full bg-gray-800">
+              <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
+                <table 
+                  className="min-w-full bg-white dark:bg-gray-800 table-modern"
+                  role="grid" 
+                  aria-label="작업 이력 테이블"
+                >
                   <thead>
-                    <tr className="bg-gray-700">
+                    <tr className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800" role="row">
                       <th 
-                        className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium cursor-pointer hover:bg-gray-600 transition-colors"
+                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium cursor-pointer hover:bg-primary-500 transition-colors"
                         onClick={() => handleSort('work_date')}
+                        role="columnheader"
+                        aria-sort={sortField === 'work_date' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                       >
                         <div className="flex items-center space-x-1">
                           <span>작업일</span>
                           {sortField === 'work_date' && (
-                            <span className="text-blue-400">
+                            <span aria-hidden="true" className="text-primary-200">
                               {sortDirection === 'asc' ? '↑' : '↓'}
                             </span>
                           )}
                         </div>
                       </th>
                       <th 
-                        className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium cursor-pointer hover:bg-gray-600 transition-colors"
+                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium cursor-pointer hover:bg-primary-500 transition-colors"
                         onClick={() => handleSort('customer_name')}
+                        role="columnheader"
+                        aria-sort={sortField === 'customer_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                       >
                         <div className="flex items-center space-x-1">
                           <span>고객/장비</span>
                           {sortField === 'customer_name' && (
-                            <span className="text-blue-400">
+                            <span aria-hidden="true" className="text-primary-200">
                               {sortDirection === 'asc' ? '↑' : '↓'}
                             </span>
                           )}
                         </div>
                       </th>
-                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                      <th 
+                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium hidden md:table-cell"
+                        role="columnheader"
+                      >
                         🔧 ECU 정보
                       </th>
-                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                      <th 
+                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium hidden md:table-cell"
+                        role="columnheader"
+                      >
                         ⚙️ ACU 정보
                       </th>
                       <th 
-                        className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium cursor-pointer hover:bg-gray-600 transition-colors"
+                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium cursor-pointer hover:bg-primary-500 transition-colors"
                         onClick={() => handleSort('status')}
+                        role="columnheader"
+                        aria-sort={sortField === 'status' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                       >
                         <div className="flex items-center space-x-1">
                           <span>상태</span>
                           {sortField === 'status' && (
-                            <span className="text-blue-400">
+                            <span aria-hidden="true" className="text-primary-200">
                               {sortDirection === 'asc' ? '↑' : '↓'}
                             </span>
                           )}
                         </div>
                       </th>
                       <th 
-                        className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium cursor-pointer hover:bg-gray-600 transition-colors"
+                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium cursor-pointer hover:bg-primary-500 transition-colors hidden sm:table-cell"
                         onClick={() => handleSort('price')}
+                        role="columnheader"
+                        aria-sort={sortField === 'price' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                       >
                         <div className="flex items-center space-x-1">
                           <span>금액</span>
                           {sortField === 'price' && (
-                            <span className="text-blue-400">
+                            <span aria-hidden="true" className="text-primary-200">
                               {sortDirection === 'asc' ? '↑' : '↓'}
                             </span>
                           )}
                         </div>
                       </th>
-                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                      <th 
+                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium"
+                        role="columnheader"
+                      >
                         작업
                       </th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody role="rowgroup">
                     {isLoadingRecords ? (
                       // 스켈레톤 로딩 (5개 행)
                       Array(5).fill(0).map((_, index) => (
-                        <tr key={`skeleton-${index}`} className="animate-pulse">
-                          <td className="py-3 px-4 border-b border-gray-700">
-                            <div className="h-4 bg-gray-600 rounded w-24"></div>
+                        <tr key={`skeleton-${index}`} className="animate-pulse" role="row">
+                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700" role="cell">
+                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
                           </td>
-                          <td className="py-3 px-4 border-b border-gray-700">
-                            <div className="h-4 bg-gray-600 rounded w-32 mb-2"></div>
-                            <div className="h-3 bg-gray-600 rounded w-24"></div>
+                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700" role="cell">
+                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-32 mb-2"></div>
+                            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
                           </td>
-                          <td className="py-3 px-4 border-b border-gray-700">
-                            <div className="h-4 bg-gray-600 rounded w-28 mb-2"></div>
-                            <div className="h-3 bg-gray-600 rounded w-20"></div>
+                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 hidden md:table-cell" role="cell">
+                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-28 mb-2"></div>
+                            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
                           </td>
-                          <td className="py-3 px-4 border-b border-gray-700">
-                            <div className="h-4 bg-gray-600 rounded w-28 mb-2"></div>
-                            <div className="h-3 bg-gray-600 rounded w-20"></div>
+                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 hidden md:table-cell" role="cell">
+                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-28 mb-2"></div>
+                            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
                           </td>
-                          <td className="py-3 px-4 border-b border-gray-700">
-                            <div className="h-6 bg-gray-600 rounded w-16"></div>
+                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700" role="cell">
+                            <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
                           </td>
-                          <td className="py-3 px-4 border-b border-gray-700">
-                            <div className="h-4 bg-gray-600 rounded w-20"></div>
+                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 hidden sm:table-cell" role="cell">
+                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
                           </td>
-                          <td className="py-3 px-4 border-b border-gray-700">
-                            <div className="h-8 bg-gray-600 rounded w-20"></div>
+                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700" role="cell">
+                            <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
                           </td>
                         </tr>
                       ))
                     ) : filteredRecords.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="py-8 text-center text-gray-400">
+                      <tr role="row">
+                        <td colSpan={7} className="py-8 text-center text-gray-500 dark:text-gray-400" role="cell">
                           {workRecords.length === 0 ? '작업 이력이 없습니다.' : '검색 결과가 없습니다.'}
                         </td>
                       </tr>
@@ -1577,14 +1602,14 @@ function HistoryPage() {
 
           {/* 고급 페이지네이션 */}
           {pagination.totalPages > 1 && (
-            <div className="bg-gray-800 rounded-lg p-4 mb-6">
-              <div className="flex items-center justify-between">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-lg border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0">
                 {/* 페이지 정보 */}
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-400 text-sm">
+                <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">
                     총 {pagination.totalItems}개 항목 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
                   </span>
-                  <span className="text-gray-400 text-sm">
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">
                     페이지 {pagination.currentPage} / {pagination.totalPages}
                   </span>
                 </div>
@@ -1595,8 +1620,9 @@ function HistoryPage() {
                   <button
                     onClick={handleFirstPage}
                     disabled={pagination.currentPage === 1}
-                    className="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
                     title="첫 페이지"
+                    aria-label="첫 페이지로 이동"
                   >
                     &lt;&lt;
                   </button>
@@ -1605,8 +1631,9 @@ function HistoryPage() {
                   <button
                     onClick={handlePreviousPage}
                     disabled={pagination.currentPage === 1}
-                    className="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
                     title="이전 페이지"
+                    aria-label="이전 페이지로 이동"
                   >
                     &lt;
                   </button>
@@ -1616,11 +1643,13 @@ function HistoryPage() {
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`px-3 py-2 rounded transition-colors ${
+                      className={`px-3 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
                         pagination.currentPage === page
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-700 text-white hover:bg-gray-600'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
                       }`}
+                      aria-label={`${page} 페이지로 이동`}
+                      aria-current={pagination.currentPage === page ? 'page' : undefined}
                     >
                       {page}
                     </button>
@@ -1630,8 +1659,9 @@ function HistoryPage() {
                   <button
                     onClick={handleNextPage}
                     disabled={pagination.currentPage === pagination.totalPages}
-                    className="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
                     title="다음 페이지"
+                    aria-label="다음 페이지로 이동"
                   >
                     &gt;
                   </button>
@@ -1640,8 +1670,9 @@ function HistoryPage() {
                   <button
                     onClick={handleLastPage}
                     disabled={pagination.currentPage === pagination.totalPages}
-                    className="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
                     title="마지막 페이지"
+                    aria-label="마지막 페이지로 이동"
                   >
                     &gt;&gt;
                   </button>
@@ -1649,11 +1680,11 @@ function HistoryPage() {
 
                 {/* 페이지당 항목 수 선택 */}
                 <div className="flex items-center space-x-2">
-                  <span className="text-gray-400 text-sm">페이지당:</span>
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">페이지당:</span>
                   <select
                     value={pagination.itemsPerPage}
                     onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                    className="px-2 py-1 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none text-sm"
+                    className="px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors text-sm"
                   >
                     <option value={2}>2개</option>
                     <option value={5}>5개</option>

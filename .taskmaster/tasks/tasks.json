@@ -130,7 +130,7 @@
           2,
           6
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -164,13 +164,13 @@
           10,
           11
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-08-04T18:34:25.065Z",
-      "updated": "2025-08-04T21:27:27.850Z",
+      "updated": "2025-08-04T21:41:37.858Z",
       "description": "Tasks for work-history-improvement context"
     }
   },
