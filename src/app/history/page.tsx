@@ -76,6 +76,16 @@ function HistoryPage() {
   const [sortField, setSortField] = useState('created_at')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [filteredRecords, setFilteredRecords] = useState<any[]>([])
+  
+  // ✅ 고급 페이지네이션 상태
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 20,
+    totalPages: 1,
+    totalItems: 0,
+    startIndex: 0,
+    endIndex: 0
+  })
 
   // ✅ 동적 ECU 모델 목록 상태
   const [ecuModels, setEcuModels] = useState<string[]>(() => {
@@ -493,16 +503,56 @@ function HistoryPage() {
     }
   }, [])
 
+  // ✅ 고급 페이지네이션 핸들러들
   const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      loadAllData(newPage)
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({
+        ...prev,
+        currentPage: newPage
+      }))
     }
   }
 
-  const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize)
-    setCurrentPage(1)
-    loadAllData(1)
+  const handleItemsPerPageChange = (newSize: number) => {
+    setPagination(prev => ({
+      ...prev,
+      itemsPerPage: newSize,
+      currentPage: 1 // 항목 수 변경 시 첫 페이지로 이동
+    }))
+  }
+
+  const handleFirstPage = () => {
+    handlePageChange(1)
+  }
+
+  const handleLastPage = () => {
+    handlePageChange(pagination.totalPages)
+  }
+
+  const handlePreviousPage = () => {
+    if (pagination.currentPage > 1) {
+      handlePageChange(pagination.currentPage - 1)
+    }
+  }
+
+  const handleNextPage = () => {
+    if (pagination.currentPage < pagination.totalPages) {
+      handlePageChange(pagination.currentPage + 1)
+    }
+  }
+
+  // 페이지 범위 계산
+  const getPageRange = () => {
+    const { currentPage, totalPages } = pagination
+    const pageRange = 5 // 한 번에 표시할 페이지 버튼 수
+    const startPage = Math.max(1, currentPage - Math.floor(pageRange / 2))
+    const endPage = Math.min(totalPages, startPage + pageRange - 1)
+    
+    const pages = []
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i)
+    }
+    return pages
   }
 
   const getAvailableModels = (manufacturer: string) => {
@@ -762,8 +812,26 @@ function HistoryPage() {
       return 0
     })
 
-    setFilteredRecords(result)
-  }, [workRecords, filters, sortField, sortDirection])
+    // 페이지네이션 계산
+    const totalItems = result.length
+    const totalPages = Math.ceil(totalItems / pagination.itemsPerPage)
+    const currentPage = Math.min(pagination.currentPage, totalPages || 1)
+    const startIndex = (currentPage - 1) * pagination.itemsPerPage
+    const endIndex = Math.min(startIndex + pagination.itemsPerPage, totalItems)
+    
+    // 현재 페이지에 해당하는 항목만 선택
+    const paginatedItems = result.slice(startIndex, endIndex)
+
+    setFilteredRecords(paginatedItems)
+    setPagination(prev => ({
+      ...prev,
+      currentPage,
+      totalPages,
+      totalItems,
+      startIndex,
+      endIndex
+    }))
+  }, [workRecords, filters, sortField, sortDirection, pagination.itemsPerPage, pagination.currentPage])
 
   // 필터링된 데이터가 변경될 때마다 적용
   useEffect(() => {
@@ -1341,18 +1409,21 @@ function HistoryPage() {
             <div className="flex items-center space-x-4">
               <h2 className="text-xl font-semibold text-white">📊 작업 이력 테이블</h2>
               <span className="text-gray-400 text-sm">
-                총 {totalCount}개 중 {filteredRecords.length}개 표시
+                총 {pagination.totalItems}개 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
+                {pagination.totalPages > 1 && ` (${pagination.currentPage}/${pagination.totalPages} 페이지)`}
               </span>
             </div>
 
             {/* 페이지 크기 선택 */}
             <div className="flex items-center space-x-2">
-              <span className="text-gray-400 text-sm">페이지 크기:</span>
+              <span className="text-gray-400 text-sm">페이지당 항목:</span>
               <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
+                value={pagination.itemsPerPage}
+                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
                 className="p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
               >
+                <option value={2}>2개</option>
+                <option value={5}>5개</option>
                 <option value={10}>10개</option>
                 <option value={20}>20개</option>
                 <option value={50}>50개</option>
@@ -1485,41 +1556,95 @@ function HistoryPage() {
             )}
           </div>
 
-          {/* 페이지네이션 */}
-          {totalPages > 1 && (
-            <div className="flex justify-center space-x-2 mb-6">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-              >
-                이전
-              </button>
-              
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const page = i + 1
-                return (
+          {/* 고급 페이지네이션 */}
+          {pagination.totalPages > 1 && (
+            <div className="bg-gray-800 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between">
+                {/* 페이지 정보 */}
+                <div className="flex items-center space-x-4">
+                  <span className="text-gray-400 text-sm">
+                    총 {pagination.totalItems}개 항목 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
+                  </span>
+                  <span className="text-gray-400 text-sm">
+                    페이지 {pagination.currentPage} / {pagination.totalPages}
+                  </span>
+                </div>
+
+                {/* 페이지네이션 컨트롤 */}
+                <div className="flex items-center space-x-2">
+                  {/* 첫 페이지 버튼 */}
                   <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`px-4 py-2 rounded ${
-                      currentPage === page
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-700 text-white hover:bg-gray-600'
-                    }`}
+                    onClick={handleFirstPage}
+                    disabled={pagination.currentPage === 1}
+                    className="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                    title="첫 페이지"
                   >
-                    {page}
+                    &lt;&lt;
                   </button>
-                )
-              })}
-              
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-              >
-                다음
-              </button>
+
+                  {/* 이전 페이지 버튼 */}
+                  <button
+                    onClick={handlePreviousPage}
+                    disabled={pagination.currentPage === 1}
+                    className="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                    title="이전 페이지"
+                  >
+                    &lt;
+                  </button>
+
+                  {/* 페이지 번호 버튼들 */}
+                  {getPageRange().map(page => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-2 rounded transition-colors ${
+                        pagination.currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-white hover:bg-gray-600'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  {/* 다음 페이지 버튼 */}
+                  <button
+                    onClick={handleNextPage}
+                    disabled={pagination.currentPage === pagination.totalPages}
+                    className="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                    title="다음 페이지"
+                  >
+                    &gt;
+                  </button>
+
+                  {/* 마지막 페이지 버튼 */}
+                  <button
+                    onClick={handleLastPage}
+                    disabled={pagination.currentPage === pagination.totalPages}
+                    className="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                    title="마지막 페이지"
+                  >
+                    &gt;&gt;
+                  </button>
+                </div>
+
+                {/* 페이지당 항목 수 선택 */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-gray-400 text-sm">페이지당:</span>
+                  <select
+                    value={pagination.itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                    className="px-2 py-1 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none text-sm"
+                  >
+                    <option value={2}>2개</option>
+                    <option value={5}>5개</option>
+                    <option value={10}>10개</option>
+                    <option value={20}>20개</option>
+                    <option value={50}>50개</option>
+                    <option value={100}>100개</option>
+                  </select>
+                </div>
+              </div>
             </div>
           )}
 
