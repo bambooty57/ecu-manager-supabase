@@ -20,6 +20,7 @@ import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/Navigation'
 import WorkRecordRow from '@/components/WorkRecordRow'
 import AuthGuard from '@/components/AuthGuard'
+import WorkDetailModal from '@/components/WorkDetailModal'
 import JSZip from 'jszip'
 import { FileDownloadSection } from '@/components/FileDownloadSection'
 import { LoadingSkeleton, WorkRecordSkeleton, DetailSkeleton } from '@/components/LoadingSkeleton'
@@ -1232,128 +1233,12 @@ function HistoryPage() {
             </div>
           )}
 
-          {/* 상세보기 모달 */}
-          {showDetailModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-white">작업 상세 정보</h2>
-                    <button
-                      onClick={closeModals}
-                      className="text-gray-400 hover:text-white text-2xl"
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  {renderDetailLoadingSkeleton() || (
-                    selectedRecord && (
-                      <div className="space-y-6">
-                        {/* 기본 정보 */}
-                        <div className="bg-gray-700 rounded-lg p-6">
-                          <h3 className="text-lg font-semibold text-white mb-4">📋 기본 정보</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">고객명</label>
-                              <p className="text-white">{selectedRecord.customer?.name || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">작업일</label>
-                              <p className="text-white">
-                                {selectedRecord.work_date ? new Date(selectedRecord.work_date).toLocaleDateString('ko-KR') : 'N/A'}
-                              </p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">차종</label>
-                              <p className="text-white">{selectedRecord.equipment?.type || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">제조사</label>
-                              <p className="text-white">{selectedRecord.equipment?.manufacturer || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">모델</label>
-                              <p className="text-white">{selectedRecord.equipment?.model || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">작업유형</label>
-                              <p className="text-white">{selectedRecord.work_type || 'N/A'}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* ECU 정보 */}
-                        <div className="bg-gray-700 rounded-lg p-6">
-                          <h3 className="text-lg font-semibold text-white mb-4">⚙️ ECU 정보</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">ECU 제조사</label>
-                              <p className="text-white">{selectedRecord.ecu_maker || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">ECU 모델</label>
-                              <p className="text-white">{selectedRecord.ecu_model || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">연결방법</label>
-                              <p className="text-white">{selectedRecord.connection_method || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">사용 도구</label>
-                              <p className="text-white">{selectedRecord.tools_used || 'N/A'}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* ACU 정보 */}
-                        <div className="bg-gray-700 rounded-lg p-6">
-                          <h3 className="text-lg font-semibold text-white mb-4">🔧 ACU 정보</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">ACU 제조사</label>
-                              <p className="text-white">{selectedRecord.acu_manufacturer || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">ACU 모델</label>
-                              <p className="text-white">{selectedRecord.acu_model || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">ACU 타입</label>
-                              <p className="text-white">{selectedRecord.acu_type || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">작업 설명</label>
-                              <p className="text-white">{selectedRecord.work_description || 'N/A'}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 파일 다운로드 섹션 */}
-                        {selectedRecord.files && selectedRecord.files.length > 0 && (
-                          <FileDownloadSection
-                            recordId={selectedRecord.id}
-                            files={selectedRecord.files}
-                            onDownloadStart={() => console.log('다운로드 시작')}
-                            onDownloadComplete={() => console.log('다운로드 완료')}
-                            onDownloadError={(error) => console.error('다운로드 오류:', error)}
-                          />
-                        )}
-
-                        {/* 메모 */}
-                        {selectedRecord.notes && (
-                          <div className="bg-gray-700 rounded-lg p-6">
-                            <h3 className="text-lg font-semibold text-white mb-4">📝 메모</h3>
-                            <p className="text-white whitespace-pre-wrap">{selectedRecord.notes}</p>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* 작업 상세보기 모달 (Task #5: HeadlessUI 기반 리팩토링) */}
+          <WorkDetailModal 
+            isOpen={showDetailModal}
+            onClose={() => setShowDetailModal(false)}
+            record={selectedRecord}
+          />
 
           {/* 다운로드 진행률 표시 */}
           {isDownloading && (
