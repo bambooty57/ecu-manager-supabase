@@ -18,6 +18,7 @@ import { cacheManager, CacheKeys, CacheTTL } from '@/lib/cache-manager'
 import { FileDownloadManager, FileMetadata } from '@/lib/file-download-manager'
 import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/Navigation'
+import WorkRecordRow from '@/components/WorkRecordRow'
 import AuthGuard from '@/components/AuthGuard'
 import JSZip from 'jszip'
 import { FileDownloadSection } from '@/components/FileDownloadSection'
@@ -42,7 +43,6 @@ function HistoryPage() {
   const [isLoadingRecords, setIsLoadingRecords] = useState(true)
   const [customers, setCustomers] = useState<CustomerData[]>([])
   const [equipments, setEquipments] = useState<EquipmentData[]>([])
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   
   // ✅ 페이지네이션 상태 개선
   const [currentPage, setCurrentPage] = useState(1)
@@ -571,6 +571,8 @@ function HistoryPage() {
     )
   }
 
+
+
   const handleEdit = (record: any) => {
     setSelectedRecord(record)
     setEditFormData({ ...record })
@@ -951,7 +953,7 @@ function HistoryPage() {
   // ✅ 개선된 로딩 스켈레톤
   const renderLoadingSkeleton = () => {
     if (isLoadingRecords) {
-      return <WorkRecordSkeleton rows={pageSize} viewMode={viewMode} />
+      return <WorkRecordSkeleton rows={pageSize} />
     }
     return null
   }
@@ -1062,7 +1064,7 @@ function HistoryPage() {
             </div>
 
             {/* 필터 초기화 버튼 */}
-            <div className="mt-4 flex justify-between items-center">
+            <div className="mt-4">
               <button
                 onClick={() => setFilters({
                   dateFrom: '',
@@ -1080,38 +1082,16 @@ function HistoryPage() {
               >
                 필터 초기화
               </button>
-              
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-400 text-sm">
-                  총 {totalCount}개 중 {workRecords.length}개 표시
-                </span>
-              </div>
             </div>
           </div>
 
-          {/* 뷰 모드 토글 */}
+          {/* 테이블 컨트롤 */}
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  viewMode === 'list' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                📋 목록 보기
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  viewMode === 'grid' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                🗂️ 그리드 보기
-              </button>
+              <h2 className="text-xl font-semibold text-white">📊 작업 이력 테이블</h2>
+              <span className="text-gray-400 text-sm">
+                총 {totalCount}개 중 {workRecords.length}개 표시
+              </span>
             </div>
 
             {/* 페이지 크기 선택 */}
@@ -1130,72 +1110,86 @@ function HistoryPage() {
             </div>
           </div>
 
-          {/* 작업 기록 목록 */}
+          {/* 작업 기록 테이블 */}
           <div className="mb-6">
             {renderLoadingSkeleton() || (
-              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
-                {workRecords.map((record) => (
-                  <div key={record.id} className={`bg-gray-800 rounded-lg p-6 ${viewMode === 'grid' ? 'h-full' : ''}`}>
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white mb-2">
-                          {record.customer?.name || '알 수 없음'}
-                        </h3>
-                        <p className="text-gray-400 text-sm">
-                          {record.work_date ? new Date(record.work_date).toLocaleDateString('ko-KR') : '날짜 없음'}
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleViewDetail(record)}
-                          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                        >
-                          상세보기
-                        </button>
-                        <button
-                          onClick={() => handleEdit(record)}
-                          className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
-                        >
-                          수정
-                        </button>
-                        <button
-                          onClick={() => handleDeleteRecord(record)}
-                          className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">차종:</span>
-                        <span className="text-white">{record.equipment?.type || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">제조사:</span>
-                        <span className="text-white">{record.equipment?.manufacturer || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">모델:</span>
-                        <span className="text-white">{record.equipment?.model || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">작업유형:</span>
-                        <span className="text-white">{record.work_type || 'N/A'}</span>
-                      </div>
-                    </div>
-
-                    {viewMode === 'grid' && (
-                      <div className="mt-4 pt-4 border-t border-gray-700">
-                        <div className="flex justify-between text-xs text-gray-400">
-                          <span>ID: {record.id}</span>
-                          <span>{record.files?.length || 0}개 파일</span>
-                        </div>
-                      </div>
+              <div className="overflow-x-auto shadow rounded-lg">
+                <table className="min-w-full bg-gray-800">
+                  <thead>
+                    <tr className="bg-gray-700">
+                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                        작업일
+                      </th>
+                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                        고객/장비
+                      </th>
+                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                        🔧 ECU 정보
+                      </th>
+                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                        ⚙️ ACU 정보
+                      </th>
+                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                        상태
+                      </th>
+                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                        금액
+                      </th>
+                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
+                        작업
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoadingRecords ? (
+                      // 스켈레톤 로딩 (5개 행)
+                      Array(5).fill(0).map((_, index) => (
+                        <tr key={`skeleton-${index}`} className="animate-pulse">
+                          <td className="py-3 px-4 border-b border-gray-700">
+                            <div className="h-4 bg-gray-600 rounded w-24"></div>
+                          </td>
+                          <td className="py-3 px-4 border-b border-gray-700">
+                            <div className="h-4 bg-gray-600 rounded w-32 mb-2"></div>
+                            <div className="h-3 bg-gray-600 rounded w-24"></div>
+                          </td>
+                          <td className="py-3 px-4 border-b border-gray-700">
+                            <div className="h-4 bg-gray-600 rounded w-28 mb-2"></div>
+                            <div className="h-3 bg-gray-600 rounded w-20"></div>
+                          </td>
+                          <td className="py-3 px-4 border-b border-gray-700">
+                            <div className="h-4 bg-gray-600 rounded w-28 mb-2"></div>
+                            <div className="h-3 bg-gray-600 rounded w-20"></div>
+                          </td>
+                          <td className="py-3 px-4 border-b border-gray-700">
+                            <div className="h-6 bg-gray-600 rounded w-16"></div>
+                          </td>
+                          <td className="py-3 px-4 border-b border-gray-700">
+                            <div className="h-4 bg-gray-600 rounded w-20"></div>
+                          </td>
+                          <td className="py-3 px-4 border-b border-gray-700">
+                            <div className="h-8 bg-gray-600 rounded w-20"></div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : workRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-gray-400">
+                          작업 이력이 없습니다.
+                        </td>
+                      </tr>
+                    ) : (
+                      workRecords.map((record) => (
+                        <WorkRecordRow
+                          key={record.id}
+                          record={record}
+                          onRowClick={handleViewDetail}
+                          onEdit={handleEdit}
+                          onDelete={handleDeleteRecord}
+                        />
+                      ))
                     )}
-                  </div>
-                ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

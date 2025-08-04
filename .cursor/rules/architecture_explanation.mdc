@@ -1,0 +1,228 @@
+# Architecture Diagram Explanation Rules
+
+---
+description: Rules for automatically generating architecture diagrams when explaining systems or features
+globs: **/*
+alwaysApply: true
+---
+
+## Core Principles
+
+- **Visual First**: Always create diagrams before text explanations
+- **Hierarchical Structure**: Explain from overview → components → details
+- **Interactive Representation**: Clearly distinguish user flows from data flows
+- **Practical Approach**: Create diagrams that aid understanding and implementation
+
+## Automatic Trigger Keywords
+
+When users mention these keywords, **automatically activate architecture diagram explanation mode**:
+
+- "구조를 설명해줘" / "explain the structure"
+- "어떻게 동작하는지 보여줘" / "show how it works"
+- "시스템을 그려줘" / "draw the system"
+- "아키텍처를 설명해줘" / "explain the architecture"
+- "흐름을 보여줘" / "show the flow"
+- "설계를 시각화해줘" / "visualize the design"
+- "다이어그램으로 설명해줘" / "explain with diagrams"
+
+## Mandatory Application Scenarios
+
+Always apply when explaining:
+- ✅ New features
+- ✅ System architecture
+- ✅ Data flows
+- ✅ User interfaces
+- ✅ API design
+- ✅ Database structure
+
+## Diagram Types and Usage
+
+### 🔄 Flowcharts
+**When to use**: Processes, workflows, decision flows
+```mermaid
+graph TD
+    A[Start] --> B{Condition Check}
+    B -->|Yes| C[Process A]
+    B -->|No| D[Process B]
+    C --> E[Result]
+    D --> E
+```
+
+**Use cases**:
+- User authentication flows
+- File upload processes
+- Data validation logic
+- Error handling flows
+
+### 🏗️ System Diagrams
+**When to use**: Overall system structure, component relationships
+```mermaid
+graph TB
+    subgraph "Frontend"
+        A[React Components]
+        B[State Management]
+    end
+    subgraph "Backend"
+        C[API Server]
+        D[Database]
+    end
+    A --> C
+    C --> D
+```
+
+**Use cases**:
+- Microservice architecture
+- Frontend-backend structure
+- Database relationships
+- External service integration
+
+### 📊 Sequence Diagrams
+**When to use**: Time-ordered interactions
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant D as Database
+    
+    U->>F: Request
+    F->>B: API Call
+    B->>D: Data Query
+    D-->>B: Result Return
+    B-->>F: Response
+    F-->>U: Screen Update
+```
+
+**Use cases**:
+- API call flows
+- User interactions
+- Data synchronization
+- Real-time communication
+
+### 🗂️ Entity Relationship Diagrams
+**When to use**: Database structure, data models
+```mermaid
+erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE-ITEM : contains
+    PRODUCT ||--o{ LINE-ITEM : includes
+```
+
+**Use cases**:
+- Database schema
+- Table relationships
+- Data modeling
+- Normalization structure
+
+## Standard Explanation Structure
+
+```markdown
+## 🏗️ [Feature Name] Architecture
+
+### 📋 System Components
+[Insert Diagram]
+
+#### 1️⃣ [Layer/Area 1]
+- **Role**: Main function description
+- **Components**: Detailed component list
+- **Responsibility**: Assigned roles
+
+#### 2️⃣ [Layer/Area 2]
+- **Role**: Main function description
+- **Components**: Detailed component list
+- **Responsibility**: Assigned roles
+
+### 🔄 Data Flow
+[Sequence Diagram or Flowchart]
+
+### 🎨 UI/UX Features
+- **Color Coding**: Meaning of each element's color
+- **Icon System**: Used icons and their meanings
+- **User Feedback**: Interaction elements
+
+### 🔧 Technical Implementation
+```typescript
+// Core code examples
+```
+
+### 📊 Performance Optimization
+- **Optimization Point 1**: Specific methods
+- **Optimization Point 2**: Specific methods
+```
+
+## Pre-Diagram Checklist
+
+1. [ ] Clearly define the scope of the system to explain
+2. [ ] Identify start and end points from user perspective
+3. [ ] Understand major components and interactions
+4. [ ] Confirm data flow directionality
+5. [ ] Consider exception cases and error handling
+
+## During Diagram Creation Checklist
+
+1. [ ] Select appropriate diagram type
+2. [ ] Apply standard color palette
+3. [ ] Use consistent icon system
+4. [ ] Provide clear labeling and descriptions
+5. [ ] Organize information hierarchically
+
+## During Explanation Checklist
+
+1. [ ] Diagram first, text explanation later
+2. [ ] Follow overview → parts → details order
+3. [ ] Specify role and responsibility of each component
+4. [ ] Explain data flows and interactions
+5. [ ] Include technical implementation code examples
+
+## Post-Completion Review Checklist
+
+1. [ ] Verify consistency between diagram and explanation
+2. [ ] Review if beginners can understand
+3. [ ] Check if information helps actual implementation
+4. [ ] Mention performance optimization aspects
+5. [ ] Include future extensibility considerations
+
+## Automatic Application Process
+
+```mermaid
+graph TD
+    A[User Question] --> B{Keyword Detection}
+    B -->|Yes| C[Architecture Explanation Mode]
+    B -->|No| D[General Explanation Mode]
+    
+    C --> E[Generate Diagram]
+    E --> F[Structured Explanation]
+    F --> G[Code Examples]
+    G --> H[Optimization Tips]
+    
+    D --> I[Text-focused Explanation]
+```
+
+## Expected Benefits
+
+### 📈 Explanation Quality Improvement
+- **Understanding Increase**: 90%+ improvement with visual explanations
+- **Memory Retention**: 3x improvement with diagrams
+- **Implementation Speed**: 50% faster with clear structure understanding
+
+### 🎯 Communication Improvement
+- **Team Collaboration**: Common understanding foundation
+- **Documentation**: Reusable architecture documents
+- **Knowledge Transfer**: Reduced onboarding time for new developers
+
+### 💡 Design Quality Improvement
+- **Structural Thinking**: Systematic system analysis
+- **Problem Detection**: Bottleneck identification through visualization
+- **Optimization Opportunities**: Clear identification of improvement points
+
+## Final Reminder
+
+**"Every complex system starts with a simple diagram!"**
+
+Through these rules:
+1. **Enhanced Visual Thinking** - Express complex concepts simply
+2. **Effective Communication** - Smooth communication with team members
+3. **Improved Design Quality** - Systematic system analysis and design
+4. **Automated Documentation** - Generate reusable architecture documents
+
+**"A picture is worth a thousand words!"** 🎯🏗️

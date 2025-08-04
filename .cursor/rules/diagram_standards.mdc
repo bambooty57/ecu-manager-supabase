@@ -1,0 +1,240 @@
+---
+description: Diagram styling standards and visual conventions for architecture documentation
+globs: **/*.md, **/*.mmd, **/*.tsx, **/*.ts
+alwaysApply: true
+---
+
+# Diagram Standards and Visual Conventions
+
+## Standard Color Palette
+
+Use these colors consistently across all diagrams:
+
+```typescript
+const DIAGRAM_COLORS = {
+  // Layer-based colors
+  frontend: '#e1f5fe',    // Light blue
+  backend: '#f3e5f5',     // Light purple
+  database: '#e8f5e8',    // Light green
+  external: '#fff3e0',    // Light orange
+  
+  // State-based colors
+  active: '#4caf50',      // Green
+  inactive: '#9e9e9e',    // Gray
+  error: '#f44336',       // Red
+  warning: '#ff9800',     // Orange
+  
+  // Data flow colors
+  request: '#2196f3',     // Blue
+  response: '#4caf50',    // Green
+  error_flow: '#f44336'   // Red
+}
+```
+
+## Standard Icon System
+
+Use these emoji icons consistently:
+
+```typescript
+const DIAGRAM_ICONS = {
+  // System components
+  user: '👤',
+  frontend: '🖥️',
+  backend: '⚙️',
+  database: '🗄️',
+  api: '🔌',
+  
+  // Files and data
+  file: '📄',
+  image: '🖼️',
+  video: '🎥',
+  data: '📊',
+  
+  // Processes
+  process: '⚡',
+  cache: '💾',
+  search: '🔍',
+  upload: '📤',
+  download: '📥',
+  
+  // States
+  success: '✅',
+  error: '❌',
+  warning: '⚠️',
+  info: 'ℹ️'
+}
+```
+
+## Node Styling Rules
+
+### Frontend Components
+```mermaid
+graph TB
+    A[User Interface]
+    style A fill:#e1f5fe,stroke:#1976d2,stroke-width:2px
+```
+- **Fill**: `#e1f5fe` (light blue)
+- **Stroke**: `#1976d2` (blue)
+- **Width**: `2px`
+
+### Backend Components
+```mermaid
+graph TB
+    B[Business Logic]
+    style B fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+```
+- **Fill**: `#f3e5f5` (light purple)
+- **Stroke**: `#7b1fa2` (purple)
+- **Width**: `2px`
+
+### Database Components
+```mermaid
+graph TB
+    C[Data Layer]
+    style C fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+```
+- **Fill**: `#e8f5e8` (light green)
+- **Stroke**: `#388e3c` (green)
+- **Width**: `2px`
+
+### External Services
+```mermaid
+graph TB
+    D[External Service]
+    style D fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+```
+- **Fill**: `#fff3e0` (light orange)
+- **Stroke**: `#f57c00` (orange)
+- **Width**: `2px`
+
+## Scenario-Specific Guidelines
+
+### Web Application Features
+1. **Overall Architecture Diagram** - System overview
+2. **User Journey Flowchart** - User experience
+3. **Data Flow Sequence** - Backend processing
+4. **UI Component Structure** - Frontend composition
+5. **API Design** - Interface specification
+
+### Database Design
+1. **ERD (Entity Relationship Diagram)** - Table relationships
+2. **Data Flow Diagram** - CRUD operations
+3. **Index Structure** - Performance optimization
+4. **Migration Flow** - Schema changes
+
+### API Design
+1. **API Architecture Diagram** - Overall structure
+2. **Request-Response Sequence** - Communication flow
+3. **Error Handling Flowchart** - Exception cases
+4. **Authentication/Authorization Diagram** - Security structure
+
+### Performance Optimization
+1. **Current vs Improved Architecture** - Before/After comparison
+2. **Bottleneck Analysis** - Problem visualization
+3. **Optimization Strategy Flow** - Improvement methods
+4. **Performance Metrics Dashboard** - Measurement indicators
+
+## Implementation Examples
+
+### System Overview Template
+```mermaid
+graph TB
+    subgraph "Frontend Layer"
+        A[🖥️ React Components]
+        B[⚙️ State Management]
+    end
+    subgraph "Backend Layer"
+        C[🔌 API Server]
+        D[⚡ Business Logic]
+    end
+    subgraph "Data Layer"
+        E[🗄️ Database]
+        F[💾 Cache]
+    end
+    
+    A --> C
+    C --> D
+    D --> E
+    D --> F
+    
+    style A fill:#e1f5fe,stroke:#1976d2,stroke-width:2px
+    style B fill:#e1f5fe,stroke:#1976d2,stroke-width:2px
+    style C fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style D fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style E fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    style F fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+```
+
+### Data Flow Template
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant F as 🖥️ Frontend
+    participant A as 🔌 API
+    participant D as 🗄️ Database
+    
+    U->>F: User Action
+    F->>A: API Request
+    A->>D: Query Data
+    D-->>A: Return Results
+    A-->>F: JSON Response
+    F-->>U: Update UI
+```
+
+### Error Flow Template
+```mermaid
+graph TD
+    A[📤 Request] --> B{🔍 Validation}
+    B -->|✅ Valid| C[⚡ Process]
+    B -->|❌ Invalid| D[⚠️ Error Response]
+    C --> E{🔍 Business Logic}
+    E -->|✅ Success| F[📊 Return Data]
+    E -->|❌ Error| G[❌ Handle Error]
+    G --> H[📥 Error Response]
+    
+    style D fill:#f44336,color:#fff
+    style G fill:#f44336,color:#fff
+    style H fill:#f44336,color:#fff
+```
+
+## Quality Standards
+
+### Consistency Requirements
+- All diagrams must use the standard color palette
+- Icons must be consistent across the project
+- Node styling must follow the defined rules
+- Labels must be clear and descriptive
+
+### Readability Standards
+- Maximum 7±2 nodes per diagram level
+- Clear hierarchy with proper spacing
+- Logical flow direction (top-to-bottom, left-to-right)
+- Meaningful component grouping with subgraphs
+
+### Documentation Integration
+- Every diagram must have accompanying text explanation
+- Code examples should follow diagram structure
+- Performance implications should be noted
+- Future extensibility should be considered
+
+## Validation Checklist
+
+### Before Creating Diagrams
+- [ ] Identify the appropriate diagram type
+- [ ] Define the scope and boundaries
+- [ ] List all components and relationships
+- [ ] Choose the right level of detail
+
+### During Creation
+- [ ] Apply standard colors and icons
+- [ ] Use consistent styling rules
+- [ ] Maintain logical flow direction
+- [ ] Group related components
+
+### After Completion
+- [ ] Verify visual consistency
+- [ ] Check readability and clarity
+- [ ] Ensure alignment with text explanation
+- [ ] Validate against quality standards
+
+These standards ensure that all architecture diagrams in the project maintain visual consistency, professional appearance, and clear communication of technical concepts.

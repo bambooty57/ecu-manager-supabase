@@ -41,3 +41,49 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Logs
+logs
+*.log
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+.env
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+
+# Task files
+# tasks.json
+# tasks/
+
+# AI Tool Settings (only keep .cursor and .github)
+.claude/
+.clinerules/
+.gemini/
+.kiro/
+.roo/
+.trae/
+.windsurf/
+.zed/
+opencode.json
+.roomodes
+.rules
+
+# Temporary/Test files
+*.tsbuildinfo
+check_current_data.sql
+migration_analysis.sql
+query_work_records.js
+test_service_role.js
+list_tables*.js
+
+# MCP local configs (use global config)
+.mcp.json 
