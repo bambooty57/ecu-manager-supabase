@@ -1147,6 +1147,25 @@ export default function WorkPage() {
 
   // 파일 입력 핸들러
   const handleFileChange = (fileType: string, file: File | File[] | null, description?: string) => {
+    // 파일 크기 및 형식 검증
+    if (file) {
+      if (Array.isArray(file)) {
+        // 폴더 선택의 경우
+        for (const f of file) {
+          if (!validateFileSize(f, 50)) { // 폴더 파일은 50MB 제한
+            alert(`파일 크기가 너무 큽니다: ${f.name} (최대 50MB)`)
+            return
+          }
+        }
+      } else {
+        // 단일 파일 선택의 경우
+        if (!validateFileSize(file, 50)) { // 단일 파일도 50MB 제한
+          alert(`파일 크기가 너무 큽니다: ${file.name} (최대 50MB)`)
+          return
+        }
+      }
+    }
+
     setCurrentRemappingWork(prev => ({
       ...prev,
       files: {
@@ -2981,6 +3000,7 @@ export default function WorkPage() {
                         id="original-folder"
                         className="hidden"
                         multiple
+                        accept="*"
                         {...({ webkitdirectory: "", directory: "" } as any)}
                         onChange={(e) => {
                           const files = Array.from(e.target.files || [])
@@ -2999,6 +3019,9 @@ export default function WorkPage() {
                             ? `📁 ${currentRemappingWork.files.originalFiles.length}개 파일 선택됨` 
                             : '📁 원본 ECU 폴더 선택'}
                         </span>
+                        <div className="text-xs text-gray-500 mt-1">
+                          모든 파일 형식 지원 (확장자 없음 포함)
+                        </div>
                       </label>
                     </div>
                     <input
@@ -3039,6 +3062,7 @@ export default function WorkPage() {
                           type="file"
                           id="stage1-file"
                           className="hidden"
+                          accept="*"
                           onChange={(e) => {
                             const file = e.target.files?.[0] || null
                             handleFileChange('stage1File', file)
@@ -3053,6 +3077,9 @@ export default function WorkPage() {
                               ? `📄 ${(currentRemappingWork.files.stage1File as File).name} (${((currentRemappingWork.files.stage1File as File).size / 1024).toFixed(1)} KB)` 
                               : '📄 엔진 ECU 1차 튜닝 파일 선택'}
                           </span>
+                          <div className="text-xs text-green-500 mt-1">
+                            모든 파일 형식 지원
+                          </div>
                         </label>
                       </div>
                       <input
@@ -3074,6 +3101,7 @@ export default function WorkPage() {
                           type="file"
                           id="stage2-file"
                           className="hidden"
+                          accept="*"
                           onChange={(e) => {
                             const file = e.target.files?.[0] || null
                             handleFileChange('stage2File', file)
@@ -3085,9 +3113,12 @@ export default function WorkPage() {
                         >
                           <span className="text-yellow-300">
                             {currentRemappingWork.files.stage2File 
-                              ? `⚡ ${(currentRemappingWork.files.stage2File as File).name} (${((currentRemappingWork.files.stage2File as File).size / 1024).toFixed(1)} KB)` 
-                              : '⚡ 엔진 ECU 2차 튜닝 파일 선택'}
+                              ? `📄 ${(currentRemappingWork.files.stage2File as File).name} (${((currentRemappingWork.files.stage2File as File).size / 1024).toFixed(1)} KB)` 
+                              : '📄 엔진 ECU 2차 튜닝 파일 선택'}
                           </span>
+                          <div className="text-xs text-yellow-500 mt-1">
+                            모든 파일 형식 지원
+                          </div>
                         </label>
                       </div>
                       <input
@@ -3109,6 +3140,7 @@ export default function WorkPage() {
                           type="file"
                           id="stage3-file"
                           className="hidden"
+                          accept="*"
                           onChange={(e) => {
                             const file = e.target.files?.[0] || null
                             handleFileChange('stage3File', file)
@@ -3120,9 +3152,12 @@ export default function WorkPage() {
                         >
                           <span className="text-red-300">
                             {currentRemappingWork.files.stage3File 
-                              ? `🔥 ${(currentRemappingWork.files.stage3File as File).name} (${((currentRemappingWork.files.stage3File as File).size / 1024).toFixed(1)} KB)` 
-                              : '🔥 엔진 ECU 3차 튜닝 파일 선택'}
+                              ? `📄 ${(currentRemappingWork.files.stage3File as File).name} (${((currentRemappingWork.files.stage3File as File).size / 1024).toFixed(1)} KB)` 
+                              : '📄 엔진 ECU 3차 튜닝 파일 선택'}
                           </span>
+                          <div className="text-xs text-red-500 mt-1">
+                            모든 파일 형식 지원
+                          </div>
                         </label>
                       </div>
                       <input
@@ -3150,6 +3185,7 @@ export default function WorkPage() {
                           id="acu-original-folder"
                           className="hidden"
                           multiple
+                          accept="*"
                           {...({ webkitdirectory: "", directory: "" } as any)}
                           onChange={(e) => {
                             const files = Array.from(e.target.files || [])
@@ -3165,9 +3201,12 @@ export default function WorkPage() {
                           </svg>
                           <span className="text-sm text-green-300">
                             {currentRemappingWork.files.acuOriginalFiles && currentRemappingWork.files.acuOriginalFiles.length > 0 
-                              ? `⚙️ ${currentRemappingWork.files.acuOriginalFiles.length}개 파일 선택됨` 
-                              : '⚙️ 원본 ACU 폴더 선택'}
+                              ? `📁 ${currentRemappingWork.files.acuOriginalFiles.length}개 파일 선택됨` 
+                              : '📁 ACU 원본 폴더 선택'}
                           </span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            모든 파일 형식 지원 (확장자 없음 포함)
+                          </div>
                         </label>
                       </div>
                       <input
@@ -3208,6 +3247,7 @@ export default function WorkPage() {
                             type="file"
                             id="acu-stage1-file"
                             className="hidden"
+                            accept="*"
                             onChange={(e) => {
                               const file = e.target.files?.[0] || null
                               handleFileChange('acuStage1File', file)
@@ -3222,6 +3262,9 @@ export default function WorkPage() {
                                 ? `⚙️ ${(currentRemappingWork.files.acuStage1File as File).name} (${((currentRemappingWork.files.acuStage1File as File).size / 1024).toFixed(1)} KB)` 
                                 : '⚙️ ACU 1차 튜닝 파일 선택'}
                             </span>
+                            <div className="text-xs text-green-500 mt-1">
+                              모든 파일 형식 지원
+                            </div>
                           </label>
                         </div>
                         <input
@@ -3243,6 +3286,7 @@ export default function WorkPage() {
                             type="file"
                             id="acu-stage2-file"
                             className="hidden"
+                            accept="*"
                             onChange={(e) => {
                               const file = e.target.files?.[0] || null
                               handleFileChange('acuStage2File', file)
@@ -3257,6 +3301,9 @@ export default function WorkPage() {
                                 ? `⚙️ ${(currentRemappingWork.files.acuStage2File as File).name} (${((currentRemappingWork.files.acuStage2File as File).size / 1024).toFixed(1)} KB)` 
                                 : '⚙️ ACU 2차 튜닝 파일 선택'}
                             </span>
+                            <div className="text-xs text-green-500 mt-1">
+                              모든 파일 형식 지원
+                            </div>
                           </label>
                         </div>
                         <input
@@ -3278,6 +3325,7 @@ export default function WorkPage() {
                             type="file"
                             id="acu-stage3-file"
                             className="hidden"
+                            accept="*"
                             onChange={(e) => {
                               const file = e.target.files?.[0] || null
                               handleFileChange('acuStage3File', file)
@@ -3292,6 +3340,9 @@ export default function WorkPage() {
                                 ? `⚙️ ${(currentRemappingWork.files.acuStage3File as File).name} (${((currentRemappingWork.files.acuStage3File as File).size / 1024).toFixed(1)} KB)` 
                                 : '⚙️ ACU 3차 튜닝 파일 선택'}
                             </span>
+                            <div className="text-xs text-green-500 mt-1">
+                              모든 파일 형식 지원
+                            </div>
                           </label>
                         </div>
                         <input
@@ -3308,7 +3359,7 @@ export default function WorkPage() {
                   {/* 사진/영상 첨부 (5개) */}
                   <div>
                     <label className="block text-sm font-medium text-white mb-4">
-                      📷 사진/영상 첨부 (최대 5개)
+                      📷 사진/영상 첨부 (최대 5개, 각 파일 최대 50MB)
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                       {[1, 2, 3, 4, 5].map((index) => {
@@ -3401,6 +3452,9 @@ export default function WorkPage() {
                                     <div className="text-2xl mb-1">📷</div>
                                     <div>파일 선택</div>
                                     <div className="text-purple-400">이미지/동영상</div>
+                                    <div className="text-xs text-purple-500 mt-1">
+                                      지원 형식: JPG, PNG, GIF, MP4, AVI, MOV
+                                    </div>
                                   </div>
                                 </label>
                               )}
