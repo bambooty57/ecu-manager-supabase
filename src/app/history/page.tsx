@@ -72,6 +72,11 @@ function HistoryPage() {
   const [lastError, setLastError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
 
+  // ✅ 정렬 및 필터링 상태
+  const [sortField, setSortField] = useState('created_at')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [filteredRecords, setFilteredRecords] = useState<any[]>([])
+
   // ✅ 동적 ECU 모델 목록 상태
   const [ecuModels, setEcuModels] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
@@ -660,6 +665,111 @@ function HistoryPage() {
     setSearchTook(0)
   }
 
+  // ✅ 정렬 및 필터링 함수들
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      // 같은 필드를 다시 클릭하면 정렬 방향 전환
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      // 다른 필드를 클릭하면 해당 필드로 정렬하고 기본 내림차순 적용
+      setSortField(field)
+      setSortDirection('desc')
+    }
+  }
+
+  const applyFiltersAndSort = useCallback(() => {
+    let result = [...workRecords]
+
+    // 필터 적용
+    if (filters.dateFrom) {
+      const startDate = new Date(filters.dateFrom)
+      result = result.filter(record => new Date(record.work_date) >= startDate)
+    }
+
+    if (filters.dateTo) {
+      const endDate = new Date(filters.dateTo)
+      endDate.setHours(23, 59, 59, 999) // 해당 일자의 마지막 시간으로 설정
+      result = result.filter(record => new Date(record.work_date) <= endDate)
+    }
+
+    if (filters.customer) {
+      const searchTerm = filters.customer.toLowerCase()
+      result = result.filter(record => {
+        const customerName = record.customer_name?.toLowerCase() || ''
+        return customerName.includes(searchTerm)
+      })
+    }
+
+    if (filters.equipmentType) {
+      result = result.filter(record => record.equipment_type === filters.equipmentType)
+    }
+
+    if (filters.manufacturer) {
+      result = result.filter(record => record.manufacturer === filters.manufacturer)
+    }
+
+    if (filters.model) {
+      result = result.filter(record => record.model === filters.model)
+    }
+
+    if (filters.ecuType) {
+      result = result.filter(record => {
+        if (filters.ecuType === 'with-ecu') {
+          return record.ecu_data && Object.keys(record.ecu_data).length > 0
+        } else if (filters.ecuType === 'without-ecu') {
+          return !record.ecu_data || Object.keys(record.ecu_data).length === 0
+        }
+        return true
+      })
+    }
+
+    if (filters.acuType) {
+      result = result.filter(record => {
+        if (filters.acuType === 'with-acu') {
+          return record.acu_data && Object.keys(record.acu_data).length > 0
+        } else if (filters.acuType === 'without-acu') {
+          return !record.acu_data || Object.keys(record.acu_data).length === 0
+        }
+        return true
+      })
+    }
+
+    if (filters.tuningWork) {
+      result = result.filter(record => record.tuning_work === filters.tuningWork)
+    }
+
+    if (filters.status) {
+      result = result.filter(record => record.status === filters.status)
+    }
+
+    // 정렬 적용
+    result.sort((a, b) => {
+      let valueA = a[sortField]
+      let valueB = b[sortField]
+
+      // 날짜 필드인 경우 Date 객체로 변환
+      if (sortField === 'created_at' || sortField === 'work_date') {
+        valueA = new Date(valueA)
+        valueB = new Date(valueB)
+      }
+
+      // 문자열인 경우 소문자로 변환하여 비교
+      if (typeof valueA === 'string') valueA = valueA.toLowerCase()
+      if (typeof valueB === 'string') valueB = valueB.toLowerCase()
+
+      if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1
+      if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+
+    setFilteredRecords(result)
+  }, [workRecords, filters, sortField, sortDirection])
+
+  // 필터링된 데이터가 변경될 때마다 적용
+  useEffect(() => {
+    applyFiltersAndSort()
+  }, [applyFiltersAndSort])
+
   const highlightSearchTerm = (text: string, searchTerm: string) => {
     if (!searchTerm || !text) return text
     
@@ -1231,7 +1341,7 @@ function HistoryPage() {
             <div className="flex items-center space-x-4">
               <h2 className="text-xl font-semibold text-white">📊 작업 이력 테이블</h2>
               <span className="text-gray-400 text-sm">
-                총 {totalCount}개 중 {workRecords.length}개 표시
+                총 {totalCount}개 중 {filteredRecords.length}개 표시
               </span>
             </div>
 
@@ -1258,11 +1368,31 @@ function HistoryPage() {
                 <table className="min-w-full bg-gray-800">
                   <thead>
                     <tr className="bg-gray-700">
-                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
-                        작업일
+                      <th 
+                        className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium cursor-pointer hover:bg-gray-600 transition-colors"
+                        onClick={() => handleSort('work_date')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>작업일</span>
+                          {sortField === 'work_date' && (
+                            <span className="text-blue-400">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
                       </th>
-                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
-                        고객/장비
+                      <th 
+                        className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium cursor-pointer hover:bg-gray-600 transition-colors"
+                        onClick={() => handleSort('customer_name')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>고객/장비</span>
+                          {sortField === 'customer_name' && (
+                            <span className="text-blue-400">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
                       </th>
                       <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
                         🔧 ECU 정보
@@ -1270,11 +1400,31 @@ function HistoryPage() {
                       <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
                         ⚙️ ACU 정보
                       </th>
-                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
-                        상태
+                      <th 
+                        className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium cursor-pointer hover:bg-gray-600 transition-colors"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>상태</span>
+                          {sortField === 'status' && (
+                            <span className="text-blue-400">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
                       </th>
-                      <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
-                        금액
+                      <th 
+                        className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium cursor-pointer hover:bg-gray-600 transition-colors"
+                        onClick={() => handleSort('price')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>금액</span>
+                          {sortField === 'price' && (
+                            <span className="text-blue-400">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
                       </th>
                       <th className="py-3 px-4 border-b border-gray-600 text-left text-white font-medium">
                         작업
@@ -1312,14 +1462,14 @@ function HistoryPage() {
                           </td>
                         </tr>
                       ))
-                    ) : workRecords.length === 0 ? (
+                    ) : filteredRecords.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-8 text-center text-gray-400">
-                          작업 이력이 없습니다.
+                          {workRecords.length === 0 ? '작업 이력이 없습니다.' : '검색 결과가 없습니다.'}
                         </td>
                       </tr>
                     ) : (
-                      workRecords.map((record) => (
+                      filteredRecords.map((record) => (
                         <WorkRecordRow
                           key={record.id}
                           record={record}
