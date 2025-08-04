@@ -1563,19 +1563,17 @@ export default function WorkPage() {
         // 파일 데이터 처리
         const files: any[] = []
         
-        if (remappingWork.files.originalFiles && remappingWork.files.originalFiles.length > 0) {
-          for (const originalFile of remappingWork.files.originalFiles) {
-            const data = await convertFileToBase64(originalFile)
-            files.push({
-              name: originalFile.name,
-              size: originalFile.size,
-              type: originalFile.type,
-              data: data,
-              description: remappingWork.files.originalFileDescription || '원본 ECU 폴더',
-              category: 'original',
-              uploadDate: new Date().toISOString()
-            })
-          }
+        if (remappingWork.files.originalFile) {
+          const data = await convertFileToBase64(remappingWork.files.originalFile)
+          files.push({
+            name: remappingWork.files.originalFile.name,
+            size: remappingWork.files.originalFile.size,
+            type: remappingWork.files.originalFile.type,
+            data: data,
+            description: remappingWork.files.originalFileDescription || '원본 ECU 파일',
+            category: 'original',
+            uploadDate: new Date().toISOString()
+          })
         }
 
         if (remappingWork.files.stage1File) {
@@ -1618,19 +1616,17 @@ export default function WorkPage() {
         }
 
         // ACU 파일들 처리
-        if (remappingWork.files.acuOriginalFiles && remappingWork.files.acuOriginalFiles.length > 0) {
-          for (const acuOriginalFile of remappingWork.files.acuOriginalFiles) {
-            const data = await convertFileToBase64(acuOriginalFile)
-            files.push({
-              name: acuOriginalFile.name,
-              size: acuOriginalFile.size,
-              type: acuOriginalFile.type,
-              data: data,
-              description: remappingWork.files.acuOriginalFileDescription || '원본 ACU 폴더',
-              category: 'acuOriginal',
-              uploadDate: new Date().toISOString()
-            })
-          }
+        if (remappingWork.files.acuOriginalFile) {
+          const data = await convertFileToBase64(remappingWork.files.acuOriginalFile)
+          files.push({
+            name: remappingWork.files.acuOriginalFile.name,
+            size: remappingWork.files.acuOriginalFile.size,
+            type: remappingWork.files.acuOriginalFile.type,
+            data: data,
+            description: remappingWork.files.acuOriginalFileDescription || '원본 ACU 파일',
+            category: 'acuOriginal',
+            uploadDate: new Date().toISOString()
+          })
         }
 
         if (remappingWork.files.acuStage1File) {
