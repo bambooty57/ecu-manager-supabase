@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Toaster, toast } from 'react-hot-toast'
 import { ACU_TYPES, CONNECTION_METHODS, ECU_TOOLS_FLAT, TUNING_WORKS, EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, WORK_STATUS, ECU_MODELS } from '@/constants'
 import { 
   getAllWorkRecords, 
@@ -66,6 +67,11 @@ function HistoryPage() {
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [downloadStatus, setDownloadStatus] = useState('')
 
+  // ✅ 에러 처리 및 사용자 피드백 상태
+  const [isOffline, setIsOffline] = useState(false)
+  const [lastError, setLastError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
+
   // ✅ 동적 ECU 모델 목록 상태
   const [ecuModels, setEcuModels] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
@@ -114,10 +120,11 @@ function HistoryPage() {
     // 구독 해제
   }, [])
 
-  // ✅ 안정적인 데이터 로딩 함수
+  // ✅ 안정적인 데이터 로딩 함수 (에러 처리 개선)
   const loadAllData = useCallback(async (page: number = 1) => {
     try {
       setIsLoadingRecords(true)
+      setLastError(null)
       
       // 1단계: 기본 메타데이터 로드 (빠른 초기 렌더링)
       const basicData = await getWorkRecordsPaginatedStable(page, pageSize)
@@ -139,12 +146,38 @@ function HistoryPage() {
       const enrichedData = await enrichWorkRecordsData(basicData.data, customersData, equipmentsData)
       setWorkRecords(enrichedData)
       
+      // 성공 알림 (첫 로딩 시에만)
+      if (page === 1 && workRecords.length === 0) {
+        toast.success('작업 이력을 성공적으로 불러왔습니다.')
+      }
+      
     } catch (error) {
       console.error('데이터 로딩 실패:', error)
+      setLastError(error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.')
+      
+      // 오류 유형에 따른 맞춤형 메시지
+      let errorMessage = '작업 이력을 불러오는 중 오류가 발생했습니다.'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = '네트워크 연결을 확인해주세요.'
+        } else if (error.message.includes('permission') || error.message.includes('unauthorized')) {
+          errorMessage = '접근 권한이 없습니다. 로그인 상태를 확인해주세요.'
+        } else if (error.message.includes('timeout')) {
+          errorMessage = '요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.'
+        }
+      }
+      
+      toast.error(errorMessage)
+      
+      // 빈 배열로 설정하여 UI가 깨지지 않도록 함
+      setWorkRecords([])
+      setTotalCount(0)
+      setTotalPages(0)
     } finally {
       setIsLoadingRecords(false)
     }
-  }, [pageSize])
+  }, [pageSize, workRecords.length])
 
   // ✅ 데이터 보강 함수
   const enrichWorkRecordsData = useCallback(async (basicData: any[], customers: CustomerData[], equipments: EquipmentData[]) => {
@@ -186,8 +219,10 @@ function HistoryPage() {
     }
   }, [])
 
-  // ✅ 파일 다운로드 함수들
+  // ✅ 파일 다운로드 함수들 (에러 처리 개선)
   const handleSingleFileDownload = useCallback(async (file: FileMetadata) => {
+    const toastId = toast.loading(`${file.original_name} 다운로드 중...`)
+    
     try {
       setIsDownloading(true)
       setDownloadStatus(`다운로드 중: ${file.original_name}`)
@@ -198,6 +233,8 @@ function HistoryPage() {
       setDownloadProgress(100)
       setDownloadStatus('다운로드 완료!')
       
+      toast.success(`${file.original_name} 다운로드 완료!`, { id: toastId })
+      
       setTimeout(() => {
         setIsDownloading(false)
         setDownloadProgress(0)
@@ -207,6 +244,24 @@ function HistoryPage() {
     } catch (error) {
       console.error('파일 다운로드 실패:', error)
       setDownloadStatus('다운로드 실패')
+      
+      // 오류 유형에 따른 맞춤형 메시지
+      let errorMessage = '파일 다운로드 중 오류가 발생했습니다.'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          errorMessage = '파일을 찾을 수 없습니다. 관리자에게 문의하세요.'
+        } else if (error.message.includes('permission')) {
+          errorMessage = '파일 다운로드 권한이 없습니다.'
+        } else if (error.message.includes('network')) {
+          errorMessage = '네트워크 연결을 확인해주세요.'
+        } else if (error.message.includes('timeout')) {
+          errorMessage = '다운로드 시간이 초과되었습니다.'
+        }
+      }
+      
+      toast.error(errorMessage, { id: toastId })
+      
       setTimeout(() => {
         setIsDownloading(false)
         setDownloadProgress(0)
@@ -216,6 +271,8 @@ function HistoryPage() {
   }, [downloadManager])
 
   const handleBulkDownload = useCallback(async (files: FileMetadata[], zipName: string) => {
+    const toastId = toast.loading('ZIP 파일 생성 중...')
+    
     try {
       setIsDownloading(true)
       setDownloadStatus(`ZIP 파일 생성 중...`)
@@ -226,6 +283,8 @@ function HistoryPage() {
       setDownloadProgress(100)
       setDownloadStatus('다운로드 완료!')
       
+      toast.success('모든 파일이 ZIP으로 다운로드되었습니다.', { id: toastId })
+      
       setTimeout(() => {
         setIsDownloading(false)
         setDownloadProgress(0)
@@ -235,6 +294,24 @@ function HistoryPage() {
     } catch (error) {
       console.error('다중 파일 다운로드 실패:', error)
       setDownloadStatus('다운로드 실패')
+      
+      // 오류 유형에 따른 맞춤형 메시지
+      let errorMessage = '파일 일괄 다운로드 중 오류가 발생했습니다.'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          errorMessage = '일부 파일을 찾을 수 없습니다.'
+        } else if (error.message.includes('permission')) {
+          errorMessage = '파일 다운로드 권한이 없습니다.'
+        } else if (error.message.includes('network')) {
+          errorMessage = '네트워크 연결을 확인해주세요.'
+        } else if (error.message.includes('timeout')) {
+          errorMessage = '다운로드 시간이 초과되었습니다.'
+        }
+      }
+      
+      toast.error(errorMessage, { id: toastId })
+      
       setTimeout(() => {
         setIsDownloading(false)
         setDownloadProgress(0)
@@ -300,6 +377,32 @@ function HistoryPage() {
       cleanup()
     }
   }, [loadAllData, currentPage, cleanup])
+
+  // ✅ 오프라인 상태 감지 및 처리
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false)
+      toast.success('온라인 상태로 전환되었습니다.')
+      // 데이터 다시 로드
+      loadAllData(currentPage)
+    }
+
+    const handleOffline = () => {
+      setIsOffline(true)
+      toast.error('오프라인 상태입니다. 네트워크 연결을 확인해주세요.')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    // 초기 상태 확인
+    setIsOffline(!navigator.onLine)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [loadAllData, currentPage])
 
   // ✅ 초기 데이터 로딩
   useEffect(() => {
@@ -971,6 +1074,31 @@ function HistoryPage() {
     <AuthGuard>
       <div className="min-h-screen bg-gray-900">
         <Navigation />
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#1f2937',
+              color: '#fff',
+              border: '1px solid #374151',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#10b981',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
         <main className="pt-20">
           {/* 홈으로 돌아가기 버튼 */}
           <div className="mb-6">
@@ -988,6 +1116,18 @@ function HistoryPage() {
             <h1 className="text-3xl font-bold text-white mb-2">📋 작업 이력</h1>
             <p className="text-gray-400">등록된 모든 작업 기록을 확인하고 관리할 수 있습니다.</p>
           </div>
+
+          {/* 오프라인 상태 배너 */}
+          {isOffline && (
+            <div className="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p>오프라인 상태입니다. 일부 기능이 제한될 수 있습니다.</p>
+              </div>
+            </div>
+          )}
 
           {/* 성능 메트릭 */}
           <PerformanceMetrics />
