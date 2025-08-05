@@ -353,6 +353,17 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
   }
 
   console.log('🔍 작업 기록 생성 시작:', recordData)
+  console.log('🔍 입력 데이터 상세 분석:')
+  console.log('  - customerId:', recordData.customerId)
+  console.log('  - equipmentId:', recordData.equipmentId)
+  console.log('  - workDate:', recordData.workDate)
+  console.log('  - workType:', recordData.workType)
+  console.log('  - totalPrice:', (recordData as any).totalPrice)
+  console.log('  - status:', recordData.status)
+  console.log('  - ecuModel:', (recordData as any).ecuModel)
+  console.log('  - acuModel:', (recordData as any).acuModel)
+  console.log('  - remappingWorks:', (recordData as any).remappingWorks)
+  console.log('  - remappingWorks 개수:', (recordData as any).remappingWorks?.length || 0)
 
   const { remappingWorks, totalPrice, ...restOfRecordData } = recordData as any
 
@@ -425,7 +436,26 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
   }
 
   console.log('📤 Supabase에 저장할 데이터:', recordToInsert)
+  console.log('📤 Supabase 삽입 직전 payload 검증:')
+  console.log('  - customer_id:', recordToInsert.customer_id)
+  console.log('  - equipment_id:', recordToInsert.equipment_id)
+  console.log('  - work_date:', recordToInsert.work_date)
+  console.log('  - work_type:', recordToInsert.work_type)
+  console.log('  - status:', recordToInsert.status)
+  console.log('  - total_price:', recordToInsert.total_price)
+  console.log('  - ecu_maker:', recordToInsert.ecu_maker)
+  console.log('  - ecu_model:', recordToInsert.ecu_model)
+  console.log('  - acu_manufacturer:', recordToInsert.acu_manufacturer)
+  console.log('  - acu_model:', recordToInsert.acu_model)
+  console.log('  - acu_type:', recordToInsert.acu_type)
+  console.log('  - connection_method:', recordToInsert.connection_method)
+  console.log('  - tools_used:', recordToInsert.tools_used)
+  console.log('  - work_description:', recordToInsert.work_description)
+  console.log('  - price:', recordToInsert.price)
+  console.log('  - remapping_works (문자열 길이):', recordToInsert.remapping_works?.length || 0)
+  console.log('  - files (문자열 길이):', recordToInsert.files?.length || 0)
 
+  console.log('🚀 Supabase INSERT 실행 중...')
   const { data, error } = await supabase
     .from('work_records')
     .insert(recordToInsert)
@@ -434,11 +464,17 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
   
   if (error) {
     console.error('❌ 작업 기록 저장 오류:', error)
+    console.error('❌ 오류 메시지:', error.message)
+    console.error('❌ 오류 코드:', error.code)
+    console.error('❌ 오류 상세:', error.details)
     console.error('❌ 저장 시도한 데이터:', recordToInsert)
     throw error
   }
 
-  console.log('✅ 작업 기록 저장 완료:', data)
+  console.log('✅ 작업 기록 저장 완료!')
+  console.log('✅ 생성된 레코드 ID:', data?.id)
+  console.log('✅ 생성된 레코드 created_at:', data?.created_at)
+  console.log('✅ 반환된 전체 데이터:', data)
   return data
 }
 
