@@ -11,17 +11,32 @@ interface WorkRecord {
   equipment?: {
     model?: string
     type?: string
+    manufacturer?: string
   }
+  // 새로운 데이터 구조 지원
+  customer_name?: string
+  equipment_model?: string
+  equipment_type?: string
+  equipment_manufacturer?: string
   ecu_maker?: string
   ecu_model?: string
+  ecu_type?: string
+  ecu_price?: number
+  ecu_status?: string
   tuning_stage?: string
   connection_method?: string
   acu_manufacturer?: string
   acu_model?: string
   acu_type?: string
+  acu_price?: number
+  acu_status?: string
   is_active?: boolean
   status?: string
   total_price?: number
+  // 추가 필드들
+  ecu_data?: any
+  acu_data?: any
+  remapping_works?: any[]
 }
 
 interface WorkRecordRowProps {
@@ -36,16 +51,16 @@ const getStatusColor = (status: string) => {
   const statusLower = status.toLowerCase()
   
   if (statusLower.includes('완료') || statusLower.includes('complete')) {
-    return 'bg-success-100 text-success-800 border-success-200 dark:bg-success-900 dark:text-success-200'
+    return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200'
   }
   if (statusLower.includes('진행') || statusLower.includes('progress')) {
-    return 'bg-primary-100 text-primary-800 border-primary-200 dark:bg-primary-900 dark:text-primary-200'
+    return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200'
   }
   if (statusLower.includes('대기') || statusLower.includes('pending')) {
-    return 'bg-warning-100 text-warning-800 border-warning-200 dark:bg-warning-900 dark:text-warning-200'
+    return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-200'
   }
   if (statusLower.includes('취소') || statusLower.includes('cancel')) {
-    return 'bg-danger-100 text-danger-800 border-danger-200 dark:bg-danger-900 dark:text-danger-200'
+    return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-200'
   }
   if (statusLower.includes('검토') || statusLower.includes('review')) {
     return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-200'
@@ -89,57 +104,168 @@ const formatPrice = (price: number | null | undefined) => {
   }
 }
 
-// ✅ 데이터 변환 로직 (Task #3 요구사항)
-const transformECUData = (record: WorkRecord) => {
-  return {
-    manufacturer: record.ecu_maker || 'Unknown',
-    model: record.ecu_model || 'Unknown Model',
-    tuning_stage: record.tuning_stage || extractTuningStageFromModel(record.ecu_model || '')
+// ✅ 차종 정보 추출 함수
+const getVehicleType = (record: WorkRecord): string => {
+  // equipment_type에서 차종 추출
+  if (record.equipment?.type || record.equipment_type) {
+    const type = record.equipment?.type || record.equipment_type || ''
+    
+    // 차종 매핑
+    const vehicleTypeMap: { [key: string]: string } = {
+      'excavator': '굴삭기',
+      'bulldozer': '불도저',
+      'wheel_loader': '휠로더',
+      'crane': '크레인',
+      'dump_truck': '덤프트럭',
+      'truck': '트럭',
+      'car': '승용차',
+      'bus': '버스',
+      'tractor': '트랙터',
+      'forklift': '지게차',
+      'generator': '발전기',
+      'compressor': '압축기'
+    }
+    
+    const lowerType = type.toLowerCase()
+    for (const [key, value] of Object.entries(vehicleTypeMap)) {
+      if (lowerType.includes(key)) {
+        return value
+      }
+    }
+    
+    // 매핑되지 않은 경우 원본 반환
+    return type
   }
-}
-
-// ✅ ECU 모델에서 튜닝 스테이지 추출
-const extractTuningStageFromModel = (model: string): string | null => {
-  const stagePatterns = [
-    { pattern: /stage\s*(\d+)/i, name: 'Stage' },
-    { pattern: /tune\s*(\d+)/i, name: 'Tune' },
-    { pattern: /level\s*(\d+)/i, name: 'Level' }
-  ]
   
-  for (const { pattern, name } of stagePatterns) {
-    const match = model.match(pattern)
-    if (match) {
-      return `${name} ${match[1]}`
+  // manufacturer에서 차종 추정
+  const manufacturer = record.equipment?.manufacturer || record.equipment_manufacturer || ''
+  if (manufacturer) {
+    const lowerManufacturer = manufacturer.toLowerCase()
+    if (lowerManufacturer.includes('caterpillar') || lowerManufacturer.includes('cat')) {
+      return '굴삭기'
+    }
+    if (lowerManufacturer.includes('komatsu')) {
+      return '굴삭기'
+    }
+    if (lowerManufacturer.includes('hitachi')) {
+      return '굴삭기'
+    }
+    if (lowerManufacturer.includes('volvo')) {
+      return '굴삭기'
+    }
+    if (lowerManufacturer.includes('hyundai')) {
+      return '굴삭기'
+    }
+    if (lowerManufacturer.includes('doosan')) {
+      return '굴삭기'
     }
   }
   
-  return null
+  return '알 수 없음'
 }
 
-// ✅ ECU 정보 셀 컴포넌트
+// ✅ ECU 정보 추출 및 개선
+const getECUInfo = (record: WorkRecord) => {
+  // remapping_works에서 ECU 정보 추출
+  let ecuInfo = {
+    manufacturer: record.ecu_maker || 'Unknown',
+    model: record.ecu_model || 'Unknown Model',
+    type: record.ecu_type || '',
+    price: record.ecu_price || 0,
+    status: record.ecu_status || record.status || '알 수 없음',
+    connectionMethod: record.connection_method || '',
+    toolCategory: ''
+  }
+  
+  // remapping_works에서 추가 정보 추출
+  if (record.remapping_works && Array.isArray(record.remapping_works) && record.remapping_works.length > 0) {
+    const firstWork = record.remapping_works[0]
+    if (firstWork && firstWork.ecu) {
+      ecuInfo = {
+        ...ecuInfo,
+        manufacturer: firstWork.ecu.maker || ecuInfo.manufacturer,
+        model: firstWork.ecu.type || ecuInfo.model,
+        type: firstWork.ecu.type || ecuInfo.type,
+        price: parseFloat(firstWork.ecu.price) || ecuInfo.price,
+        status: firstWork.ecu.status || ecuInfo.status,
+        connectionMethod: firstWork.ecu.connectionMethod || ecuInfo.connectionMethod,
+        toolCategory: firstWork.ecu.toolCategory || ecuInfo.toolCategory
+      }
+    }
+  }
+  
+  return ecuInfo
+}
+
+// ✅ ACU 정보 추출 및 개선
+const getACUInfo = (record: WorkRecord) => {
+  // remapping_works에서 ACU 정보 추출
+  let acuInfo = {
+    manufacturer: record.acu_manufacturer || '',
+    model: record.acu_model || '',
+    type: record.acu_type || '',
+    price: record.acu_price || 0,
+    status: record.acu_status || record.status || '알 수 없음',
+    connectionMethod: record.connection_method || '',
+    toolCategory: ''
+  }
+  
+  // remapping_works에서 추가 정보 추출
+  if (record.remapping_works && Array.isArray(record.remapping_works) && record.remapping_works.length > 0) {
+    const firstWork = record.remapping_works[0]
+    if (firstWork && firstWork.acu) {
+      acuInfo = {
+        ...acuInfo,
+        manufacturer: firstWork.acu.manufacturer || acuInfo.manufacturer,
+        model: firstWork.acu.model || acuInfo.model,
+        type: firstWork.acu.type || acuInfo.type,
+        price: parseFloat(firstWork.acu.price) || acuInfo.price,
+        status: firstWork.acu.status || acuInfo.status,
+        connectionMethod: firstWork.acu.connectionMethod || acuInfo.connectionMethod,
+        toolCategory: firstWork.acu.toolCategory || acuInfo.toolCategory
+      }
+    }
+  }
+  
+  return acuInfo
+}
+
+// ✅ ECU 정보 셀 컴포넌트 (개선됨)
 const ECUInfoCell = ({ record }: { record: WorkRecord }) => {
-  const ecuData = transformECUData(record)
+  const ecuInfo = getECUInfo(record)
+  const statusColor = getStatusColor(ecuInfo.status)
   
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
-        {ecuData.manufacturer}
+        {ecuInfo.manufacturer}
       </div>
       <div className="text-xs text-gray-600 dark:text-gray-400">
-        {ecuData.model}
+        {ecuInfo.model}
       </div>
-      {ecuData.tuning_stage && (
-        <div className="text-xs text-primary-600 dark:text-primary-400">
-          {ecuData.tuning_stage}
+      {ecuInfo.type && (
+        <div className="text-xs text-blue-600 dark:text-blue-400">
+          {ecuInfo.type}
         </div>
       )}
+      {ecuInfo.price > 0 && (
+        <div className="text-xs font-medium text-green-600 dark:text-green-400">
+          {formatPrice(ecuInfo.price)}
+        </div>
+      )}
+      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
+        {ecuInfo.status}
+      </span>
     </div>
   )
 }
 
-// ✅ ACU 정보 셀 컴포넌트
+// ✅ ACU 정보 셀 컴포넌트 (개선됨)
 const ACUInfoCell = ({ record }: { record: WorkRecord }) => {
-  if (!record.acu_manufacturer && !record.acu_model && !record.acu_type) {
+  const acuInfo = getACUInfo(record)
+  const statusColor = getStatusColor(acuInfo.status)
+  
+  if (!acuInfo.manufacturer && !acuInfo.model && !acuInfo.type) {
     return (
       <div className="text-gray-500 dark:text-gray-400 text-sm">
         ACU 정보 없음
@@ -148,22 +274,30 @@ const ACUInfoCell = ({ record }: { record: WorkRecord }) => {
   }
   
   return (
-    <div className="space-y-1">
-      {record.acu_manufacturer && (
+    <div className="space-y-2">
+      {acuInfo.manufacturer && (
         <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
-          {record.acu_manufacturer}
+          {acuInfo.manufacturer}
         </div>
       )}
-      {record.acu_model && (
+      {acuInfo.model && (
         <div className="text-xs text-gray-600 dark:text-gray-400">
-          {record.acu_model}
+          {acuInfo.model}
         </div>
       )}
-      {record.acu_type && (
-        <div className="text-xs text-secondary-600 dark:text-secondary-400">
-          {record.acu_type}
+      {acuInfo.type && (
+        <div className="text-xs text-purple-600 dark:text-purple-400">
+          {acuInfo.type}
         </div>
       )}
+      {acuInfo.price > 0 && (
+        <div className="text-xs font-medium text-green-600 dark:text-green-400">
+          {formatPrice(acuInfo.price)}
+        </div>
+      )}
+      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
+        {acuInfo.status}
+      </span>
     </div>
   )
 }
@@ -173,6 +307,7 @@ export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: 
   
   const handleRowClick = (e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     onRowClick(record)
   }
   
@@ -182,8 +317,8 @@ export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: 
   }
   
   const formattedDate = formatDate(record.work_date)
-  const statusColor = getStatusColor(record.status || '')
   const formattedPrice = formatPrice(record.total_price)
+  const vehicleType = getVehicleType(record)
   
   return (
     <tr 
@@ -216,28 +351,26 @@ export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: 
         <div className="font-medium">{formattedDate}</div>
       </td>
       
-      {/* 고객/차량 정보 - 모바일에서도 항상 표시 */}
+      {/* 고객/차량 정보 - 개선됨 */}
       <td 
         className="py-3 px-4"
         role="cell"
-        aria-label={`고객: ${record.customer?.name || '알 수 없음'}, 차량: ${record.equipment?.model || '알 수 없음'}`}
+        aria-label={`고객: ${record.customer?.name || record.customer_name || '알 수 없음'}, 차량: ${record.equipment?.model || record.equipment_model || '알 수 없음'}`}
       >
         <div className="space-y-1">
           <div className="font-medium text-gray-900 dark:text-gray-100">
-            {record.customer?.name || '알 수 없음'}
+            {record.customer?.name || record.customer_name || '알 수 없음'}
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            {record.equipment?.model || '모델 정보 없음'}
+            {record.equipment?.model || record.equipment_model || '모델 정보 없음'}
           </div>
-          {record.equipment?.type && (
-            <div className="text-xs text-gray-500 dark:text-gray-500">
-              {record.equipment.type}
-            </div>
-          )}
+          <div className="text-xs text-gray-500 dark:text-gray-500">
+            {vehicleType}
+          </div>
         </div>
       </td>
       
-      {/* ECU 정보 - 태블릿 이상에서만 표시 */}
+      {/* ECU 정보 - 개선됨 */}
       <td 
         className="py-3 px-4 hidden md:table-cell"
         role="cell"
@@ -246,7 +379,7 @@ export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: 
         <ECUInfoCell record={record} />
       </td>
       
-      {/* ACU 정보 - 태블릿 이상에서만 표시 */}
+      {/* ACU 정보 - 개선됨 */}
       <td 
         className="py-3 px-4 hidden md:table-cell"
         role="cell"
@@ -255,32 +388,18 @@ export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: 
         <ACUInfoCell record={record} />
       </td>
       
-      {/* 상태 - 모바일에서도 항상 표시 */}
-      <td 
-        className="py-3 px-4"
-        role="cell"
-        aria-label={`상태: ${record.status || '알 수 없음'}`}
-      >
-        <span className={`
-          inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
-          ${statusColor}
-        `}>
-          {record.status || '알 수 없음'}
-        </span>
-      </td>
-      
-      {/* 금액 - 작은 모바일에서는 숨김 */}
+      {/* 금액 - 전체 금액 표시 */}
       <td 
         className="py-3 px-4 hidden sm:table-cell"
         role="cell"
-        aria-label={`금액: ${formattedPrice}`}
+        aria-label={`전체 금액: ${formattedPrice}`}
       >
         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
           {formattedPrice}
         </div>
       </td>
       
-      {/* 액션 버튼 - 모바일에서도 항상 표시 */}
+      {/* 액션 버튼 - 개선됨 */}
       <td 
         className="py-3 px-4"
         role="cell"
@@ -290,10 +409,11 @@ export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: 
           <button
             onClick={(e) => handleButtonClick(e, () => onRowClick(record))}
             className="
-              text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300
+              text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300
               font-medium text-sm transition-colors duration-200
-              focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
               dark:focus:ring-offset-gray-800
+              px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900
             "
             aria-label="상세보기"
           >
@@ -304,10 +424,11 @@ export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: 
             <button
               onClick={(e) => handleButtonClick(e, () => onEdit(record))}
               className="
-                p-1 text-accent-600 hover:text-accent-800 dark:text-accent-400 dark:hover:text-accent-300
+                p-1 text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300
                 transition-colors duration-200 rounded
-                focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2
+                focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2
                 dark:focus:ring-offset-gray-800
+                hover:bg-yellow-50 dark:hover:bg-yellow-900
               "
               aria-label="수정"
             >
@@ -319,10 +440,11 @@ export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: 
             <button
               onClick={(e) => handleButtonClick(e, () => onDelete(record))}
               className="
-                p-1 text-danger-600 hover:text-danger-800 dark:text-danger-400 dark:hover:text-danger-300
+                p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300
                 transition-colors duration-200 rounded
-                focus:outline-none focus:ring-2 focus:ring-danger-500 focus:ring-offset-2
+                focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
                 dark:focus:ring-offset-gray-800
+                hover:bg-red-50 dark:hover:bg-red-900
               "
               aria-label="삭제"
             >

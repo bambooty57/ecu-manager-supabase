@@ -15,9 +15,17 @@ interface WorkRecord {
     model?: string
     type?: string
     manufacturer?: string
+    equipmentType?: string
   }
+  // 새로운 데이터 구조 지원 (enriched data)
+  customer_name?: string
+  equipment_model?: string
+  equipment_type?: string
+  equipment_manufacturer?: string
+  // 기존 필드들
   ecu_maker?: string
   ecu_model?: string
+  ecu_manufacturer?: string
   tuning_stage?: string
   connection_method?: string
   tools_used?: string
@@ -30,7 +38,17 @@ interface WorkRecord {
   notes?: string
   files?: any[]
   total_price?: number
+  price?: number
   status?: string
+  // 데이터베이스에서 오는 실제 구조
+  customers?: {
+    id: number
+    name: string
+    phone: string
+    zip_code?: string
+    road_address?: string
+    jibun_address?: string
+  }
 }
 
 interface WorkDetailModalProps {
@@ -41,7 +59,11 @@ interface WorkDetailModalProps {
 
 // ✅ ECU 데이터 변환 함수 (Task #3과 연동)
 const transformECUData = (record: WorkRecord) => {
-  if (!record.ecu_maker && !record.ecu_model) return null
+  
+  // 더 관대한 조건: 하나라도 있으면 표시
+  if (!record.ecu_maker && !record.ecu_model && !record.ecu_manufacturer) {
+    return null
+  }
   
   // 튜닝 단계 추출 (ecu_model에서 stage 정보 파싱 시도)
   const extractTuningStage = (model: string) => {
@@ -50,18 +72,26 @@ const transformECUData = (record: WorkRecord) => {
     return stageMatch ? stageMatch[1] : null
   }
 
-  return {
-    manufacturer: record.ecu_maker || 'Unknown',
+  const result = {
+    manufacturer: record.ecu_maker || record.ecu_manufacturer || 'Unknown',
     model: record.ecu_model || 'Unknown Model',
     tuning_stage: record.tuning_stage || extractTuningStage(record.ecu_model || ''),
     connection_method: record.connection_method,
-    tools_used: record.tools_used
+    tools_used: record.tools_used,
+    status: record.status || 'Unknown',
+    price: record.total_price || null
   }
+  
+  return result
 }
 
 // ✅ ACU 데이터 변환 함수 (Task #4와 연동)
 const transformACUData = (record: WorkRecord) => {
-  if (!record.acu_manufacturer && !record.acu_model) return null
+  
+  // 더 관대한 조건: 하나라도 있으면 표시
+  if (!record.acu_manufacturer && !record.acu_model && !record.acu_type) {
+    return null
+  }
 
   // ACU 활성화 상태 판단 (여러 조건 확인)
   const isActive = Boolean(
@@ -72,12 +102,16 @@ const transformACUData = (record: WorkRecord) => {
     record.acu_model
   )
 
-  return {
+  const result = {
     manufacturer: record.acu_manufacturer || 'Unknown',
     model: record.acu_model || 'Unknown Model',
     type: record.acu_type || 'Unknown Type',
-    is_active: record.is_active ?? isActive
+    is_active: record.is_active ?? isActive,
+    status: record.status || 'Unknown',
+    price: record.total_price || null
   }
+  
+  return result
 }
 
 const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
@@ -112,7 +146,7 @@ const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-gray-800 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-gray-800 text-left align-middle shadow-xl transition-all">
                 <div className="p-6">
                   {/* 헤더 */}
                   <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
@@ -141,23 +175,37 @@ const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
                         </div>
                         <div>
                           <p className="text-sm text-gray-300 mb-1">고객명</p>
-                          <p className="text-white">{record.customer?.name || 'N/A'}</p>
+                          <p className="text-white">
+                            {record.customer_name || record.customers?.name || record.customer?.name || 'N/A'}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-300 mb-1">차종</p>
-                          <p className="text-white">{record.equipment?.type || 'N/A'}</p>
+                          <p className="text-white">
+                            {record.equipment_type || record.equipment?.equipmentType || record.equipment?.type || 'N/A'}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-300 mb-1">제조사</p>
-                          <p className="text-white">{record.equipment?.manufacturer || 'N/A'}</p>
+                          <p className="text-white">
+                            {record.equipment_manufacturer || record.equipment?.manufacturer || 'N/A'}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-300 mb-1">모델</p>
-                          <p className="text-white">{record.equipment?.model || 'N/A'}</p>
+                          <p className="text-white">
+                            {record.equipment_model || record.equipment?.model || 'N/A'}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-300 mb-1">작업유형</p>
                           <p className="text-white">{record.work_type || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-300 mb-1">금액</p>
+                          <p className="text-white">
+                            {record.total_price ? `${record.total_price.toLocaleString()}원` : 'N/A'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -201,6 +249,24 @@ const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
                                 <p className="text-white">{ecuData.tools_used}</p>
                               </div>
                             )}
+                            <div>
+                              <p className="text-sm text-blue-200 mb-1">상태</p>
+                              <span className={`px-2 py-1 rounded text-sm ${
+                                ecuData.status === '완료' || ecuData.status === '완료됨' 
+                                  ? 'bg-green-700 text-green-100' 
+                                  : ecuData.status === '진행중' 
+                                  ? 'bg-yellow-700 text-yellow-100'
+                                  : 'bg-gray-700 text-gray-300'
+                              }`}>
+                                {ecuData.status}
+                              </span>
+                            </div>
+                            {ecuData.price && (
+                              <div>
+                                <p className="text-sm text-blue-200 mb-1">금액</p>
+                                <p className="text-white font-medium">{ecuData.price.toLocaleString()}원</p>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <p className="text-blue-300 italic">ECU 정보 없음</p>
@@ -237,6 +303,12 @@ const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
                                 {acuData.is_active ? '✅ 활성화' : '❌ 비활성화'}
                               </span>
                             </div>
+                            {acuData.price && (
+                              <div>
+                                <p className="text-sm text-green-200 mb-1">금액</p>
+                                <p className="text-white font-medium">{acuData.price.toLocaleString()}원</p>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <p className="text-green-300 italic">ACU 정보 없음</p>

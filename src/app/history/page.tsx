@@ -149,10 +149,7 @@ function HistoryPage() {
       
       // 1단계: 기본 메타데이터 로드 (빠른 초기 렌더링)
       const basicData = await getWorkRecordsPaginatedStable(page, pageSize)
-      setWorkRecords(basicData.data || [])
-      setTotalCount(basicData.totalCount || 0)
-      setTotalPages(basicData.totalPages || 0)
-      setCurrentPage(page)
+      console.log('기본 데이터:', basicData.data)
       
       // 2단계: 고객/장비 정보 병렬 로드
       const [customersData, equipmentsData] = await Promise.all([
@@ -160,12 +157,148 @@ function HistoryPage() {
         getAllEquipment()
       ])
       
+      console.log('고객 데이터:', customersData)
+      console.log('장비 데이터:', equipmentsData)
+      
       setCustomers(customersData)
       setEquipments(equipmentsData)
       
-      // 3단계: 데이터 보강 (백그라운드)
-      const enrichedData = await enrichWorkRecordsData(basicData.data, customersData, equipmentsData)
+      // 3단계: 데이터 보강 (고객/장비 정보 연결)
+      const enrichedData = basicData.data?.map(record => {
+        const customer = customersData.find(c => c.id === record.customer_id)
+        const equipment = equipmentsData.find(e => e.id === record.equipment_id)
+        
+        console.log(`레코드 ${record.id}:`, {
+          customer_id: record.customer_id,
+          equipment_id: record.equipment_id,
+          found_customer: customer?.name,
+          found_equipment: equipment?.model
+        })
+        
+        // ECU/ACU 정보 추출
+        let ecuInfo = {
+          manufacturer: record.ecu_maker || 'Unknown',
+          model: record.ecu_model || 'Unknown Model',
+          type: record.ecu_type || '',
+          price: record.ecu_price || 0,
+          status: record.status || '알 수 없음'
+        }
+        
+        let acuInfo = {
+          manufacturer: record.acu_manufacturer || '',
+          model: record.acu_model || '',
+          type: record.acu_type || '',
+          price: record.acu_price || 0,
+          status: record.status || '알 수 없음'
+        }
+        
+        // remapping_works에서 추가 정보 추출
+        if (record.remapping_works && Array.isArray(record.remapping_works) && record.remapping_works.length > 0) {
+          const firstWork = record.remapping_works[0]
+          if (firstWork && firstWork.ecu) {
+            ecuInfo = {
+              ...ecuInfo,
+              manufacturer: firstWork.ecu.maker || ecuInfo.manufacturer,
+              model: firstWork.ecu.type || ecuInfo.model,
+              type: firstWork.ecu.type || ecuInfo.type,
+              price: parseFloat(firstWork.ecu.price) || ecuInfo.price,
+              status: firstWork.ecu.status || ecuInfo.status
+            }
+          }
+          if (firstWork && firstWork.acu) {
+            acuInfo = {
+              ...acuInfo,
+              manufacturer: firstWork.acu.manufacturer || acuInfo.manufacturer,
+              model: firstWork.acu.model || acuInfo.model,
+              type: firstWork.acu.type || acuInfo.type,
+              price: parseFloat(firstWork.acu.price) || acuInfo.price,
+              status: firstWork.acu.status || acuInfo.status
+            }
+          }
+        }
+        
+        // 차종 정보 추출
+        const vehicleType = (() => {
+          if (equipment?.equipmentType) {
+            const type = equipment.equipmentType.toLowerCase()
+            const vehicleTypeMap: { [key: string]: string } = {
+              'excavator': '굴삭기',
+              'bulldozer': '불도저',
+              'wheel_loader': '휠로더',
+              'crane': '크레인',
+              'dump_truck': '덤프트럭',
+              'truck': '트럭',
+              'car': '승용차',
+              'bus': '버스',
+              'tractor': '트랙터',
+              'forklift': '지게차',
+              'generator': '발전기',
+              'compressor': '압축기'
+            }
+            
+            for (const [key, value] of Object.entries(vehicleTypeMap)) {
+              if (type.includes(key)) {
+                return value
+              }
+            }
+            return equipment.equipmentType
+          }
+          
+          if (equipment?.manufacturer) {
+            const manufacturer = equipment.manufacturer.toLowerCase()
+            if (manufacturer.includes('caterpillar') || manufacturer.includes('cat')) {
+              return '굴삭기'
+            }
+            if (manufacturer.includes('komatsu')) {
+              return '굴삭기'
+            }
+            if (manufacturer.includes('hitachi')) {
+              return '굴삭기'
+            }
+            if (manufacturer.includes('volvo')) {
+              return '굴삭기'
+            }
+            if (manufacturer.includes('hyundai')) {
+              return '굴삭기'
+            }
+            if (manufacturer.includes('doosan')) {
+              return '굴삭기'
+            }
+          }
+          
+          return '알 수 없음'
+        })()
+        
+        return {
+          ...record,
+          customer: customer || null,
+          equipment: equipment || null,
+          // WorkRecordRow 컴포넌트에서 사용할 수 있도록 추가 필드들
+          customer_name: customer?.name || '알 수 없음',
+          equipment_model: equipment?.model || '알 수 없음',
+          equipment_type: equipment?.equipmentType || '알 수 없음',
+          equipment_manufacturer: equipment?.manufacturer || '알 수 없음',
+          vehicle_type: vehicleType,
+          // ECU/ACU 정보 추가
+          ecu_maker: ecuInfo.manufacturer,
+          ecu_model: ecuInfo.model,
+          ecu_type: ecuInfo.type,
+          ecu_price: ecuInfo.price,
+          ecu_status: ecuInfo.status,
+          acu_manufacturer: acuInfo.manufacturer,
+          acu_model: acuInfo.model,
+          acu_type: acuInfo.type,
+          acu_price: acuInfo.price,
+          acu_status: acuInfo.status
+        }
+      }) || []
+      
+      console.log('보강된 데이터:', enrichedData)
+      
       setWorkRecords(enrichedData)
+      setTotalCount(basicData.totalCount || 0)
+      setTotalPages(basicData.totalPages || 0)
+      setCurrentPage(page)
       
       // 성공 알림 (첫 로딩 시에만)
       if (page === 1 && workRecords.length === 0) {
@@ -1297,406 +1430,403 @@ function HistoryPage() {
             },
           }}
         />
-        <main className="pt-20">
-          {/* 다크 모드 토글 */}
-          <DarkModeToggle />
-          
-          {/* 홈으로 돌아가기 버튼 */}
-          <div className="mb-6">
-            <button
-              onClick={() => window.history.back()}
-              className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <span>←</span>
-              <span>홈으로 돌아가기</span>
-            </button>
-          </div>
-
-          {/* 페이지 제목 */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">📋 작업 이력</h1>
-            <p className="text-gray-400">등록된 모든 작업 기록을 확인하고 관리할 수 있습니다.</p>
-          </div>
-
-          {/* 오프라인 상태 배너 */}
-          {isOffline && (
-            <div className="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
-              <div className="flex items-center">
-                <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <p>오프라인 상태입니다. 일부 기능이 제한될 수 있습니다.</p>
-              </div>
-            </div>
-          )}
-
-          {/* 성능 메트릭 */}
-          <PerformanceMetrics />
-
-          {/* 필터 섹션 */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">🔍 필터 및 검색</h2>
-            
-            {/* 검색 입력 */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="고객명, 차종, 작업내용으로 검색..."
-                className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-                // 검색 기능은 나중에 구현
-              />
-            </div>
-
-            {/* 필터 옵션들 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* 날짜 필터 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">시작일</label>
-                <input
-                  type="date"
-                  value={filters.dateFrom}
-                  onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-                  className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                />
-              </div>
+        <main className="pt-20 pb-8 min-h-screen bg-gray-900">
+          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="space-y-8">
+              {/* 다크 모드 토글 */}
+              <DarkModeToggle />
               
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">종료일</label>
-                <input
-                  type="date"
-                  value={filters.dateTo}
-                  onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-                  className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              {/* 고객 필터 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">고객</label>
-                <select
-                  value={filters.customer}
-                  onChange={(e) => setFilters(prev => ({ ...prev, customer: e.target.value }))}
-                  className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+              {/* 홈으로 돌아가기 버튼 */}
+              <div className="mb-6">
+                <button
+                  onClick={() => window.history.back()}
+                  className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
                 >
-                  <option value="">전체 고객</option>
-                  {customers.map(customer => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
-                </select>
+                  <span>←</span>
+                  <span>홈으로 돌아가기</span>
+                </button>
               </div>
 
-              {/* 상태 필터 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">상태</label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                  className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                >
-                  <option value="">전체 상태</option>
-                  {WORK_STATUS.map(status => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
+              {/* 페이지 제목 */}
+              <div className="bg-gray-800 rounded-xl p-6">
+                <div className="flex justify-between items-center">
+                  <div className="animate-slideIn">
+                    <h1 className="text-3xl font-bold text-white flex items-center">
+                      <span className="text-4xl mr-3">📋</span>
+                      작업 이력
+                    </h1>
+                    <p className="mt-2 text-gray-300">등록된 모든 작업 기록을 확인하고 관리할 수 있습니다.</p>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* 필터 초기화 버튼 */}
-            <div className="mt-4">
-              <button
-                onClick={() => setFilters({
-                  dateFrom: '',
-                  dateTo: '',
-                  customer: '',
-                  equipmentType: '',
-                  manufacturer: '',
-                  model: '',
-                  ecuType: '',
-                  acuType: '',
-                  tuningWork: '',
-                  status: ''
-                })}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-              >
-                필터 초기화
-              </button>
-            </div>
-          </div>
+              {/* 오프라인 상태 배너 */}
+              {isOffline && (
+                <div className="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <p>오프라인 상태입니다. 일부 기능이 제한될 수 있습니다.</p>
+                  </div>
+                </div>
+              )}
 
-          {/* 테이블 컨트롤 */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">📊 작업 이력 테이블</h2>
-              <span className="text-gray-600 dark:text-gray-400 text-sm">
-                총 {pagination.totalItems}개 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
-                {pagination.totalPages > 1 && ` (${pagination.currentPage}/${pagination.totalPages} 페이지)`}
-              </span>
-            </div>
+              {/* 성능 메트릭 */}
+              <PerformanceMetrics />
 
-            {/* 페이지 크기 선택 */}
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-600 dark:text-gray-400 text-sm">페이지당 항목:</span>
-              <select
-                value={pagination.itemsPerPage}
-                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                className="p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-              >
-                <option value={2}>2개</option>
-                <option value={5}>5개</option>
-                <option value={10}>10개</option>
-                <option value={20}>20개</option>
-                <option value={50}>50개</option>
-                <option value={100}>100개</option>
-              </select>
-            </div>
-          </div>
-
-          {/* 작업 기록 테이블 */}
-          <div className="mb-6">
-            {renderLoadingSkeleton() || (
-              <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
-                <table 
-                  className="min-w-full bg-white dark:bg-gray-800 table-modern"
-                  role="grid" 
-                  aria-label="작업 이력 테이블"
-                >
-                  <thead>
-                    <tr className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800" role="row">
-                      <th 
-                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium cursor-pointer hover:bg-primary-500 transition-colors"
-                        onClick={() => handleSort('work_date')}
-                        role="columnheader"
-                        aria-sort={sortField === 'work_date' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>작업일</span>
-                          {sortField === 'work_date' && (
-                            <span aria-hidden="true" className="text-primary-200">
-                              {sortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium cursor-pointer hover:bg-primary-500 transition-colors"
-                        onClick={() => handleSort('customer_name')}
-                        role="columnheader"
-                        aria-sort={sortField === 'customer_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>고객/장비</span>
-                          {sortField === 'customer_name' && (
-                            <span aria-hidden="true" className="text-primary-200">
-                              {sortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium hidden md:table-cell"
-                        role="columnheader"
-                      >
-                        🔧 ECU 정보
-                      </th>
-                      <th 
-                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium hidden md:table-cell"
-                        role="columnheader"
-                      >
-                        ⚙️ ACU 정보
-                      </th>
-                      <th 
-                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium cursor-pointer hover:bg-primary-500 transition-colors"
-                        onClick={() => handleSort('status')}
-                        role="columnheader"
-                        aria-sort={sortField === 'status' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>상태</span>
-                          {sortField === 'status' && (
-                            <span aria-hidden="true" className="text-primary-200">
-                              {sortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium cursor-pointer hover:bg-primary-500 transition-colors hidden sm:table-cell"
-                        onClick={() => handleSort('price')}
-                        role="columnheader"
-                        aria-sort={sortField === 'price' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>금액</span>
-                          {sortField === 'price' && (
-                            <span aria-hidden="true" className="text-primary-200">
-                              {sortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="py-3 px-4 border-b border-primary-500 text-left text-white font-medium"
-                        role="columnheader"
-                      >
-                        작업
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody role="rowgroup">
-                    {isLoadingRecords ? (
-                      // 스켈레톤 로딩 (5개 행)
-                      Array(5).fill(0).map((_, index) => (
-                        <tr key={`skeleton-${index}`} className="animate-pulse" role="row">
-                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700" role="cell">
-                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
-                          </td>
-                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700" role="cell">
-                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-32 mb-2"></div>
-                            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
-                          </td>
-                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 hidden md:table-cell" role="cell">
-                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-28 mb-2"></div>
-                            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
-                          </td>
-                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 hidden md:table-cell" role="cell">
-                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-28 mb-2"></div>
-                            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
-                          </td>
-                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700" role="cell">
-                            <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
-                          </td>
-                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 hidden sm:table-cell" role="cell">
-                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
-                          </td>
-                          <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700" role="cell">
-                            <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : filteredRecords.length === 0 ? (
-                      <tr role="row">
-                        <td colSpan={7} className="py-8 text-center text-gray-500 dark:text-gray-400" role="cell">
-                          {workRecords.length === 0 ? '작업 이력이 없습니다.' : '검색 결과가 없습니다.'}
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredRecords.map((record) => (
-                        <WorkRecordRow
-                          key={record.id}
-                          record={record}
-                          onRowClick={handleViewDetail}
-                          onEdit={handleEdit}
-                          onDelete={handleDeleteRecord}
-                        />
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* 고급 페이지네이션 */}
-          {pagination.totalPages > 1 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0">
-                {/* 페이지 정보 */}
-                <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                  <span className="text-gray-600 dark:text-gray-400 text-sm">
-                    총 {pagination.totalItems}개 항목 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
-                  </span>
-                  <span className="text-gray-600 dark:text-gray-400 text-sm">
-                    페이지 {pagination.currentPage} / {pagination.totalPages}
-                  </span>
+              {/* 필터 섹션 */}
+              <div className="bg-gray-800 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">🔍 필터 및 검색</h2>
+                
+                {/* 검색 입력 */}
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="고객명, 차종, 작업내용으로 검색..."
+                    className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                    // 검색 기능은 나중에 구현
+                  />
                 </div>
 
-                {/* 페이지네이션 컨트롤 */}
-                <div className="flex items-center space-x-2">
-                  {/* 첫 페이지 버튼 */}
-                  <button
-                    onClick={handleFirstPage}
-                    disabled={pagination.currentPage === 1}
-                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-                    title="첫 페이지"
-                    aria-label="첫 페이지로 이동"
-                  >
-                    &lt;&lt;
-                  </button>
+                {/* 필터 옵션들 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* 날짜 필터 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">시작일</label>
+                    <input
+                      type="date"
+                      value={filters.dateFrom}
+                      onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                      className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">종료일</label>
+                    <input
+                      type="date"
+                      value={filters.dateTo}
+                      onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                      className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
 
-                  {/* 이전 페이지 버튼 */}
-                  <button
-                    onClick={handlePreviousPage}
-                    disabled={pagination.currentPage === 1}
-                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-                    title="이전 페이지"
-                    aria-label="이전 페이지로 이동"
-                  >
-                    &lt;
-                  </button>
-
-                  {/* 페이지 번호 버튼들 */}
-                  {getPageRange().map(page => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-3 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
-                        pagination.currentPage === page
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
-                      }`}
-                      aria-label={`${page} 페이지로 이동`}
-                      aria-current={pagination.currentPage === page ? 'page' : undefined}
+                  {/* 고객 필터 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">고객</label>
+                    <select
+                      value={filters.customer}
+                      onChange={(e) => setFilters(prev => ({ ...prev, customer: e.target.value }))}
+                      className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
                     >
-                      {page}
-                    </button>
-                  ))}
+                      <option value="">전체 고객</option>
+                      {customers.map(customer => (
+                        <option key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                  {/* 다음 페이지 버튼 */}
-                  <button
-                    onClick={handleNextPage}
-                    disabled={pagination.currentPage === pagination.totalPages}
-                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-                    title="다음 페이지"
-                    aria-label="다음 페이지로 이동"
-                  >
-                    &gt;
-                  </button>
-
-                  {/* 마지막 페이지 버튼 */}
-                  <button
-                    onClick={handleLastPage}
-                    disabled={pagination.currentPage === pagination.totalPages}
-                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-                    title="마지막 페이지"
-                    aria-label="마지막 페이지로 이동"
-                  >
-                    &gt;&gt;
-                  </button>
+                  {/* 상태 필터 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">상태</label>
+                    <select
+                      value={filters.status}
+                      onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                      className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="">전체 상태</option>
+                      {WORK_STATUS.map(status => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                {/* 페이지당 항목 수 선택 */}
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-600 dark:text-gray-400 text-sm">페이지당:</span>
-                  <select
-                    value={pagination.itemsPerPage}
-                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                    className="px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors text-sm"
+                {/* 필터 초기화 버튼 */}
+                <div className="mt-4">
+                  <button
+                    onClick={() => setFilters({
+                      dateFrom: '',
+                      dateTo: '',
+                      customer: '',
+                      equipmentType: '',
+                      manufacturer: '',
+                      model: '',
+                      ecuType: '',
+                      acuType: '',
+                      tuningWork: '',
+                      status: ''
+                    })}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
                   >
-                    <option value={2}>2개</option>
-                    <option value={5}>5개</option>
-                    <option value={10}>10개</option>
-                    <option value={20}>20개</option>
-                    <option value={50}>50개</option>
-                    <option value={100}>100개</option>
-                  </select>
+                    필터 초기화
+                  </button>
                 </div>
               </div>
+
+              {/* 테이블 컨트롤 */}
+              <div className="bg-gray-800 rounded-xl p-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                    <h2 className="text-xl font-semibold text-white">📊 작업 이력 테이블</h2>
+                    <span className="text-gray-400 text-sm">
+                      총 {pagination.totalItems}개 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
+                      {pagination.totalPages > 1 && ` (${pagination.currentPage}/${pagination.totalPages} 페이지)`}
+                    </span>
+                  </div>
+
+                  {/* 페이지 크기 선택 */}
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-400 text-sm">페이지당 항목:</span>
+                    <select
+                      value={pagination.itemsPerPage}
+                      onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                      className="p-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                    >
+                      <option value={2}>2개</option>
+                      <option value={5}>5개</option>
+                      <option value={10}>10개</option>
+                      <option value={20}>20개</option>
+                      <option value={50}>50개</option>
+                      <option value={100}>100개</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 작업 기록 테이블 */}
+                <div className="mb-6">
+                  {renderLoadingSkeleton() || (
+                    <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-700">
+                      <table 
+                        className="min-w-full bg-gray-800 table-modern"
+                        role="grid" 
+                        aria-label="작업 이력 테이블"
+                      >
+                        <thead>
+                          <tr className="bg-gradient-to-r from-blue-600 to-blue-700" role="row">
+                            <th 
+                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium cursor-pointer hover:bg-blue-500 transition-colors"
+                              onClick={() => handleSort('work_date')}
+                              role="columnheader"
+                              aria-sort={sortField === 'work_date' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                              <div className="flex items-center space-x-1">
+                                <span>작업일</span>
+                                {sortField === 'work_date' && (
+                                  <span aria-hidden="true" className="text-blue-200">
+                                    {sortDirection === 'asc' ? '↑' : '↓'}
+                                  </span>
+                                )}
+                              </div>
+                            </th>
+                            <th 
+                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium cursor-pointer hover:bg-blue-500 transition-colors"
+                              onClick={() => handleSort('customer_name')}
+                              role="columnheader"
+                              aria-sort={sortField === 'customer_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                              <div className="flex items-center space-x-1">
+                                <span>고객/장비</span>
+                                {sortField === 'customer_name' && (
+                                  <span aria-hidden="true" className="text-blue-200">
+                                    {sortDirection === 'asc' ? '↑' : '↓'}
+                                  </span>
+                                )}
+                              </div>
+                            </th>
+                            <th 
+                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium hidden md:table-cell"
+                              role="columnheader"
+                            >
+                              🔧 ECU 정보 (상태 포함)
+                            </th>
+                            <th 
+                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium hidden md:table-cell"
+                              role="columnheader"
+                            >
+                              ⚙️ ACU 정보 (상태 포함)
+                            </th>
+                            <th 
+                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium cursor-pointer hover:bg-blue-500 transition-colors hidden sm:table-cell"
+                              onClick={() => handleSort('price')}
+                              role="columnheader"
+                              aria-sort={sortField === 'price' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                              <div className="flex items-center space-x-1">
+                                <span>전체 금액</span>
+                                {sortField === 'price' && (
+                                  <span aria-hidden="true" className="text-blue-200">
+                                    {sortDirection === 'asc' ? '↑' : '↓'}
+                                  </span>
+                                )}
+                              </div>
+                            </th>
+                            <th 
+                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium"
+                              role="columnheader"
+                            >
+                              작업
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody role="rowgroup">
+                          {isLoadingRecords ? (
+                            // 스켈레톤 로딩 (5개 행)
+                            Array(5).fill(0).map((_, index) => (
+                              <tr key={`skeleton-${index}`} className="animate-pulse" role="row">
+                                <td className="py-3 px-4 border-b border-gray-700" role="cell">
+                                  <div className="h-4 bg-gray-600 rounded w-24"></div>
+                                </td>
+                                <td className="py-3 px-4 border-b border-gray-700" role="cell">
+                                  <div className="h-4 bg-gray-600 rounded w-32 mb-2"></div>
+                                  <div className="h-3 bg-gray-600 rounded w-24"></div>
+                                </td>
+                                <td className="py-3 px-4 border-b border-gray-700 hidden md:table-cell" role="cell">
+                                  <div className="h-4 bg-gray-600 rounded w-28 mb-2"></div>
+                                  <div className="h-3 bg-gray-600 rounded w-20"></div>
+                                  <div className="h-3 bg-gray-600 rounded w-16"></div>
+                                </td>
+                                <td className="py-3 px-4 border-b border-gray-700 hidden md:table-cell" role="cell">
+                                  <div className="h-4 bg-gray-600 rounded w-28 mb-2"></div>
+                                  <div className="h-3 bg-gray-600 rounded w-20"></div>
+                                  <div className="h-3 bg-gray-600 rounded w-16"></div>
+                                </td>
+                                <td className="py-3 px-4 border-b border-gray-700 hidden sm:table-cell" role="cell">
+                                  <div className="h-4 bg-gray-600 rounded w-20"></div>
+                                </td>
+                                <td className="py-3 px-4 border-b border-gray-700" role="cell">
+                                  <div className="h-8 bg-gray-600 rounded w-20"></div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : filteredRecords.length === 0 ? (
+                            <tr role="row">
+                              <td colSpan={6} className="py-8 text-center text-gray-400" role="cell">
+                                {workRecords.length === 0 ? '작업 이력이 없습니다.' : '검색 결과가 없습니다.'}
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredRecords.map((record) => (
+                              <WorkRecordRow
+                                key={record.id}
+                                record={record}
+                                onRowClick={handleViewDetail}
+                                onEdit={handleEdit}
+                                onDelete={handleDeleteRecord}
+                              />
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* 고급 페이지네이션 */}
+                {pagination.totalPages > 1 && (
+                  <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
+                    <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0">
+                      {/* 페이지 정보 */}
+                      <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <span className="text-gray-400 text-sm">
+                          총 {pagination.totalItems}개 항목 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
+                        </span>
+                        <span className="text-gray-400 text-sm">
+                          페이지 {pagination.currentPage} / {pagination.totalPages}
+                        </span>
+                      </div>
+
+                      {/* 페이지네이션 컨트롤 */}
+                      <div className="flex items-center space-x-2">
+                        {/* 첫 페이지 버튼 */}
+                        <button
+                          onClick={handleFirstPage}
+                          disabled={pagination.currentPage === 1}
+                          className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                          title="첫 페이지"
+                          aria-label="첫 페이지로 이동"
+                        >
+                          &lt;&lt;
+                        </button>
+
+                        {/* 이전 페이지 버튼 */}
+                        <button
+                          onClick={handlePreviousPage}
+                          disabled={pagination.currentPage === 1}
+                          className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                          title="이전 페이지"
+                          aria-label="이전 페이지로 이동"
+                        >
+                          &lt;
+                        </button>
+
+                        {/* 페이지 번호 버튼들 */}
+                        {getPageRange().map(page => (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`px-3 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                              pagination.currentPage === page
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-700 text-white hover:bg-gray-600'
+                            }`}
+                            aria-label={`${page} 페이지로 이동`}
+                            aria-current={pagination.currentPage === page ? 'page' : undefined}
+                          >
+                            {page}
+                          </button>
+                        ))}
+
+                        {/* 다음 페이지 버튼 */}
+                        <button
+                          onClick={handleNextPage}
+                          disabled={pagination.currentPage === pagination.totalPages}
+                          className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                          title="다음 페이지"
+                          aria-label="다음 페이지로 이동"
+                        >
+                          &gt;
+                        </button>
+
+                        {/* 마지막 페이지 버튼 */}
+                        <button
+                          onClick={handleLastPage}
+                          disabled={pagination.currentPage === pagination.totalPages}
+                          className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                          title="마지막 페이지"
+                          aria-label="마지막 페이지로 이동"
+                        >
+                          &gt;&gt;
+                        </button>
+                      </div>
+
+                      {/* 페이지당 항목 수 선택 */}
+                      <div className="flex items-center space-x-2">
+                        <span className="text-gray-400 text-sm">페이지당:</span>
+                        <select
+                          value={pagination.itemsPerPage}
+                          onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                          className="px-2 py-1 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors text-sm"
+                        >
+                          <option value={2}>2개</option>
+                          <option value={5}>5개</option>
+                          <option value={10}>10개</option>
+                          <option value={20}>20개</option>
+                          <option value={50}>50개</option>
+                          <option value={100}>100개</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          </div>
 
           {/* 작업 상세보기 모달 (Task #5: HeadlessUI 기반 리팩토링) */}
           <WorkDetailModal 

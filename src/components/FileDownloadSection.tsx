@@ -302,17 +302,6 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">📁 첨부 파일 ({files.length}개)</h3>
-        <div className="flex space-x-2">
-          {files.length > 1 && (
-            <button
-              onClick={handleAllFilesDownload}
-              disabled={isDownloading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {isDownloading ? '다운로드 중...' : '전체 다운로드'}
-            </button>
-          )}
-        </div>
       </div>
 
       {/* 다운로드 진행률 */}
@@ -362,15 +351,6 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
                   <span className="mr-2">{categoryIcons[category as keyof typeof categoryIcons]}</span>
                   {categoryLabels[category as keyof typeof categoryLabels]} ({categoryFiles.length}개)
                 </h4>
-                {categoryFiles.length > 1 && (
-                  <button
-                    onClick={() => handleCategoryDownload(categoryFiles, category)}
-                    disabled={isDownloading}
-                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                  >
-                    {isDownloading ? '다운로드 중...' : '전체 다운로드'}
-                  </button>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -393,13 +373,15 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleSingleDownload(file)}
-                      disabled={isDownloading}
-                      className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm ml-3"
-                    >
-                      {isDownloading && currentDownloadFile === file.original_name ? '다운로드 중...' : '다운로드'}
-                    </button>
+                    <div className="flex-shrink-0 ml-4">
+                      <button
+                        onClick={() => handleSingleDownload(file)}
+                        disabled={isDownloading}
+                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap"
+                      >
+                        {isDownloading && currentDownloadFile === file.original_name ? '다운로드 중...' : '다운로드'}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -408,7 +390,7 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
         })}
       </div>
 
-      {/* 전체 파일 ZIP 다운로드 버튼 (Task #7) */}
+      {/* 전체 파일 ZIP 다운로드 버튼 */}
       {files.length > 1 && (
         <div className="mt-6 pt-4 border-t border-gray-700">
           <div className="flex items-center justify-between">

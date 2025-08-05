@@ -220,13 +220,17 @@ export const getWorkRecordDetailsStable = async (recordId: number) => {
       return cached
     }
     
+    console.log('새로운 상세 데이터 로드:', recordId)
+    
     // 상세 데이터 로드
     const { data, error } = await supabase
       .from('work_records')
       .select(`
         *,
-        customers:customer_id(id, name, phone, email, address),
-        equipment:equipment_id(id, type, manufacturer, model, year)
+        ecu_maker, ecu_model, ecu_manufacturer_id,
+        acu_manufacturer, acu_model, acu_type,
+        customers:customer_id(id, name, phone, zip_code, road_address, jibun_address),
+        equipment:equipment_id(id, equipment_type, manufacturer, model, year)
       `)
       .eq('id', recordId)
       .single()
@@ -258,7 +262,7 @@ export const getFileMetadataForRecord = async (recordId: number) => {
       .from('file_metadata')
       .select('*')
       .eq('work_record_id', recordId)
-      .order('uploaded_at', { ascending: false })
+      .order('created_at', { ascending: false })
     
     if (error) throw error
     
@@ -298,7 +302,7 @@ export const getWorkRecordsPaginatedStable = async (page: number = 1, pageSize: 
     const { data, count, error } = await supabase
       .from('work_records')
       .select(`
-        id, work_date, work_type, created_at, updated_at,
+        id, work_date, work_type, created_at, updated_at, customer_id, equipment_id,
         customers:customer_id(id, name, phone),
         equipment:equipment_id(id, equipment_type, manufacturer, model)
       `, { count: 'exact' })
