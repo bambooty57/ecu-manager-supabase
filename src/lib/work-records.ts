@@ -77,7 +77,6 @@ export interface WorkRecordData {
   ecuModel?: string | null
   acuManufacturer?: string | null
   acuModel?: string | null
-  acuType?: string | null
   connectionMethod?: string | null
   toolsUsed?: string[] | null
   files?: any[]
@@ -120,7 +119,6 @@ const transformWorkRecordToDB = (record: Omit<WorkRecordData, 'id' | 'created_at
   ecu_model: record.ecuModel || null,
   acu_manufacturer: record.acuManufacturer || null,
   acu_model: record.acuModel || null,
-  acu_type: record.acuType || null,
   // 연결 방법 및 기타 정보
   connection_method: record.connectionMethod || null,
   tools_used: record.toolsUsed ? JSON.stringify(record.toolsUsed) : null,
@@ -387,7 +385,6 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
   let ecuModel = recordData.ecuModel || (firstWork?.ecu?.type || firstWork?.ecu?.typeCustom) || null
   let acuManufacturer = recordData.acuManufacturer || (firstWork?.acu?.manufacturer) || null
   let acuModel = recordData.acuModel || (firstWork?.acu?.model || firstWork?.acu?.modelCustom) || null
-  let acuType = recordData.acuType || (firstWork?.acu?.type) || null
   let connectionMethod = recordData.connectionMethod || (firstWork?.ecu?.connectionMethod || firstWork?.acu?.connectionMethod) || null
   let toolsUsed = recordData.toolsUsed || []
   let workDescription = recordData.workDescription || null
@@ -450,7 +447,6 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
     ecu_model: ecuModel,
     acu_manufacturer: acuManufacturer,
     acu_model: acuModel,
-    acu_type: acuType,
     connection_method: connectionMethod,
     tools_used: toolsUsed.length > 0 ? toolsUsed : null,
     work_description: workDescription,
@@ -469,7 +465,6 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
   console.log('  - ecu_model:', recordToInsert.ecu_model)
   console.log('  - acu_manufacturer:', recordToInsert.acu_manufacturer)
   console.log('  - acu_model:', recordToInsert.acu_model)
-  console.log('  - acu_type:', recordToInsert.acu_type)
   console.log('  - connection_method:', recordToInsert.connection_method)
   console.log('  - tools_used:', recordToInsert.tools_used)
   console.log('  - work_description:', recordToInsert.work_description)

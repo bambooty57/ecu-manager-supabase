@@ -1717,7 +1717,6 @@ export default function WorkPage() {
           // ACU 정보
           acuManufacturer: remappingWork.acu?.manufacturer || null,
           acuModel: remappingWork.acu?.model || remappingWork.acu?.modelCustom || null,
-          acuType: remappingWork.acu?.type || null,
           // 연결 방법 (ECU 우선, 없으면 ACU)
           connectionMethod: remappingWork.ecu?.connectionMethod || remappingWork.acu?.connectionMethod || null,
           // 사용된 도구들
