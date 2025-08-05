@@ -22,8 +22,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
+  // 개발 환경 체크
+  const isDevelopment = process.env.NODE_ENV === 'development'
+
   useEffect(() => {
-    // 초기 세션 확인
+    // 개발 환경에서는 더미 사용자로 자동 로그인
+    if (isDevelopment) {
+      console.log('🚀 개발 환경: 자동 로그인 처리')
+      const dummyUser = {
+        id: 'dev-user-id',
+        email: 'dev@example.com',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        app_metadata: {},
+        user_metadata: {},
+        aud: 'authenticated',
+        role: 'authenticated'
+      } as User
+      
+      setUser(dummyUser)
+      setLoading(false)
+      return
+    }
+
+    // 초기 세션 확인 (프로덕션 환경에서만)
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
@@ -52,41 +74,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    getInitialSession()
+    // 프로덕션 환경에서만 세션 확인 및 리스너 설정
+    if (!isDevelopment) {
+      getInitialSession()
 
-    // 인증 상태 변경 리스너
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔄 인증 상태 변경:', event, session?.user?.email)
-        
-        if (session?.user) {
-          // bambooty57@gmail.com만 허용
-          if (session.user.email?.toLowerCase() === 'bambooty57@gmail.com') {
-            console.log('✅ 관리자 인증 성공:', session.user.email)
-            setUser(session.user)
-            
-            // 로그인 페이지에서만 홈으로 리다이렉트
-            if (event === 'SIGNED_IN' && window.location.pathname === '/login') {
-              router.push('/')
+      // 인증 상태 변경 리스너
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('🔄 인증 상태 변경:', event, session?.user?.email)
+          
+          if (session?.user) {
+            // bambooty57@gmail.com만 허용
+            if (session.user.email?.toLowerCase() === 'bambooty57@gmail.com') {
+              console.log('✅ 관리자 인증 성공:', session.user.email)
+              setUser(session.user)
+              
+              // 로그인 페이지에서만 홈으로 리다이렉트
+              if (event === 'SIGNED_IN' && window.location.pathname === '/login') {
+                router.push('/')
+              }
+            } else {
+              console.log('❌ 권한 없는 사용자, 로그아웃 처리:', session.user.email)
+              await supabase.auth.signOut()
+              setUser(null)
             }
           } else {
-            console.log('❌ 권한 없는 사용자, 로그아웃 처리:', session.user.email)
-            await supabase.auth.signOut()
+            console.log('🚪 로그아웃 상태')
             setUser(null)
           }
-        } else {
-          console.log('🚪 로그아웃 상태')
-          setUser(null)
+          
+          setLoading(false)
         }
-        
-        setLoading(false)
-      }
-    )
+      )
 
-    return () => subscription.unsubscribe()
-  }, [router])
+      return () => subscription.unsubscribe()
+    }
+  }, [router, isDevelopment])
 
   const signInWithGoogle = async () => {
+    if (isDevelopment) {
+      console.log('🚀 개발 환경: Google 로그인 더미 처리')
+      return // 개발 환경에서는 아무것도 하지 않음
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -97,6 +127,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signInWithEmail = async (email: string, password: string) => {
+    if (isDevelopment) {
+      console.log('🚀 개발 환경: 이메일 로그인 더미 처리')
+      return // 개발 환경에서는 이미 더미 사용자로 로그인됨
+    }
+
     // bambooty57@gmail.com이 아니면 바로 차단
     if (email.toLowerCase() !== 'bambooty57@gmail.com') {
       throw new Error('이 시스템은 관리자만 사용할 수 있습니다.')
@@ -126,6 +161,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signUpWithEmail = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
+    if (isDevelopment) {
+      console.log('🚀 개발 환경: 회원가입 더미 처리')
+      return { 
+        success: true, 
+        message: '개발 환경에서는 이미 로그인되어 있습니다.' 
+      }
+    }
+
     // bambooty57@gmail.com이 아니면 회원가입 차단
     if (email.toLowerCase() !== 'bambooty57@gmail.com') {
       return {
@@ -166,6 +209,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    if (isDevelopment) {
+      console.log('🚀 개발 환경: 로그아웃 더미 처리 (실제로는 로그아웃하지 않음)')
+      return // 개발 환경에서는 로그아웃하지 않음
+    }
+
     const { error } = await supabase.auth.signOut()
     if (error) throw error
     
