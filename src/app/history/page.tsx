@@ -744,8 +744,8 @@ function HistoryPage() {
     // ECU 타입 필터링
     if (filters.ecuType && record.ecuType !== filters.ecuType) return false
     
-    // ACU 타입 필터링
-    if (filters.acuType && record.acuType !== filters.acuType) return false
+    // ACU 타입 필터링 (temporarily disabled - acuType field removed from WorkRecordData)
+    // if (filters.acuType && record.acuType !== filters.acuType) return false
     
     // 튜닝작업 필터링
     if (filters.tuningWork && record.tuningWork !== filters.tuningWork) {
@@ -1191,7 +1191,6 @@ function HistoryPage() {
       ecuModel: record.ecuModel,
       acuManufacturer: record.acuManufacturer,
       acuModel: record.acuModel,
-      acuType: record.acuType,
       connectionMethod: record.connectionMethod,
       toolsUsed: record.toolsUsed,
       remappingWorks: record.remappingWorks,
@@ -1347,7 +1346,6 @@ function HistoryPage() {
       ecuTuningWorks,
       acuManufacturer,
       acuModel,
-      acuType: record.acuType || '',
       acuCategory,
       acuConnectionMethod,
       acuTool: acuCategory && acuConnectionMethod ? `${acuCategory} - ${acuConnectionMethod}` : (acuTool || 'N/A'),
