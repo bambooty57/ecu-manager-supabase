@@ -1693,16 +1693,44 @@ export default function WorkPage() {
         const ecuModelId = await findEcuModelIdByName(remappingWork.ecu.type || remappingWork.ecu.typeCustom)
         const acuModelId = await findAcuModelIdByName(remappingWork.acu.model || remappingWork.acu.modelCustom)
 
-        // Supabase에 저장할 작업 기록 데이터 생성
+        // 총 금액 계산 (ECU + ACU 작업 금액)
+        const ecuPrice = parseFloat(remappingWork.ecu?.price || '0') || 0
+        const acuPrice = parseFloat(remappingWork.acu?.price || '0') || 0
+        const totalCalculatedPrice = ecuPrice + acuPrice
+
+        console.log('💰 금액 계산 상세:')
+        console.log('  - ECU 금액:', ecuPrice)
+        console.log('  - ACU 금액:', acuPrice)
+        console.log('  - 총 금액:', totalCalculatedPrice)
+
+        // Supabase에 저장할 작업 기록 데이터 생성 (모든 필수 필드 포함)
         const workRecordData: Omit<WorkRecordData, 'id' | 'created_at'> = {
           customerId: parseInt(formData.customerId),
           equipmentId: parseInt(formData.equipmentId),
           workDate: formData.workDate,
           workType: 'ECU 튜닝',
-          totalPrice: (parseFloat(remappingWork.ecu.price) || 0) + (parseFloat(remappingWork.acu.price) || 0),
-          status: remappingWork.ecu.status || remappingWork.acu.status,
-          ecuModel: remappingWork.ecu.type || remappingWork.ecu.typeCustom,
-          acuModel: remappingWork.acu.model || remappingWork.acu.modelCustom,
+          totalPrice: totalCalculatedPrice,
+          status: remappingWork.ecu?.status || remappingWork.acu?.status || '예약',
+          // ECU 정보
+          ecuMaker: remappingWork.ecu?.maker || null,
+          ecuModel: remappingWork.ecu?.type || remappingWork.ecu?.typeCustom || null,
+          // ACU 정보
+          acuManufacturer: remappingWork.acu?.manufacturer || null,
+          acuModel: remappingWork.acu?.model || remappingWork.acu?.modelCustom || null,
+          acuType: remappingWork.acu?.type || null,
+          // 연결 방법 (ECU 우선, 없으면 ACU)
+          connectionMethod: remappingWork.ecu?.connectionMethod || remappingWork.acu?.connectionMethod || null,
+          // 사용된 도구들
+          toolsUsed: [
+            ...(remappingWork.ecu?.toolCategory ? [remappingWork.ecu.toolCategory] : []),
+            ...(remappingWork.acu?.toolCategory ? [remappingWork.acu.toolCategory] : [])
+          ],
+          // 작업 설명
+          workDescription: [
+            ...(remappingWork.ecu?.workDetails ? [`ECU: ${remappingWork.ecu.workDetails}`] : []),
+            ...(remappingWork.acu?.workDetails ? [`ACU: ${remappingWork.acu.workDetails}`] : [])
+          ].join(', ') || null,
+          // 리매핑 작업 데이터
           remappingWorks: [
             {
               ...remappingWork, // RemappingWork 전체 구조(jsonb)
@@ -1710,6 +1738,16 @@ export default function WorkPage() {
             }
           ] as any
         }
+
+        console.log('📋 생성된 workRecordData 상세:')
+        console.log('  - ecuMaker:', workRecordData.ecuMaker)
+        console.log('  - ecuModel:', workRecordData.ecuModel)
+        console.log('  - acuManufacturer:', workRecordData.acuManufacturer)
+        console.log('  - acuModel:', workRecordData.acuModel)
+        console.log('  - connectionMethod:', workRecordData.connectionMethod)
+        console.log('  - totalPrice:', workRecordData.totalPrice)
+        console.log('  - toolsUsed:', workRecordData.toolsUsed)
+        console.log('  - workDescription:', workRecordData.workDescription)
 
         // Supabase에 작업 기록 저장
         const savedRecord = await createWorkRecord(workRecordData)

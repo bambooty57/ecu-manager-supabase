@@ -115,6 +115,18 @@ const transformWorkRecordToDB = (record: Omit<WorkRecordData, 'id' | 'created_at
   work_date: record.workDate,
   work_type: record.workType,
   status: record.status,
+  // ECU/ACU 정보 추가
+  ecu_maker: record.ecuMaker || null,
+  ecu_model: record.ecuModel || null,
+  acu_manufacturer: record.acuManufacturer || null,
+  acu_model: record.acuModel || null,
+  acu_type: record.acuType || null,
+  // 연결 방법 및 기타 정보
+  connection_method: record.connectionMethod || null,
+  tools_used: record.toolsUsed ? JSON.stringify(record.toolsUsed) : null,
+  work_description: record.workDescription || null,
+  price: record.price || null,
+  user_id: record.userId || null,
 });
 
 const cacheManager = new CacheManager()
@@ -367,35 +379,29 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
 
   const { remappingWorks, totalPrice, ...restOfRecordData } = recordData as any
 
-  // ECU/ACU 정보 추출 (첫 번째 remapping work에서)
+  // ECU/ACU 정보: recordData에서 우선 사용, 없으면 firstWork에서 fallback
   const firstWork = remappingWorks && remappingWorks.length > 0 ? remappingWorks[0] : null
-  let ecuMaker = null
-  let ecuModel = null
-  let acuManufacturer = null
-  let acuModel = null
-  let acuType = null
-  let connectionMethod = null
-  let toolsUsed: string[] = []
-  let workDescription = null
-  let price = null
+  
+  // recordData에 이미 설정된 값들을 우선 사용 (work/page.tsx에서 설정한 값들)
+  let ecuMaker = recordData.ecuMaker || (firstWork?.ecu?.maker) || null
+  let ecuModel = recordData.ecuModel || (firstWork?.ecu?.type || firstWork?.ecu?.typeCustom) || null
+  let acuManufacturer = recordData.acuManufacturer || (firstWork?.acu?.manufacturer) || null
+  let acuModel = recordData.acuModel || (firstWork?.acu?.model || firstWork?.acu?.modelCustom) || null
+  let acuType = recordData.acuType || (firstWork?.acu?.type) || null
+  let connectionMethod = recordData.connectionMethod || (firstWork?.ecu?.connectionMethod || firstWork?.acu?.connectionMethod) || null
+  let toolsUsed = recordData.toolsUsed || []
+  let workDescription = recordData.workDescription || null
+  let price = recordData.price || null
 
-  if (firstWork) {
-    ecuMaker = firstWork.ecuMaker || null
-    ecuModel = firstWork.ecuType || firstWork.ecuTypeCustom || null
-    acuManufacturer = firstWork.acuManufacturer || null
-    acuModel = firstWork.acuModel || firstWork.acuModelCustom || null
-    acuType = firstWork.acuType || null
-    connectionMethod = firstWork.connectionMethod || null
-    
-    // tools_used 배열 생성 (ECU 도구 카테고리와 연결방법 기반)
-    if (firstWork.ecuToolCategory) {
-      toolsUsed.push(firstWork.ecuToolCategory)
-    }
-    if (firstWork.connectionMethod) {
-      toolsUsed.push(firstWork.connectionMethod)
-    }
-    
-    // work_description 생성
+  console.log('🔄 ECU/ACU 정보 우선순위 적용 결과:')
+  console.log('  - ecuMaker (우선: recordData, fallback: firstWork):', ecuMaker)
+  console.log('  - ecuModel (우선: recordData, fallback: firstWork):', ecuModel)
+  console.log('  - acuManufacturer (우선: recordData, fallback: firstWork):', acuManufacturer)
+  console.log('  - acuModel (우선: recordData, fallback: firstWork):', acuModel)
+  console.log('  - connectionMethod (우선: recordData, fallback: firstWork):', connectionMethod)
+
+  // fallback: 아직 값이 없고 firstWork가 있는 경우에만 추가 처리
+  if (!workDescription && firstWork) {
     const ecuInfo = ecuMaker && ecuModel ? `ECU(${ecuMaker}-${ecuModel})` : ''
     const acuInfo = acuManufacturer && acuModel ? `ACU(${acuManufacturer}-${acuModel})` : ''
     
@@ -408,9 +414,25 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
     } else {
       workDescription = firstWork.workDetails || restOfRecordData.workType || '튜닝 작업'
     }
-    
-    // 개별 작업 가격
-    price = firstWork.price ? parseFloat(firstWork.price) : null
+  }
+
+  // fallback: toolsUsed가 비어있고 firstWork가 있는 경우
+  if ((!toolsUsed || toolsUsed.length === 0) && firstWork) {
+    toolsUsed = []
+    if (firstWork.ecu?.toolCategory) {
+      toolsUsed.push(firstWork.ecu.toolCategory)
+    }
+    if (firstWork.acu?.toolCategory) {
+      toolsUsed.push(firstWork.acu.toolCategory)
+    }
+    if (connectionMethod) {
+      toolsUsed.push(connectionMethod)
+    }
+  }
+
+  // fallback: price가 없고 firstWork가 있는 경우
+  if (!price && firstWork?.ecu?.price) {
+    price = parseFloat(firstWork.ecu.price) || null
   }
 
   // 파일 데이터 추출 (첫 번째 remapping work에서)

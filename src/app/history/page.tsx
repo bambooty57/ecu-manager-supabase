@@ -58,6 +58,8 @@ function HistoryPage() {
   const [selectedRecord, setSelectedRecord] = useState<any>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [recordToDelete, setRecordToDelete] = useState<any>(null)
   const [editFormData, setEditFormData] = useState<any>({})
   
   // ✅ 고객 정보 모달 상태
@@ -1004,30 +1006,48 @@ function HistoryPage() {
     setShowDetailModal(false)
     setShowEditModal(false)
     setShowCustomerModal(false)
+    setShowDeleteConfirmModal(false)
     setSelectedRecord(null)
     setSelectedCustomer(null)
+    setRecordToDelete(null)
     setEditFormData({})
   }
 
-  const handleDeleteRecord = async (record: any) => {
-    if (confirm(`'${record.customer?.name || '알 수 없음'}' 고객의 작업 기록(ID: ${record.id})을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
-      try {
-        setIsDeleting(true)
-        await deleteWorkRecord(record.id);
+  // 삭제 확인 모달 표시
+  const showDeleteConfirm = (record: any) => {
+    setRecordToDelete(record)
+    setShowDeleteConfirmModal(true)
+  }
 
-        // 성공적으로 삭제된 경우 UI 업데이트
-        setWorkRecords(prev => prev.filter(r => r.id !== record.id));
-        toast.success('작업 기록이 성공적으로 삭제되었습니다.');
+  // 실제 삭제 실행
+  const handleDeleteRecord = async () => {
+    if (!recordToDelete) return
 
-        // 모달이 열려있다면 닫기
-        closeModals();
-        
-      } catch (error) {
-        console.error('Failed to delete work record:', error);
-        toast.error('작업 기록 삭제에 실패했습니다.');
-      } finally {
-        setIsDeleting(false)
-      }
+    try {
+      setIsDeleting(true)
+      await deleteWorkRecord(recordToDelete.id);
+
+      // 성공적으로 삭제된 경우에만 UI 업데이트
+      setWorkRecords(prev => prev.filter(r => r.id !== recordToDelete.id));
+      
+      // 필터링된 데이터도 업데이트
+      setFilteredRecords(prev => prev.filter(r => r.id !== recordToDelete.id));
+      
+      // 페이지네이션 정보 업데이트
+      setPagination(prev => ({
+        ...prev,
+        totalItems: Math.max(0, prev.totalItems - 1),
+        totalPages: Math.ceil(Math.max(0, prev.totalItems - 1) / prev.itemsPerPage)
+      }));
+      
+      toast.success('작업 기록이 성공적으로 삭제되었습니다.');
+      closeModals();
+      
+    } catch (error) {
+      console.error('Failed to delete work record:', error);
+      toast.error('작업 기록 삭제에 실패했습니다.');
+    } finally {
+      setIsDeleting(false)
     }
   };
 
@@ -1717,7 +1737,7 @@ function HistoryPage() {
                                 record={record}
                                 onRowClick={handleViewDetail}
                                 onEdit={handleEdit}
-                                onDelete={handleDeleteRecord}
+                                onDelete={showDeleteConfirm}
                               />
                             ))
                           )}
@@ -1834,6 +1854,71 @@ function HistoryPage() {
             onClose={() => setShowDetailModal(false)}
             record={selectedRecord}
           />
+
+          {/* 삭제 확인 모달 */}
+          {showDeleteConfirmModal && recordToDelete && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+                <div className="flex items-center mb-4">
+                  <div className="flex-shrink-0">
+                    <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                      작업 기록 삭제
+                    </h3>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    다음 작업 기록을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                  </p>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                        고객: {recordToDelete.customer?.name || recordToDelete.customer_name || '알 수 없음'}
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        작업일: {new Date(recordToDelete.work_date).toLocaleDateString()}
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        ID: {recordToDelete.id}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowDeleteConfirmModal(false)}
+                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleDeleteRecord}
+                    disabled={isDeleting}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        삭제 중...
+                      </>
+                    ) : (
+                      '삭제'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 다운로드 진행률 표시 */}
           {isDownloading && (
