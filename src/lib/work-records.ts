@@ -359,7 +359,7 @@ export const getWorkRecordsPaginatedStable = async (options: {
 
   let query = supabase
     .from('work_records')
-    .select('*', { count: 'exact' })
+    .select('*, remapping_works', { count: 'exact' })
 
   // 필터 적용
   if (customerId) query = query.eq('customer_id', customerId)

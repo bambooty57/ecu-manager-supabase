@@ -33,6 +33,114 @@ interface WorkRecordRowProps {
   onDelete?: (id: string) => void
 }
 
+// 상태 표시 컴포넌트 개선
+const StatusBadge = ({ status, amount }: { status: string; amount: number }) => {
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case '완료':
+        return {
+          icon: '✅',
+          bgColor: 'bg-green-500',
+          textColor: 'text-white',
+          borderColor: 'border-green-400'
+        };
+      case '진행중':
+        return {
+          icon: '⏳',
+          bgColor: 'bg-blue-500',
+          textColor: 'text-white',
+          borderColor: 'border-blue-400'
+        };
+      case '실패':
+        return {
+          icon: '❌',
+          bgColor: 'bg-red-500',
+          textColor: 'text-white',
+          borderColor: 'border-red-400'
+        };
+      case 'AS':
+        return {
+          icon: '🔧',
+          bgColor: 'bg-gray-600',
+          textColor: 'text-white',
+          borderColor: 'border-gray-500'
+        };
+      case 'N/A':
+        return {
+          icon: '➖',
+          bgColor: 'bg-gray-400',
+          textColor: 'text-gray-700',
+          borderColor: 'border-gray-300'
+        };
+      default:
+        return {
+          icon: '❓',
+          bgColor: 'bg-gray-500',
+          textColor: 'text-white',
+          borderColor: 'border-gray-400'
+        };
+    }
+  };
+
+  const config = getStatusConfig(status);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${config.bgColor} ${config.borderColor} border-2 shadow-sm`}>
+        <span className="text-sm font-medium">{config.icon}</span>
+      </div>
+      <div className="flex flex-col">
+        <span className={`text-sm font-medium ${config.textColor}`}>
+          {status}
+        </span>
+        {amount > 0 && (
+          <span className="text-xs text-yellow-400 font-medium">
+            ₩{amount.toLocaleString()}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ECU/ACU 정보 컴포넌트 개선
+const EcuAcuInfo = ({ 
+  model, 
+  services, 
+  amount, 
+  status 
+}: { 
+  model: string; 
+  services: string[]; 
+  amount: number; 
+  status: string; 
+}) => {
+  return (
+    <div className="flex flex-col gap-2 p-3 bg-gray-800 rounded-lg border border-gray-700">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h4 className="text-sm font-semibold text-gray-200 mb-1">
+            {model || 'N/A'}
+          </h4>
+          {services.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {services.map((service, index) => (
+                <span
+                  key={index}
+                  className="inline-block px-2 py-1 text-xs bg-blue-600 text-white rounded-full"
+                >
+                  {service}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <StatusBadge status={status} amount={amount} />
+      </div>
+    </div>
+  );
+};
+
 export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRowProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -182,9 +290,30 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
                   <p><span className="font-medium">가격:</span> ₩{parseInt(ecuInfo.price || '0').toLocaleString()}</p>
                   <p>
                     <span className="font-medium">상태:</span>
-                    <span className={`ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(ecuInfo.status)}`}>
-                      {ecuInfo.status}
-                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
+                        ecuInfo.status === '완료' ? 'bg-green-500 border-green-400' :
+                        ecuInfo.status === '진행중' ? 'bg-blue-500 border-blue-400' :
+                        ecuInfo.status === '실패' ? 'bg-red-500 border-red-400' :
+                        ecuInfo.status === 'AS' ? 'bg-gray-600 border-gray-500' :
+                        'bg-gray-400 border-gray-300'
+                      } border-2 shadow-sm`}>
+                        <span className="text-xs font-medium">
+                          {ecuInfo.status === '완료' ? '✅' :
+                           ecuInfo.status === '진행중' ? '⏳' :
+                           ecuInfo.status === '실패' ? '❌' :
+                           ecuInfo.status === 'AS' ? '🔧' :
+                           '➖'}
+                        </span>
+                      </div>
+                      <span className={`text-xs font-medium ${
+                        ecuInfo.status === 'AS' ? 'text-white' :
+                        ecuInfo.status === 'N/A' ? 'text-gray-700' :
+                        'text-white'
+                      }`}>
+                        {ecuInfo.status}
+                      </span>
+                    </div>
                   </p>
                 </div>
               </div>
@@ -203,9 +332,30 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
                   <p><span className="font-medium">가격:</span> ₩{parseInt(acuInfo.price || '0').toLocaleString()}</p>
                   <p>
                     <span className="font-medium">상태:</span>
-                    <span className={`ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(acuInfo.status)}`}>
-                      {acuInfo.status}
-                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
+                        acuInfo.status === '완료' ? 'bg-green-500 border-green-400' :
+                        acuInfo.status === '진행중' ? 'bg-blue-500 border-blue-400' :
+                        acuInfo.status === '실패' ? 'bg-red-500 border-red-400' :
+                        acuInfo.status === 'AS' ? 'bg-gray-600 border-gray-500' :
+                        'bg-gray-400 border-gray-300'
+                      } border-2 shadow-sm`}>
+                        <span className="text-xs font-medium">
+                          {acuInfo.status === '완료' ? '✅' :
+                           acuInfo.status === '진행중' ? '⏳' :
+                           acuInfo.status === '실패' ? '❌' :
+                           acuInfo.status === 'AS' ? '🔧' :
+                           '➖'}
+                        </span>
+                      </div>
+                      <span className={`text-xs font-medium ${
+                        acuInfo.status === 'AS' ? 'text-white' :
+                        acuInfo.status === 'N/A' ? 'text-gray-700' :
+                        'text-white'
+                      }`}>
+                        {acuInfo.status}
+                      </span>
+                    </div>
                   </p>
                 </div>
               </div>

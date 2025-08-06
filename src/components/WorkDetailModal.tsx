@@ -1,414 +1,435 @@
-'use client'
+'use client';
 
-import { Dialog, Transition } from '@headlessui/react'
-import { Fragment } from 'react'
-import { FileDownloadSection } from './FileDownloadSection'
+import React, { useState, useEffect } from 'react';
+import { Dialog } from '@headlessui/react';
+import { supabase } from '@/lib/supabase';
+import { TUNING_WORKS, WORK_STATUS } from '@/constants';
 
-// ✅ WorkRecord 타입 정의 (Task #3에서 개선된 버전)
 interface WorkRecord {
-  id: string
-  work_date: string
-  customer?: {
-    name: string
-  }
-  equipment?: {
-    model?: string
-    type?: string
-    manufacturer?: string
-    equipmentType?: string
-  }
-  // 새로운 데이터 구조 지원 (enriched data)
-  customer_name?: string
-  equipment_model?: string
-  equipment_type?: string
-  equipment_manufacturer?: string
-  // 기존 필드들
-  ecu_maker?: string
-  ecu_model?: string
-  ecu_manufacturer?: string
-  tuning_stage?: string
-  connection_method?: string
-  tools_used?: string
-  acu_manufacturer?: string
-  acu_model?: string
-  acu_type?: string
-  is_active?: boolean
-  work_type?: string
-  work_description?: string
-  notes?: string
-  files?: any[]
-  total_price?: number
-  price?: number
-  status?: string
-  // 데이터베이스에서 오는 실제 구조
-  customers?: {
-    id: number
-    name: string
-    phone: string
-    zip_code?: string
-    road_address?: string
-    jibun_address?: string
-  }
+  id: number;
+  work_date: string;
+  ecu_work_amount?: number;
+  acu_work_amount?: number;
+  ecu_work_content?: string;
+  acu_work_content?: string;
+  ecu_status?: string;
+  acu_status?: string;
+  customer_id: number;
+  equipment_id: number;
+  remappingWorks?: any[]; // Assuming remappingWorks is an array of objects
 }
 
 interface WorkDetailModalProps {
-  isOpen: boolean
-  onClose: () => void
-  record: WorkRecord | null
+  isOpen: boolean;
+  onClose: () => void;
+  workRecord: WorkRecord | null;
+  onSave: () => void;
 }
 
-// ✅ ECU 데이터 변환 함수 (Task #3과 연동)
-const transformECUData = (record: WorkRecord) => {
-  
-  // 더 관대한 조건: 하나라도 있으면 표시
-  if (!record.ecu_maker && !record.ecu_model && !record.ecu_manufacturer) {
-    return null
-  }
-  
-  // 튜닝 단계 추출 (ecu_model에서 stage 정보 파싱 시도)
-  const extractTuningStage = (model: string) => {
-    if (!model) return null
-    const stageMatch = model.match(/stage\s*(\d+)/i)
-    return stageMatch ? stageMatch[1] : null
-  }
+// 간단한 X 아이콘 컴포넌트
+const XIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
 
-  const result = {
-    manufacturer: record.ecu_maker || 'Unknown',
-    model: record.ecu_model || 'Unknown Model',
-    tuning_stage: record.tuning_stage || extractTuningStage(record.ecu_model || ''),
-    connection_method: record.connection_method,
-    tools_used: record.tools_used,
-    status: record.status || 'Unknown', // 전체 상태 사용
-    price: record.total_price || null
-  }
-  
-  return result
-}
+export default function WorkDetailModal({ isOpen, onClose, workRecord, onSave }: WorkDetailModalProps) {
+  const [formData, setFormData] = useState<WorkRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [ecuSelectedWorks, setEcuSelectedWorks] = useState<string[]>([]);
+  const [acuSelectedWorks, setAcuSelectedWorks] = useState<string[]>([]);
 
-// ✅ ACU 데이터 변환 함수 (Task #4와 연동)
-const transformACUData = (record: WorkRecord) => {
-  
-  // 더 관대한 조건: 하나라도 있으면 표시
-  if (!record.acu_manufacturer && !record.acu_model && !record.acu_type) {
-    return null
-  }
+  useEffect(() => {
+    if (workRecord) {
+      console.log('🔍 WorkRecord received:', workRecord);
+      
+      setFormData({
+        ...workRecord,
+        ecu_work_amount: workRecord.ecu_work_amount || 0,
+        acu_work_amount: workRecord.acu_work_amount || 0,
+        ecu_work_content: workRecord.ecu_work_content || '',
+        acu_work_content: workRecord.acu_work_content || '',
+        ecu_status: workRecord.ecu_status || '',
+        acu_status: workRecord.acu_status || ''
+      });
 
-  // ACU 활성화 상태 판단 (여러 조건 확인)
-  const isActive = Boolean(
-    record.acu_type && 
-    record.acu_type !== 'N/A' && 
-    record.acu_type !== '' &&
-    record.acu_manufacturer &&
-    record.acu_model
-  )
+      // ECU 작업내용 추출 - remapping_works에서 가져오기
+      let ecuWorks: string[] = [];
+      let ecuAmount: number = workRecord.ecu_work_amount || 0;
+      let ecuStatus: string = workRecord.ecu_status || '';
+      
+      if (workRecord.remappingWorks && Array.isArray(workRecord.remappingWorks) && workRecord.remappingWorks.length > 0) {
+        const firstWork = workRecord.remappingWorks[0] as any;
+        console.log('🔍 First work structure:', firstWork);
+        
+        if (firstWork.ecu && firstWork.ecu.selectedWorks && Array.isArray(firstWork.ecu.selectedWorks)) {
+          ecuWorks = [...firstWork.ecu.selectedWorks]; // 배열 복사
+          console.log('🔍 ECU selectedWorks found:', ecuWorks);
+        } else {
+          console.log('🔍 No ECU selectedWorks found in:', firstWork.ecu);
+        }
+        
+        // ECU 금액과 상태도 remapping_works에서 가져오기
+        if (firstWork.ecu) {
+          if (firstWork.ecu.price && firstWork.ecu.price !== '') {
+            ecuAmount = parseFloat(firstWork.ecu.price) || 0;
+            console.log('🔍 ECU price from remapping_works:', ecuAmount);
+          }
+          if (firstWork.ecu.status && firstWork.ecu.status !== '') {
+            ecuStatus = firstWork.ecu.status;
+            console.log('🔍 ECU status from remapping_works:', ecuStatus);
+          }
+        }
+      } else {
+        console.log('🔍 No remappingWorks found or empty array');
+      }
 
-  const result = {
-    manufacturer: record.acu_manufacturer || 'Unknown',
-    model: record.acu_model || 'Unknown Model',
-    type: record.acu_type || 'Unknown Type',
-    connection_method: record.connection_method || null,
-    tools_used: record.tools_used || null,
-    is_active: record.is_active ?? isActive,
-    status: record.status || 'Unknown', // 전체 상태 사용
-    price: record.total_price || null
-  }
-  
-  return result
-}
+      // ACU 작업내용 추출 - remapping_works에서 가져오기
+      let acuWorks: string[] = [];
+      let acuAmount: number = workRecord.acu_work_amount || 0;
+      let acuStatus: string = workRecord.acu_status || '';
+      
+      if (workRecord.remappingWorks && Array.isArray(workRecord.remappingWorks) && workRecord.remappingWorks.length > 0) {
+        const firstWork = workRecord.remappingWorks[0] as any;
+        
+        if (firstWork.acu && firstWork.acu.selectedWorks && Array.isArray(firstWork.acu.selectedWorks)) {
+          acuWorks = [...firstWork.acu.selectedWorks]; // 배열 복사
+          console.log('🔍 ACU selectedWorks found:', acuWorks);
+        } else {
+          console.log('🔍 No ACU selectedWorks found in:', firstWork.acu);
+        }
+        
+        // ACU 금액과 상태도 remapping_works에서 가져오기
+        if (firstWork.acu) {
+          if (firstWork.acu.price && firstWork.acu.price !== '') {
+            acuAmount = parseFloat(firstWork.acu.price) || 0;
+            console.log('🔍 ACU price from remapping_works:', acuAmount);
+          }
+          if (firstWork.acu.status && firstWork.acu.status !== '') {
+            acuStatus = firstWork.acu.status;
+            console.log('🔍 ACU status from remapping_works:', acuStatus);
+          }
+        }
+      }
 
-const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
-  if (!record) return null
+      console.log('🔍 Final ECU Works:', ecuWorks);
+      console.log('🔍 Final ACU Works:', acuWorks);
+      console.log('🔍 Final ECU Amount:', ecuAmount);
+      console.log('🔍 Final ACU Amount:', acuAmount);
 
-  const ecuData = transformECUData(record)
-  const acuData = transformACUData(record)
-  
-  // 파일 정보 표시를 위한 로깅
-  console.log('📁 WorkDetailModal - Record files:', record.files)
-  console.log('📁 WorkDetailModal - Record files length:', record.files?.length || 0)
-  
-  // 테스트용: ID 49, 51 작업에 대해 더미 파일 데이터 추가 (실제 Supabase Storage에 존재하는 파일)
-  const testFiles = (record.id === '49' || record.id === '51' || record.id.toString() === '49' || record.id.toString() === '51') ? [
-    {
-      id: 1,
-      work_record_id: 49,
-      original_name: 'test_ecu_file.txt',
-      file_path: '49/original_work0_ecu_original_test_ecu_file.txt',
-      file_size: 48,
-      bucket: 'work-files',
-      uploaded_at: new Date().toISOString(),
-      file_type: 'text/plain',
-      description: '테스트 ECU 파일 - 실제 Storage에 존재하는 파일로 다운로드 테스트 가능'
+      // 상태 업데이트를 동기적으로 처리
+      setEcuSelectedWorks(ecuWorks);
+      setAcuSelectedWorks(acuWorks);
+      
+      // formData도 업데이트
+      setFormData(prev => prev ? {
+        ...prev,
+        ecu_work_amount: ecuAmount,
+        acu_work_amount: acuAmount,
+        ecu_status: ecuStatus,
+        acu_status: acuStatus
+      } : null);
+    } else {
+      // workRecord가 null인 경우 상태 초기화
+      setEcuSelectedWorks([]);
+      setAcuSelectedWorks([]);
     }
-  ] : record.files || []
-  
-  console.log('🧪 테스트 파일 데이터:', testFiles)
-  console.log('🆔 Record ID와 타입:', record.id, typeof record.id)
+  }, [workRecord]);
+
+  const handleSave = async () => {
+    if (!formData) return;
+
+    setIsLoading(true);
+    try {
+      // 새로운 필드 업데이트
+      const updateData: any = {
+        work_date: formData.work_date,
+        ecu_work_amount: formData.ecu_work_amount || null,
+        acu_work_amount: formData.acu_work_amount || null,
+        ecu_work_content: ecuSelectedWorks.join(', '),
+        acu_work_content: acuSelectedWorks.join(', '),
+        ecu_status: formData.ecu_status || null,
+        acu_status: formData.acu_status || null,
+        updated_at: new Date().toISOString()
+      };
+
+      // remappingWorks JSONB 데이터 업데이트
+      if (workRecord?.remappingWorks && Array.isArray(workRecord.remappingWorks) && workRecord.remappingWorks.length > 0) {
+        const updatedRemappingWorks = [...workRecord.remappingWorks];
+        const firstWork = { ...updatedRemappingWorks[0] };
+        
+        // ECU selectedWorks 업데이트
+        if (firstWork.ecu) {
+          firstWork.ecu.selectedWorks = ecuSelectedWorks;
+          firstWork.ecu.status = formData.ecu_status || firstWork.ecu.status;
+          firstWork.ecu.price = formData.ecu_work_amount || firstWork.ecu.price || 0;
+        }
+        
+        // ACU selectedWorks 업데이트
+        if (firstWork.acu) {
+          firstWork.acu.selectedWorks = acuSelectedWorks;
+          firstWork.acu.status = formData.acu_status || firstWork.acu.status;
+          firstWork.acu.price = formData.acu_work_amount || firstWork.acu.price || 0;
+        }
+        
+        updatedRemappingWorks[0] = firstWork;
+        updateData.remapping_works = updatedRemappingWorks;
+      }
+
+      console.log('🔍 Saving data:', updateData);
+
+      const { error } = await supabase
+        .from('work_records')
+        .update(updateData)
+        .eq('id', formData.id);
+
+      if (error) {
+        console.error('저장 오류:', error);
+        alert('저장 중 오류가 발생했습니다.');
+      } else {
+        alert('작업 기록이 성공적으로 저장되었습니다.');
+        onSave();
+        onClose();
+      }
+    } catch (error) {
+      console.error('저장 오류:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof WorkRecord, value: any) => {
+    if (formData) {
+      setFormData({
+        ...formData,
+        [field]: value
+      });
+    }
+  };
+
+  const handleEcuWorkToggle = (work: string) => {
+    setEcuSelectedWorks(prev => 
+      prev.includes(work) 
+        ? prev.filter(item => item !== work)
+        : [...prev, work]
+    );
+  };
+
+  const handleAcuWorkToggle = (work: string) => {
+    setAcuSelectedWorks(prev => 
+      prev.includes(work) 
+        ? prev.filter(item => item !== work)
+        : [...prev, work]
+    );
+  };
+
+  if (!formData) return null;
 
   return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black bg-opacity-50" />
-        </Transition.Child>
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black bg-opacity-50" aria-hidden="true" />
+      
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            {/* 헤더 */}
+            <div className="flex items-center justify-between mb-6">
+              <Dialog.Title className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                작업 기록 수정
+              </Dialog.Title>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <XIcon />
+              </button>
+            </div>
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-gray-800 text-left align-middle shadow-xl transition-all">
-                <div className="p-6">
-                  {/* 헤더 */}
-                  <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
-                    <Dialog.Title as="h3" className="text-2xl font-bold text-white">
-                      작업 상세 정보
-                    </Dialog.Title>
-                    <button
-                      type="button"
-                      className="text-gray-400 hover:text-white text-2xl transition-colors"
-                      onClick={onClose}
-                    >
-                      ×
-                    </button>
+            {/* 작업일 */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                작업일
+              </label>
+              <input
+                type="date"
+                value={formData.work_date}
+                onChange={(e) => handleInputChange('work_date', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+
+            {/* ECU 섹션 */}
+            <div className="mb-6 p-4 border-2 border-blue-200 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20 rounded-lg">
+              <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-4">
+                🚜 ECU 작업
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* ECU 작업금액 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    ECU 작업금액 (만원)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.ecu_work_amount ? Math.floor(formData.ecu_work_amount / 10000) : ''}
+                    onChange={(e) => handleInputChange('ecu_work_amount', (parseFloat(e.target.value) || 0) * 10000)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="금액을 만원 단위로 입력하세요"
+                  />
+                </div>
+
+                {/* ECU 상태 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    ECU 상태
+                  </label>
+                  <select
+                    value={formData.ecu_status || ''}
+                    onChange={(e) => handleInputChange('ecu_status', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">선택하세요</option>
+                    {WORK_STATUS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* ECU 작업내용 - 다중선택 */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  ECU 작업내용 (다중 선택 가능)
+                </label>
+                <div className="p-4 border border-blue-200 bg-white dark:bg-gray-700 dark:border-blue-600 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      ECU/튜닝 🔧
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {ecuSelectedWorks.length}/{TUNING_WORKS.length} 선택됨
+                    </span>
                   </div>
-
-                  <div className="space-y-6 max-h-[70vh] overflow-y-auto">
-                    {/* 기본 정보 섹션 */}
-                    <div className="bg-gray-700 rounded-lg p-6">
-                      <h4 className="font-medium text-white text-lg mb-4">📋 기본 정보</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-300 mb-1">작업일</p>
-                          <p className="text-white">
-                            {record.work_date ? new Date(record.work_date).toLocaleDateString('ko-KR') : 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-300 mb-1">고객명</p>
-                          <p className="text-white">
-                            {record.customer_name || record.customers?.name || record.customer?.name || 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-300 mb-1">차종</p>
-                          <p className="text-white">
-                            {record.equipment_type || record.equipment?.equipmentType || record.equipment?.type || 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-300 mb-1">제조사</p>
-                          <p className="text-white">
-                            {record.equipment_manufacturer || record.equipment?.manufacturer || 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-300 mb-1">모델</p>
-                          <p className="text-white">
-                            {record.equipment_model || record.equipment?.model || 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-300 mb-1">작업유형</p>
-                          <p className="text-white">{record.work_type || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-300 mb-1">금액</p>
-                          <p className="text-white">
-                            {record.total_price ? `${record.total_price.toLocaleString()}원` : 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* ECU 정보 섹션 (파란색 계열) */}
-                      <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-6">
-                        <h4 className="font-medium text-blue-300 text-lg mb-4 flex items-center">
-                          <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-                          🔧 ECU 정보
-                        </h4>
-                        {ecuData ? (
-                          <div className="space-y-3">
-                            <div>
-                              <p className="text-sm text-blue-200 mb-1">제조사</p>
-                              <p className="text-white font-medium">{ecuData.manufacturer}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-blue-200 mb-1">모델</p>
-                              <p className="text-white">{ecuData.model}</p>
-                            </div>
-                            {ecuData.tuning_stage && (
-                              <div>
-                                <p className="text-sm text-blue-200 mb-1">튜닝 단계</p>
-                                <span className="px-2 py-1 bg-blue-700 text-blue-100 rounded text-sm">
-                                  Stage {ecuData.tuning_stage}
-                                </span>
-                              </div>
-                            )}
-                            {ecuData.connection_method && (
-                              <div>
-                                <p className="text-sm text-blue-200 mb-1">연결방법</p>
-                                <span className="px-2 py-1 bg-blue-800 text-blue-200 rounded text-sm">
-                                  {ecuData.connection_method}
-                                </span>
-                              </div>
-                            )}
-                            {ecuData.tools_used && (
-                              <div>
-                                <p className="text-sm text-blue-200 mb-1">사용 도구</p>
-                                <p className="text-white">{ecuData.tools_used}</p>
-                              </div>
-                            )}
-                            <div>
-                              <p className="text-sm text-blue-200 mb-1">상태</p>
-                              <span className={`px-2 py-1 rounded text-sm ${
-                                ecuData.status === '완료' || ecuData.status === '완료됨' 
-                                  ? 'bg-green-700 text-green-100' 
-                                  : ecuData.status === '진행중' 
-                                  ? 'bg-yellow-700 text-yellow-100'
-                                  : 'bg-gray-700 text-gray-300'
-                              }`}>
-                                {ecuData.status}
-                              </span>
-                            </div>
-                            {ecuData.price && (
-                              <div>
-                                <p className="text-sm text-blue-200 mb-1">금액</p>
-                                <p className="text-white font-medium">{ecuData.price.toLocaleString()}원</p>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-blue-300 italic">ECU 정보 없음</p>
-                        )}
-                      </div>
-
-                      {/* ACU 정보 섹션 (초록색 계열) - ECU와 동일한 항목 구조 */}
-                      <div className="bg-green-900/30 border border-green-700 rounded-lg p-6">
-                        <h4 className="font-medium text-green-300 text-lg mb-4 flex items-center">
-                          <span className="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
-                          ⚙️ ACU 정보
-                        </h4>
-                        {acuData ? (
-                          <div className="space-y-3">
-                            <div>
-                              <p className="text-sm text-green-200 mb-1">제조사</p>
-                              <p className="text-white font-medium">{acuData.manufacturer}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-green-200 mb-1">모델</p>
-                              <p className="text-white">{acuData.model}</p>
-                            </div>
-
-                            <div>
-                              <p className="text-sm text-green-200 mb-1">연결방법</p>
-                              <span className="px-2 py-1 bg-green-800 text-green-200 rounded text-sm">
-                                {acuData.connection_method || 'N/A'}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-sm text-green-200 mb-1">사용 도구</p>
-                              <p className="text-white">{acuData.tools_used || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-green-200 mb-1">상태</p>
-                              <span className={`px-2 py-1 rounded text-sm ${
-                                acuData.status === '완료' || acuData.status === '완료됨' 
-                                  ? 'bg-green-700 text-green-100' 
-                                  : acuData.status === '진행중' 
-                                  ? 'bg-yellow-700 text-yellow-100'
-                                  : acuData.status === 'AS'
-                                  ? 'bg-blue-700 text-blue-100'
-                                  : acuData.status === '실패'
-                                  ? 'bg-red-700 text-red-100'
-                                  : 'bg-gray-700 text-gray-300'
-                              }`}>
-                                {acuData.status}
-                              </span>
-                            </div>
-                            {acuData.price && (
-                              <div>
-                                <p className="text-sm text-green-200 mb-1">금액</p>
-                                <p className="text-white font-medium">{acuData.price.toLocaleString()}원</p>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-green-300 italic">ACU 정보 없음</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 작업 설명 */}
-                    {record.work_description && (
-                      <div className="bg-gray-700 rounded-lg p-6">
-                        <h4 className="font-medium text-white text-lg mb-4">📝 작업 설명</h4>
-                        <p className="text-gray-100 whitespace-pre-wrap">{record.work_description}</p>
-                      </div>
-                    )}
-
-                    {/* 파일 다운로드 섹션 - 항상 표시하되 파일이 없으면 정보 표시 */}
-                    <div className="bg-gray-700 rounded-lg p-6">
-                      <h4 className="font-medium text-white text-lg mb-4">📁 첨부 파일</h4>
-                      {testFiles && testFiles.length > 0 ? (
-                        <FileDownloadSection
-                          recordId={parseInt(record.id, 10)}
-                          files={testFiles}
-                          onDownloadStart={() => console.log('다운로드 시작')}
-                          onDownloadComplete={() => console.log('다운로드 완료')}
-                          onDownloadError={(error) => console.error('다운로드 오류:', error)}
-                        />
-                      ) : (
-                        <div className="text-gray-300 italic flex items-center">
-                          <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          첨부된 파일이 없습니다.
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 메모 */}
-                    {record.notes && (
-                      <div className="bg-gray-700 rounded-lg p-6">
-                        <h4 className="font-medium text-white text-lg mb-4">📝 메모</h4>
-                        <p className="text-gray-100 whitespace-pre-wrap">{record.notes}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 푸터 */}
-                  <div className="mt-6 flex justify-end border-t border-gray-700 pt-4">
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                      onClick={onClose}
-                    >
-                      닫기
-                    </button>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {TUNING_WORKS.map((work) => {
+                      const isChecked = ecuSelectedWorks.includes(work);
+                      console.log(`🔍 ECU Checkbox "${work}": ${isChecked} (ecuSelectedWorks: ${ecuSelectedWorks.join(', ')})`);
+                      return (
+                        <label key={work} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleEcuWorkToggle(work)}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{work}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
-      </Dialog>
-    </Transition>
-  )
-}
+              </div>
+            </div>
 
-export default WorkDetailModal
+            {/* ACU 섹션 */}
+            <div className="mb-6 p-4 border-2 border-green-200 bg-green-50 dark:border-green-700 dark:bg-green-900/20 rounded-lg">
+              <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-4">
+                ⚙️ ACU 작업
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* ACU 작업금액 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    ACU 작업금액 (만원)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.acu_work_amount ? Math.floor(formData.acu_work_amount / 10000) : ''}
+                    onChange={(e) => handleInputChange('acu_work_amount', (parseFloat(e.target.value) || 0) * 10000)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="금액을 만원 단위로 입력하세요"
+                  />
+                </div>
+
+                {/* ACU 상태 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    ACU 상태
+                  </label>
+                  <select
+                    value={formData.acu_status || ''}
+                    onChange={(e) => handleInputChange('acu_status', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">선택하세요</option>
+                    {WORK_STATUS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* ACU 작업내용 - 다중선택 */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  ACU 작업내용 (다중 선택 가능)
+                </label>
+                <div className="p-4 border border-green-200 bg-white dark:bg-gray-700 dark:border-green-600 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                      ACU/튜닝 ⚙️
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {acuSelectedWorks.length}/{TUNING_WORKS.length} 선택됨
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {TUNING_WORKS.map((work) => {
+                      const isChecked = acuSelectedWorks.includes(work);
+                      console.log(`🔍 ACU Checkbox "${work}": ${isChecked} (acuSelectedWorks: ${acuSelectedWorks.join(', ')})`);
+                      return (
+                        <label key={work} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleAcuWorkToggle(work)}
+                            className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{work}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 버튼 */}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        </Dialog.Panel>
+      </div>
+    </Dialog>
+  );
+}

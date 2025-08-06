@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Toaster, toast } from 'react-hot-toast'
 import { ACU_TYPES, CONNECTION_METHODS, ECU_TOOLS_FLAT, TUNING_WORKS, EQUIPMENT_TYPES, MANUFACTURERS, MANUFACTURER_MODELS, WORK_STATUS, ECU_MODELS } from '@/constants'
 import { 
@@ -135,6 +135,11 @@ function HistoryPage() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchTook, setSearchTook] = useState(0)
   const [searchMode, setSearchMode] = useState<'fuzzy' | 'exact'>('fuzzy')
+  
+  // ✅ 검색 디바운스를 위한 timeout
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null)
+  
+  // ✅ 무한스크롤 상태
   const [isInfiniteScrollEnabled, setIsInfiniteScrollEnabled] = useState(false)
 
   // ✅ 메모리 누수 방지를 위한 cleanup 함수
@@ -220,79 +225,17 @@ function HistoryPage() {
           }
         }
         
-        // 차종 정보 추출
-        const vehicleType = (() => {
-          if (equipment?.equipmentType) {
-            const type = equipment.equipmentType.toLowerCase()
-            const vehicleTypeMap: { [key: string]: string } = {
-              'excavator': '굴삭기',
-              'bulldozer': '불도저',
-              'wheel_loader': '휠로더',
-              'crane': '크레인',
-              'dump_truck': '덤프트럭',
-              'truck': '트럭',
-              'car': '승용차',
-              'bus': '버스',
-              'tractor': '트랙터',
-              'forklift': '지게차',
-              'generator': '발전기',
-              'compressor': '압축기'
-            }
-            
-            for (const [key, value] of Object.entries(vehicleTypeMap)) {
-              if (type.includes(key)) {
-                return value
-              }
-            }
-            return equipment.equipmentType
-          }
-          
-          if (equipment?.manufacturer) {
-            const manufacturer = equipment.manufacturer.toLowerCase()
-            if (manufacturer.includes('caterpillar') || manufacturer.includes('cat')) {
-              return '굴삭기'
-            }
-            if (manufacturer.includes('komatsu')) {
-              return '굴삭기'
-            }
-            if (manufacturer.includes('hitachi')) {
-              return '굴삭기'
-            }
-            if (manufacturer.includes('volvo')) {
-              return '굴삭기'
-            }
-            if (manufacturer.includes('hyundai')) {
-              return '굴삭기'
-            }
-            if (manufacturer.includes('doosan')) {
-              return '굴삭기'
-            }
-          }
-          
-          return '알 수 없음'
-        })()
-        
         return {
           ...record,
-          customer: customer || null,
-          equipment: equipment || null,
-          // WorkRecordRow 컴포넌트에서 사용할 수 있도록 추가 필드들
-          customer_name: customer?.name || '알 수 없음',
-          equipment_model: equipment?.model || '알 수 없음',
-          equipment_type: equipment?.equipmentType || '알 수 없음',
-          equipment_manufacturer: equipment?.manufacturer || '알 수 없음',
-          vehicle_type: vehicleType,
-          // ECU/ACU 정보 추가
-          ecu_maker: ecuInfo.manufacturer,
-          ecu_model: ecuInfo.model,
-          ecu_type: ecuInfo.type,
-          ecu_price: ecuInfo.price,
-          ecu_status: ecuInfo.status,
-          acu_manufacturer: acuInfo.manufacturer,
-          acu_model: acuInfo.model,
-          acu_type: acuInfo.type,
-          acu_price: acuInfo.price,
-          acu_status: acuInfo.status
+          customerName: customer?.name || '알 수 없음',
+          equipmentType: equipment?.equipmentType || '알 수 없음',
+          manufacturer: equipment?.manufacturer || '알 수 없음',
+          model: equipment?.model || '알 수 없음',
+          serial: equipment?.serialNumber || '',
+          ecuInfo,
+          acuInfo,
+          // remapping_works를 remappingWorks로 변환하여 WorkDetailModal에서 사용
+          remappingWorks: record.remapping_works || []
         }
       }) || []
       
@@ -829,14 +772,21 @@ function HistoryPage() {
     const query = e.target.value
     setSearchQuery(query)
 
+    // 실시간 검색을 위한 디바운스
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current)
+    }
+
     if (query.length >= 2) {
-      try {
-        const suggestions = await searchEngine.generateSuggestions(query, 5)
-        setSearchSuggestions(suggestions.map(s => s.text))
-        setShowSuggestions(true)
-      } catch (error) {
-        console.error('❌ 자동완성 실패:', error)
-      }
+      searchTimeout.current = setTimeout(async () => {
+        try {
+          const suggestions = await searchEngine.generateSuggestions(query, 5)
+          setSearchSuggestions(suggestions.map(s => s.text))
+          setShowSuggestions(true)
+        } catch (error) {
+          console.error('❌ 자동완성 실패:', error)
+        }
+      }, 300) // 300ms 디바운스
     } else {
       setSearchSuggestions([])
       setShowSuggestions(false)
@@ -871,6 +821,47 @@ function HistoryPage() {
 
   const applyFiltersAndSort = useCallback(() => {
     let result = [...workRecords]
+
+    // 검색어 필터링 추가
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      result = result.filter(record => {
+        // 고객명 검색
+        const customerName = record.customerName || record.customer?.name || ''
+        if (customerName.toLowerCase().includes(query)) return true
+        
+        // 장비 정보 검색
+        const equipmentModel = record.model || record.equipment?.model || ''
+        const equipmentType = record.equipmentType || record.equipment?.type || ''
+        const equipmentManufacturer = record.manufacturer || record.equipment?.manufacturer || ''
+        
+        if (equipmentModel.toLowerCase().includes(query)) return true
+        if (equipmentType.toLowerCase().includes(query)) return true
+        if (equipmentManufacturer.toLowerCase().includes(query)) return true
+        
+        // 작업내용 검색
+        const ecuWorkContent = record.ecu_work_content || ''
+        const acuWorkContent = record.acu_work_content || ''
+        
+        if (ecuWorkContent.toLowerCase().includes(query)) return true
+        if (acuWorkContent.toLowerCase().includes(query)) return true
+        
+        // remapping_works에서 작업내용 검색
+        if (record.remapping_works && Array.isArray(record.remapping_works) && record.remapping_works.length > 0) {
+          const firstWork = record.remapping_works[0] as any
+          if (firstWork.ecu && firstWork.ecu.selectedWorks) {
+            const ecuWorks = firstWork.ecu.selectedWorks.join(' ')
+            if (ecuWorks.toLowerCase().includes(query)) return true
+          }
+          if (firstWork.acu && firstWork.acu.selectedWorks) {
+            const acuWorks = firstWork.acu.selectedWorks.join(' ')
+            if (acuWorks.toLowerCase().includes(query)) return true
+          }
+        }
+        
+        return false
+      })
+    }
 
     // 필터 적용
     if (filters.dateFrom) {
@@ -934,10 +925,14 @@ function HistoryPage() {
         // remapping_works에서 ECU와 ACU 상태 확인
         if (record.remapping_works && Array.isArray(record.remapping_works) && record.remapping_works.length > 0) {
           const firstWork = record.remapping_works[0] as any
-          const ecuStatus = firstWork?.ecu?.status
-          const acuStatus = firstWork?.acu?.status
+          const ecuInfo = firstWork?.ecu
+          const acuInfo = firstWork?.acu
           
-          // ECU 또는 ACU 상태 중 하나라도 일치하면 포함
+          // 화면 표시 로직과 동일하게 처리
+          const ecuStatus = (ecuInfo && ecuInfo.maker) ? ecuInfo.status : 'N/A'
+          const acuStatus = (acuInfo && acuInfo.manufacturer) ? acuInfo.status : 'N/A'
+          
+          // 화면에 표시되는 상태와 일치하는지 확인
           return ecuStatus === filters.status || acuStatus === filters.status
         }
         return false
@@ -987,7 +982,7 @@ function HistoryPage() {
       startIndex,
       endIndex
     }))
-  }, [workRecords, filters, sortField, sortDirection, pagination.itemsPerPage, pagination.currentPage])
+  }, [workRecords, filters, sortField, sortDirection, pagination.itemsPerPage, pagination.currentPage, searchQuery])
 
   // 필터링된 데이터가 변경될 때마다 적용
   useEffect(() => {
@@ -1013,7 +1008,6 @@ function HistoryPage() {
 
   const handleEdit = (record: any) => {
     setSelectedRecord(record)
-    setEditFormData({ ...record })
     setShowEditModal(true)
   }
 
@@ -1514,12 +1508,71 @@ function HistoryPage() {
                 
                 {/* 검색 입력 */}
                 <div className="mb-4">
-                  <input
-                    type="text"
-                    placeholder="고객명, 차종, 작업내용으로 검색..."
-                    className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
-                    // 검색 기능은 나중에 구현
-                  />
+                  <div className="flex space-x-2">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        placeholder="고객명, 차종, 작업내용으로 검색..."
+                        value={searchQuery}
+                        onChange={handleSearchInputChange}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSearch(searchQuery)
+                          }
+                        }}
+                        className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={clearSearch}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleSearch(searchQuery)}
+                      disabled={isSearching}
+                      className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSearching ? '검색 중...' : '🔍 검색'}
+                    </button>
+                  </div>
+                  
+                  {/* 실시간 검색 결과 */}
+                  {searchQuery && searchResults.length > 0 && (
+                    <div className="mt-2 p-3 bg-gray-700 rounded-lg">
+                      <div className="text-sm text-gray-300 mb-2">
+                        검색 결과: {searchResults.length}건 ({searchTook.toFixed(0)}ms)
+                      </div>
+                      <div className="space-y-1">
+                        {searchResults.slice(0, 3).map((result, index) => (
+                          <div key={index} className="text-sm text-white p-2 bg-gray-600 rounded">
+                            {result.text}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* 자동완성 제안 */}
+                  {showSuggestions && searchSuggestions.length > 0 && (
+                    <div className="mt-2 p-3 bg-gray-700 rounded-lg">
+                      <div className="text-sm text-gray-300 mb-2">추천 검색어:</div>
+                      <div className="space-y-1">
+                        {searchSuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleSuggestionClick(suggestion)}
+                            className="block w-full text-left text-sm text-white p-2 bg-gray-600 rounded hover:bg-gray-500 transition-colors"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 필터 옵션들 */}
@@ -1756,6 +1809,7 @@ function HistoryPage() {
                                   <div className="flex space-x-3">
                                     <div className="h-8 w-8 bg-gray-700 rounded"></div>
                                     <div className="h-8 w-8 bg-gray-700 rounded"></div>
+                                    <div className="h-8 w-8 bg-gray-700 rounded"></div>
                                   </div>
                                 </td>
                               </tr>
@@ -1777,12 +1831,12 @@ function HistoryPage() {
                           ) : (
                             filteredRecords.map((record, index) => {
                               // 고객명 추출
-                              const customerName = record.customer?.name || record.customer_name || 'N/A'
+                              const customerName = record.customerName || record.customer?.name || record.customer_name || 'N/A'
                               
                               // 장비 정보 추출
-                              const equipmentModel = record.equipment?.model || record.equipment_model || 'N/A'
-                              const equipmentType = record.equipment?.type || record.equipment_type || 'N/A'
-                              const equipmentManufacturer = record.equipment?.manufacturer || record.equipment_manufacturer || 'N/A'
+                              const equipmentModel = record.model || record.equipment?.model || record.equipment_model || 'N/A'
+                              const equipmentType = record.equipmentType || record.equipment?.type || record.equipment_type || 'N/A'
+                              const equipmentManufacturer = record.manufacturer || record.equipment?.manufacturer || record.equipment_manufacturer || 'N/A'
                               
                               // remapping_works에서 ECU/ACU 정보 추출
                               const firstWork = record.remapping_works?.[0]
@@ -1843,18 +1897,44 @@ function HistoryPage() {
                                         <p className="text-sm font-bold text-blue-200">
                                           ₩{(ecuInfo.price || 0).toLocaleString()}
                                         </p>
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${getStatusColor(ecuStatus)}`}>
-                                          {ecuStatus}
-                                        </span>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
+                                            ecuStatus === '완료' ? 'bg-green-500 border-green-400' :
+                                            ecuStatus === '진행중' ? 'bg-blue-500 border-blue-400' :
+                                            ecuStatus === '실패' ? 'bg-red-500 border-red-400' :
+                                            ecuStatus === 'AS' ? 'bg-gray-600 border-gray-500' :
+                                            'bg-gray-400 border-gray-300'
+                                          } border-2 shadow-sm`}>
+                                            <span className="text-xs font-medium">
+                                              {ecuStatus === '완료' ? '✅' :
+                                               ecuStatus === '진행중' ? '⏳' :
+                                               ecuStatus === '실패' ? '❌' :
+                                               ecuStatus === 'AS' ? '🔧' :
+                                               '➖'}
+                                            </span>
+                                          </div>
+                                          <span className={`text-xs font-medium ${
+                                            ecuStatus === 'AS' ? 'text-white' :
+                                            ecuStatus === 'N/A' ? 'text-white' :
+                                            'text-white'
+                                          }`}>
+                                            {ecuStatus}
+                                          </span>
+                                        </div>
                                       </div>
                                     ) : (
                                       <div>
                                         <p className="text-base text-gray-400">N/A</p>
                                         <p className="text-sm text-gray-300">N/A</p>
                                         <p className="text-sm font-bold text-blue-200">₩0</p>
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium text-gray-600 bg-gray-100">
-                                          N/A
-                                        </span>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-400 border-gray-300 border-2 shadow-sm">
+                                            <span className="text-xs font-medium">➖</span>
+                                          </div>
+                                          <span className="text-xs font-medium text-white">
+                                            N/A
+                                          </span>
+                                        </div>
                                       </div>
                                     )}
                                   </td>
@@ -1872,18 +1952,44 @@ function HistoryPage() {
                                         <p className="text-sm font-bold text-green-200">
                                           ₩{(acuInfo.price || 0).toLocaleString()}
                                         </p>
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${getStatusColor(acuStatus)}`}>
-                                          {acuStatus}
-                                        </span>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
+                                            acuStatus === '완료' ? 'bg-green-500 border-green-400' :
+                                            acuStatus === '진행중' ? 'bg-blue-500 border-blue-400' :
+                                            acuStatus === '실패' ? 'bg-red-500 border-red-400' :
+                                            acuStatus === 'AS' ? 'bg-gray-600 border-gray-500' :
+                                            'bg-gray-400 border-gray-300'
+                                          } border-2 shadow-sm`}>
+                                            <span className="text-xs font-medium">
+                                              {acuStatus === '완료' ? '✅' :
+                                               acuStatus === '진행중' ? '⏳' :
+                                               acuStatus === '실패' ? '❌' :
+                                               acuStatus === 'AS' ? '🔧' :
+                                               '➖'}
+                                            </span>
+                                          </div>
+                                          <span className={`text-xs font-medium ${
+                                            acuStatus === 'AS' ? 'text-white' :
+                                            acuStatus === 'N/A' ? 'text-white' :
+                                            'text-white'
+                                          }`}>
+                                            {acuStatus}
+                                          </span>
+                                        </div>
                                       </div>
                                     ) : (
                                       <div>
                                         <p className="text-base text-gray-400">N/A</p>
                                         <p className="text-sm text-gray-300">N/A</p>
                                         <p className="text-sm font-bold text-green-200">₩0</p>
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium text-gray-600 bg-gray-100">
-                                          N/A
-                                        </span>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-400 border-gray-300 border-2 shadow-sm">
+                                            <span className="text-xs font-medium">➖</span>
+                                          </div>
+                                          <span className="text-xs font-medium text-white">
+                                            N/A
+                                          </span>
+                                        </div>
                                       </div>
                                     )}
                                   </td>
@@ -1906,6 +2012,15 @@ function HistoryPage() {
                                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                      </button>
+                                      <button
+                                        onClick={() => handleEdit(record)}
+                                        className="text-green-400 hover:text-green-300 hover:bg-green-900 p-2 rounded-lg transition-colors"
+                                        title="수정"
+                                      >
+                                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                       </button>
                                       <button
@@ -2034,7 +2149,20 @@ function HistoryPage() {
           <WorkDetailModal 
             isOpen={showDetailModal}
             onClose={() => setShowDetailModal(false)}
-            record={selectedRecord}
+            workRecord={selectedRecord}
+            onSave={() => {}}
+          />
+
+          {/* 편집 모달 */}
+          <WorkDetailModal
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            workRecord={selectedRecord}
+            onSave={() => {
+              setShowEditModal(false)
+              loadAllData()
+              toast.success('작업이 수정되었습니다.')
+            }}
           />
 
           {/* 삭제 확인 모달 */}

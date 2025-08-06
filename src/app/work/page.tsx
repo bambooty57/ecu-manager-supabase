@@ -30,6 +30,7 @@ import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 import CustomDropdown from '@/components/CustomDropdown'
+import WorkDetailModal from '@/components/WorkDetailModal'
 import { findEcuModelIdByName, findAcuModelIdByName, getEcuModelNames, createEcuModel, deleteEcuModel, getAcuModelNames, createAcuModel, deleteAcuModel } from '@/lib/ecu-acu-models'
 
 export default function WorkPage() {
@@ -143,7 +144,7 @@ export default function WorkPage() {
       selectedWorks: [] as string[],
       workDetails: '',
       price: '',
-      status: '예약',
+      status: '',
       statusCustom: ''
     },
     acu: {
@@ -158,7 +159,7 @@ export default function WorkPage() {
       selectedWorks: [] as string[],
       workDetails: '',
       price: '',
-      status: '예약',
+      status: '',
       statusCustom: ''
     },
     notes: '',
@@ -201,6 +202,10 @@ export default function WorkPage() {
   // Remapping 작업 편집 모드
   const [isEditingRemapping, setIsEditingRemapping] = useState(false)
   const [editingRemappingId, setEditingRemappingId] = useState<number | null>(null)
+  
+  // 작업 기록 편집 모달 상태
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [selectedWorkRecord, setSelectedWorkRecord] = useState<any>(null)
 
   // 선택된 고객의 장비 목록
   const [availableEquipment, setAvailableEquipment] = useState<EquipmentData[]>([])
@@ -1272,7 +1277,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약',
+        status: '',
         statusCustom: ''
       },
       acu: {
@@ -1287,7 +1292,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약',
+        status: '',
         statusCustom: ''
       },
       notes: '',
@@ -1381,6 +1386,24 @@ export default function WorkPage() {
     }
   }
 
+  // 작업 기록 편집 모달 열기
+  const handleOpenEditModal = (workRecord: any) => {
+    setSelectedWorkRecord(workRecord)
+    setIsEditModalOpen(true)
+  }
+
+  // 작업 기록 편집 모달 닫기
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    setSelectedWorkRecord(null)
+  }
+
+  // 작업 기록 저장 후 처리
+  const handleWorkRecordSave = () => {
+    // 저장 후 필요한 처리 (예: 목록 새로고침)
+    console.log('작업 기록이 저장되었습니다.')
+  }
+
   // Remapping 작업 편집 취소
   const handleCancelRemappingEdit = () => {
     setCurrentRemappingWork({
@@ -1396,7 +1419,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약',
+        status: '',
         statusCustom: ''
       },
       acu: {
@@ -1411,7 +1434,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약',
+        status: '',
         statusCustom: ''
       },
       notes: '',
@@ -1737,7 +1760,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약',
+        status: '',
         statusCustom: ''
       },
       acu: {
@@ -1752,7 +1775,7 @@ export default function WorkPage() {
         selectedWorks: [],
         workDetails: '',
         price: '',
-        status: '예약',
+        status: '',
         statusCustom: ''
       },
       notes: '',
@@ -2641,7 +2664,7 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       ECU 작업 상태
                     </label>
                     <CustomDropdown
@@ -3596,6 +3619,14 @@ export default function WorkPage() {
 
 
       </div>
+      
+      {/* 작업 기록 편집 모달 */}
+      <WorkDetailModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        workRecord={selectedWorkRecord}
+        onSave={handleWorkRecordSave}
+      />
     </AuthGuard>
   )
 } 
