@@ -6,6 +6,7 @@ import type { Database } from './database.types'
 import { CacheManager } from './cache-manager'
 import { CustomerData } from './customers'
 import { EquipmentData } from './equipment'
+import { uploadMultipleFiles, type FileUploadResult } from './file-upload'
 
 // isPlaceholderEnvironment 함수를 이 파일 내부에 정의하거나, 항상 false를 반환하도록 수정
 const isPlaceholderEnvironment = () => {
@@ -432,16 +433,11 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
     price = parseFloat(firstWork.ecu.price) || null
   }
 
-  // 파일 데이터 추출 (첫 번째 remapping work에서)
-  let filesData = null
-  if (firstWork && firstWork.files) {
-    filesData = firstWork.files
-  }
-
+  // 1단계: 작업 기록을 먼저 데이터베이스에 저장 (파일 없이)
   const recordToInsert = {
     ...transformWorkRecordToDB(restOfRecordData),
     remapping_works: remappingWorks ? JSON.stringify(remappingWorks) : null,
-    files: filesData ? JSON.stringify(filesData) : null,
+    files: null, // 파일은 나중에 업로드 후 업데이트
     total_price: totalPrice || null,
     ecu_maker: ecuMaker,
     ecu_model: ecuModel,
@@ -470,7 +466,6 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
   console.log('  - work_description:', recordToInsert.work_description)
   console.log('  - price:', recordToInsert.price)
   console.log('  - remapping_works (문자열 길이):', recordToInsert.remapping_works?.length || 0)
-  console.log('  - files (문자열 길이):', recordToInsert.files?.length || 0)
 
   console.log('🚀 Supabase INSERT 실행 중...')
   const { data, error } = await supabase
@@ -491,7 +486,173 @@ export const createWorkRecord = async (recordData: Omit<WorkRecordData, 'id' | '
   console.log('✅ 작업 기록 저장 완료!')
   console.log('✅ 생성된 레코드 ID:', data?.id)
   console.log('✅ 생성된 레코드 created_at:', data?.created_at)
-  console.log('✅ 반환된 전체 데이터:', data)
+
+  // 2단계: 파일들을 Supabase Storage에 업로드
+  let finalFilesData = null
+  
+  if (remappingWorks && remappingWorks.length > 0) {
+    console.log('📁 파일 업로드 처리 시작...')
+    
+    // 모든 remapping work에서 파일 수집
+    const filesToUpload: Array<{
+      file: File
+      fileId: string
+      category: 'original' | 'stage1' | 'stage2' | 'stage3' | 'acu-original' | 'acu-stage1' | 'acu-stage2' | 'acu-stage3' | 'media'
+      description?: string
+    }> = []
+
+    remappingWorks.forEach((work: any, workIndex: number) => {
+      if (work.files) {
+        // ECU 파일들
+        if (work.files.originalFile) {
+          filesToUpload.push({
+            file: work.files.originalFile,
+            fileId: `work${workIndex}_ecu_original`,
+            category: 'original',
+            description: work.files.originalFileDescription || '원본 ECU 파일'
+          })
+        }
+        if (work.files.stage1File) {
+          filesToUpload.push({
+            file: work.files.stage1File,
+            fileId: `work${workIndex}_ecu_stage1`,
+            category: 'stage1',
+            description: work.files.stage1FileDescription || 'Stage 1 튜닝 파일'
+          })
+        }
+        if (work.files.stage2File) {
+          filesToUpload.push({
+            file: work.files.stage2File,
+            fileId: `work${workIndex}_ecu_stage2`,
+            category: 'stage2',
+            description: work.files.stage2FileDescription || 'Stage 2 튜닝 파일'
+          })
+        }
+        if (work.files.stage3File) {
+          filesToUpload.push({
+            file: work.files.stage3File,
+            fileId: `work${workIndex}_ecu_stage3`,
+            category: 'stage3',
+            description: work.files.stage3FileDescription || 'Stage 3 튜닝 파일'
+          })
+        }
+
+        // ACU 파일들
+        if (work.files.acuOriginalFile) {
+          filesToUpload.push({
+            file: work.files.acuOriginalFile,
+            fileId: `work${workIndex}_acu_original`,
+            category: 'acu-original',
+            description: work.files.acuOriginalFileDescription || '원본 ACU 파일'
+          })
+        }
+        if (work.files.acuStage1File) {
+          filesToUpload.push({
+            file: work.files.acuStage1File,
+            fileId: `work${workIndex}_acu_stage1`,
+            category: 'acu-stage1',
+            description: work.files.acuStage1FileDescription || 'ACU Stage 1 튜닝 파일'
+          })
+        }
+        if (work.files.acuStage2File) {
+          filesToUpload.push({
+            file: work.files.acuStage2File,
+            fileId: `work${workIndex}_acu_stage2`,
+            category: 'acu-stage2',
+            description: work.files.acuStage2FileDescription || 'ACU Stage 2 튜닝 파일'
+          })
+        }
+        if (work.files.acuStage3File) {
+          filesToUpload.push({
+            file: work.files.acuStage3File,
+            fileId: `work${workIndex}_acu_stage3`,
+            category: 'acu-stage3',
+            description: work.files.acuStage3FileDescription || 'ACU Stage 3 튜닝 파일'
+          })
+        }
+      }
+
+      // 미디어 파일들
+      if (work.media) {
+        if (work.media.before) {
+          filesToUpload.push({
+            file: work.media.before,
+            fileId: `work${workIndex}_media_before`,
+            category: 'media',
+            description: '작업 전 사진'
+          })
+        }
+        if (work.media.after) {
+          filesToUpload.push({
+            file: work.media.after,
+            fileId: `work${workIndex}_media_after`,
+            category: 'media',
+            description: '작업 후 사진'
+          })
+        }
+      }
+    })
+
+    if (filesToUpload.length > 0) {
+      console.log(`📦 총 ${filesToUpload.length}개 파일 업로드 예정`)
+      
+      try {
+        const uploadResults = await uploadMultipleFiles(filesToUpload, data.id)
+        
+        // 업로드 결과를 정리해서 files 데이터 구성
+        const fileEntries = uploadResults
+          .filter(result => result.success)
+          .map(result => ({
+            id: result.fileId,
+            name: filesToUpload.find(f => f.fileId === result.fileId)?.file.name || 'unknown',
+            description: result.description || '',
+            url: result.url,
+            path: result.path,
+            category: result.category,
+            size: filesToUpload.find(f => f.fileId === result.fileId)?.file.size || 0,
+            uploadDate: new Date().toISOString()
+          }))
+
+        if (fileEntries.length > 0) {
+          finalFilesData = fileEntries
+          console.log(`✅ ${fileEntries.length}개 파일 업로드 성공`)
+        }
+
+        // 실패한 파일들 로그
+        const failedUploads = uploadResults.filter(result => !result.success)
+        if (failedUploads.length > 0) {
+          console.warn(`⚠️ ${failedUploads.length}개 파일 업로드 실패:`)
+          failedUploads.forEach(failed => {
+            console.warn(`  - ${failed.fileId}: ${failed.error}`)
+          })
+        }
+
+      } catch (uploadError) {
+        console.error('❌ 파일 업로드 중 오류:', uploadError)
+        // 파일 업로드 실패해도 작업 기록은 유지
+      }
+    } else {
+      console.log('📂 업로드할 파일이 없습니다.')
+    }
+  }
+
+  // 3단계: 파일 정보로 레코드 업데이트
+  if (finalFilesData && finalFilesData.length > 0) {
+    console.log('📝 파일 정보로 작업 기록 업데이트 중...')
+    
+    const { error: updateError } = await supabase
+      .from('work_records')
+      .update({ files: JSON.stringify(finalFilesData) })
+      .eq('id', data.id)
+
+    if (updateError) {
+      console.error('❌ 파일 정보 업데이트 실패:', updateError)
+    } else {
+      console.log('✅ 파일 정보 업데이트 완료')
+    }
+  }
+
+  console.log('✅ 전체 작업 기록 생성 완료!')
   return data
 }
 

@@ -22,10 +22,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  // 개발 환경 체크
-  const isDevelopment = process.env.NODE_ENV === 'development'
+  // 개발 환경 체크 (더 강력한 감지)
+  const isDevelopment = process.env.NODE_ENV === 'development' || 
+                       typeof window !== 'undefined' && window.location.hostname === 'localhost'
 
   useEffect(() => {
+    console.log('🔍 AuthContext 초기화 시작')
+    console.log('🔍 NODE_ENV:', process.env.NODE_ENV)
+    console.log('🔍 hostname:', typeof window !== 'undefined' ? window.location.hostname : 'undefined')
+    console.log('🔍 isDevelopment:', isDevelopment)
+    
     // 개발 환경에서는 더미 사용자로 자동 로그인
     if (isDevelopment) {
       console.log('🚀 개발 환경: 자동 로그인 처리')

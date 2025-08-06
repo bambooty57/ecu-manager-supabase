@@ -119,6 +119,28 @@ const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
 
   const ecuData = transformECUData(record)
   const acuData = transformACUData(record)
+  
+  // 파일 정보 표시를 위한 로깅
+  console.log('📁 WorkDetailModal - Record files:', record.files)
+  console.log('📁 WorkDetailModal - Record files length:', record.files?.length || 0)
+  
+  // 테스트용: ID 49 작업에 대해 더미 파일 데이터 추가 (실제 Supabase Storage에 존재하는 파일)
+  const testFiles = (record.id === '49' || record.id.toString() === '49') ? [
+    {
+      id: 1,
+      work_record_id: 49,
+      original_name: 'test_ecu_file.txt',
+      file_path: '49/original_work0_ecu_original_test_ecu_file.txt',
+      file_size: 48,
+      bucket: 'work-files',
+      uploaded_at: new Date().toISOString(),
+      file_type: 'text/plain',
+      description: '테스트 ECU 파일 - 실제 Storage에 존재하는 파일로 다운로드 테스트 가능'
+    }
+  ] : record.files || []
+  
+  console.log('🧪 테스트 파일 데이터:', testFiles)
+  console.log('🆔 Record ID와 타입:', record.id, typeof record.id)
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -324,19 +346,26 @@ const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
                       </div>
                     )}
 
-                    {/* 파일 다운로드 섹션 */}
-                    {record.files && record.files.length > 0 && (
-                      <div className="bg-gray-700 rounded-lg p-6">
-                        <h4 className="font-medium text-white text-lg mb-4">📁 파일</h4>
+                    {/* 파일 다운로드 섹션 - 항상 표시하되 파일이 없으면 정보 표시 */}
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h4 className="font-medium text-white text-lg mb-4">📁 첨부 파일</h4>
+                      {testFiles && testFiles.length > 0 ? (
                         <FileDownloadSection
                           recordId={parseInt(record.id, 10)}
-                          files={record.files}
+                          files={testFiles}
                           onDownloadStart={() => console.log('다운로드 시작')}
                           onDownloadComplete={() => console.log('다운로드 완료')}
                           onDownloadError={(error) => console.error('다운로드 오류:', error)}
                         />
-                      </div>
-                    )}
+                      ) : (
+                        <div className="text-gray-300 italic flex items-center">
+                          <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          첨부된 파일이 없습니다.
+                        </div>
+                      )}
+                    </div>
 
                     {/* 메모 */}
                     {record.notes && (

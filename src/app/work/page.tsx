@@ -112,6 +112,10 @@ export default function WorkPage() {
       mediaFile5?: File
       mediaFile5Description?: string
     }
+    media?: {
+      before?: File | null
+      after?: File | null
+    }
   }
 
   const [formData, setFormData] = useState({
@@ -1560,133 +1564,56 @@ export default function WorkPage() {
     
     for (const [index, remappingWork] of remappingWorks.entries()) {
       try {
-        // 파일 데이터 처리
-        const files: any[] = []
-        
-        if (remappingWork.files.originalFile) {
-          const data = await convertFileToBase64(remappingWork.files.originalFile)
-          files.push({
-            name: remappingWork.files.originalFile.name,
-            size: remappingWork.files.originalFile.size,
-            type: remappingWork.files.originalFile.type,
-            data: data,
-            description: remappingWork.files.originalFileDescription || '원본 ECU 파일',
-            category: 'original',
-            uploadDate: new Date().toISOString()
-          })
-        }
-
-        if (remappingWork.files.stage1File) {
-          const data = await convertFileToBase64(remappingWork.files.stage1File)
-          files.push({
-            name: remappingWork.files.stage1File.name,
-            size: remappingWork.files.stage1File.size,
-            type: remappingWork.files.stage1File.type,
-            data: data,
-            description: remappingWork.files.stage1FileDescription || 'Stage 1 튜닝 파일',
-            category: 'stage1',
-            uploadDate: new Date().toISOString()
-          })
-        }
-
-        if (remappingWork.files.stage2File) {
-          const data = await convertFileToBase64(remappingWork.files.stage2File)
-          files.push({
-            name: remappingWork.files.stage2File.name,
-            size: remappingWork.files.stage2File.size,
-            type: remappingWork.files.stage2File.type,
-            data: data,
-            description: remappingWork.files.stage2FileDescription || 'Stage 2 튜닝 파일',
-            category: 'stage2',
-            uploadDate: new Date().toISOString()
-          })
-        }
-
-        if (remappingWork.files.stage3File) {
-          const data = await convertFileToBase64(remappingWork.files.stage3File)
-          files.push({
-            name: remappingWork.files.stage3File.name,
-            size: remappingWork.files.stage3File.size,
-            type: remappingWork.files.stage3File.type,
-            data: data,
-            description: remappingWork.files.stage3FileDescription || 'Stage 3 튜닝 파일',
-            category: 'stage3',
-            uploadDate: new Date().toISOString()
-          })
-        }
-
-        // ACU 파일들 처리
-        if (remappingWork.files.acuOriginalFile) {
-          const data = await convertFileToBase64(remappingWork.files.acuOriginalFile)
-          files.push({
-            name: remappingWork.files.acuOriginalFile.name,
-            size: remappingWork.files.acuOriginalFile.size,
-            type: remappingWork.files.acuOriginalFile.type,
-            data: data,
-            description: remappingWork.files.acuOriginalFileDescription || '원본 ACU 파일',
-            category: 'acuOriginal',
-            uploadDate: new Date().toISOString()
-          })
-        }
-
-        if (remappingWork.files.acuStage1File) {
-          const data = await convertFileToBase64(remappingWork.files.acuStage1File)
-          files.push({
-            name: remappingWork.files.acuStage1File.name,
-            size: remappingWork.files.acuStage1File.size,
-            type: remappingWork.files.acuStage1File.type,
-            data: data,
-            description: remappingWork.files.acuStage1FileDescription || 'ACU Stage 1 튜닝 파일',
-            category: 'acuStage1',
-            uploadDate: new Date().toISOString()
-          })
-        }
-
-        if (remappingWork.files.acuStage2File) {
-          const data = await convertFileToBase64(remappingWork.files.acuStage2File)
-          files.push({
-            name: remappingWork.files.acuStage2File.name,
-            size: remappingWork.files.acuStage2File.size,
-            type: remappingWork.files.acuStage2File.type,
-            data: data,
-            description: remappingWork.files.acuStage2FileDescription || 'ACU Stage 2 튜닝 파일',
-            category: 'acuStage2',
-            uploadDate: new Date().toISOString()
-          })
-        }
-
-        if (remappingWork.files.acuStage3File) {
-          const data = await convertFileToBase64(remappingWork.files.acuStage3File)
-          files.push({
-            name: remappingWork.files.acuStage3File.name,
-            size: remappingWork.files.acuStage3File.size,
-            type: remappingWork.files.acuStage3File.type,
-            data: data,
-            description: remappingWork.files.acuStage3FileDescription || 'ACU Stage 3 튜닝 파일',
-            category: 'acuStage3',
-            uploadDate: new Date().toISOString()
-          })
-        }
-
-        // 미디어 파일들 처리 (5개)
-        for (let i = 1; i <= 5; i++) {
-          const mediaFileKey = `mediaFile${i}` as keyof typeof remappingWork.files
-          const mediaDescKey = `mediaFile${i}Description` as keyof typeof remappingWork.files
-          const mediaFile = remappingWork.files[mediaFileKey] as File | undefined
-          const mediaDesc = remappingWork.files[mediaDescKey] as string | undefined
+        // 파일 데이터 처리 - File 객체를 그대로 전달 (Storage 업로드용)
+        const files: any = {
+          // ECU 파일들
+          originalFile: remappingWork.files.originalFile || null,
+          originalFileDescription: remappingWork.files.originalFileDescription || '원본 ECU 파일',
           
-          if (mediaFile) {
-            const data = await convertFileToBase64(mediaFile)
-            files.push({
-              name: mediaFile.name,
-              size: mediaFile.size,
-              type: mediaFile.type,
-              data: data,
-              description: mediaDesc || `미디어 파일 ${i}`,
-              category: `media${i}`,
-              uploadDate: new Date().toISOString()
-            })
-          }
+          stage1File: remappingWork.files.stage1File || null,
+          stage1FileDescription: remappingWork.files.stage1FileDescription || 'Stage 1 튜닝 파일',
+
+          // ECU 파일들 (계속)
+          stage2File: remappingWork.files.stage2File || null,
+          stage2FileDescription: remappingWork.files.stage2FileDescription || 'Stage 2 튜닝 파일',
+          
+          stage3File: remappingWork.files.stage3File || null,
+          stage3FileDescription: remappingWork.files.stage3FileDescription || 'Stage 3 튜닝 파일',
+
+          // ACU 파일들
+          acuOriginalFile: remappingWork.files.acuOriginalFile || null,
+          acuOriginalFileDescription: remappingWork.files.acuOriginalFileDescription || '원본 ACU 파일',
+          
+          acuStage1File: remappingWork.files.acuStage1File || null,
+          acuStage1FileDescription: remappingWork.files.acuStage1FileDescription || 'ACU Stage 1 튜닝 파일',
+          
+          acuStage2File: remappingWork.files.acuStage2File || null,
+          acuStage2FileDescription: remappingWork.files.acuStage2FileDescription || 'ACU Stage 2 튜닝 파일',
+          
+          acuStage3File: remappingWork.files.acuStage3File || null,
+          acuStage3FileDescription: remappingWork.files.acuStage3FileDescription || 'ACU Stage 3 튜닝 파일',
+
+          // 미디어 파일들
+          mediaFile1: remappingWork.files.mediaFile1 || null,
+          mediaFile1Description: remappingWork.files.mediaFile1Description || '미디어 파일 1',
+          
+          mediaFile2: remappingWork.files.mediaFile2 || null,
+          mediaFile2Description: remappingWork.files.mediaFile2Description || '미디어 파일 2',
+          
+          mediaFile3: remappingWork.files.mediaFile3 || null,
+          mediaFile3Description: remappingWork.files.mediaFile3Description || '미디어 파일 3',
+          
+          mediaFile4: remappingWork.files.mediaFile4 || null,
+          mediaFile4Description: remappingWork.files.mediaFile4Description || '미디어 파일 4',
+          
+          mediaFile5: remappingWork.files.mediaFile5 || null,
+          mediaFile5Description: remappingWork.files.mediaFile5Description || '미디어 파일 5'
+        }
+
+        // 미디어 파일 추가 (before, after)
+        const media = {
+          before: remappingWork.media?.before || null,
+          after: remappingWork.media?.after || null
         }
 
         // 모델명 → id 변환
@@ -1733,7 +1660,8 @@ export default function WorkPage() {
           remappingWorks: [
             {
               ...remappingWork, // RemappingWork 전체 구조(jsonb)
-              files: files // 파일 정보 포함
+              files: files, // File 객체들 포함 (Storage 업로드용)
+              media: media  // 미디어 파일들 포함
             }
           ] as any
         }
