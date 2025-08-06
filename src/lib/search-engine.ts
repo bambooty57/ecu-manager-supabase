@@ -97,27 +97,31 @@ export class SearchEngine {
     // 1. 키워드 검색
     const keywordResults = await this.keywordSearch(tokens, options)
     keywordResults.forEach(result => {
-      results.set(result.record.id, {
-        ...result,
-        score: result.score * 1.0,
-        type: 'keyword'
-      })
+      if (result.record.id) {
+        results.set(result.record.id, {
+          ...result,
+          score: result.score * 1.0,
+          type: 'keyword'
+        })
+      }
     })
     
     // 2. 퍼지 검색 (옵션)
     if (options.fuzzy !== false) {
       const fuzzyResults = await this.fuzzySearch(tokens, options)
       fuzzyResults.forEach(result => {
-        const existing = results.get(result.record.id)
-        if (existing) {
-          existing.score += result.score * 0.8
-          existing.matches.push(...result.matches)
-        } else {
-          results.set(result.record.id, {
-            ...result,
-            score: result.score * 0.8,
-            type: 'fuzzy'
-          })
+        if (result.record.id) {
+          const existing = results.get(result.record.id)
+          if (existing) {
+            existing.score += result.score * 0.8
+            existing.matches.push(...result.matches)
+          } else {
+            results.set(result.record.id, {
+              ...result,
+              score: result.score * 0.8,
+              type: 'fuzzy'
+            })
+          }
         }
       })
     }
@@ -126,16 +130,18 @@ export class SearchEngine {
     if (options.ngram !== false) {
       const ngramResults = await this.ngramSearch(tokens, options)
       ngramResults.forEach(result => {
-        const existing = results.get(result.record.id)
-        if (existing) {
-          existing.score += result.score * 0.6
-          existing.matches.push(...result.matches)
-        } else {
-          results.set(result.record.id, {
-            ...result,
-            score: result.score * 0.6,
-            type: 'ngram'
-          })
+        if (result.record.id) {
+          const existing = results.get(result.record.id)
+          if (existing) {
+            existing.score += result.score * 0.6
+            existing.matches.push(...result.matches)
+          } else {
+            results.set(result.record.id, {
+              ...result,
+              score: result.score * 0.6,
+              type: 'ngram'
+            })
+          }
         }
       })
     }

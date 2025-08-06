@@ -78,7 +78,7 @@ const transformECUData = (record: WorkRecord) => {
     tuning_stage: record.tuning_stage || extractTuningStage(record.ecu_model || ''),
     connection_method: record.connection_method,
     tools_used: record.tools_used,
-    status: record.ecu_status || record.status || 'Unknown', // ECU 전용 상태 사용
+    status: record.status || 'Unknown', // 전체 상태 사용
     price: record.total_price || null
   }
   
@@ -109,7 +109,7 @@ const transformACUData = (record: WorkRecord) => {
     connection_method: record.connection_method || null,
     tools_used: record.tools_used || null,
     is_active: record.is_active ?? isActive,
-    status: record.acu_status || record.status || 'Unknown', // ACU 전용 상태 사용
+    status: record.status || 'Unknown', // 전체 상태 사용
     price: record.total_price || null
   }
   

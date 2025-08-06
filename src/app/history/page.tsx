@@ -197,8 +197,8 @@ function HistoryPage() {
         
         // remapping_works에서 추가 정보 추출
         if (record.remapping_works && Array.isArray(record.remapping_works) && record.remapping_works.length > 0) {
-          const firstWork = record.remapping_works[0]
-          if (firstWork && firstWork.ecu) {
+          const firstWork = record.remapping_works[0] as any
+          if (firstWork && firstWork.ecu && typeof firstWork.ecu === 'object') {
             ecuInfo = {
               ...ecuInfo,
               manufacturer: firstWork.ecu.maker || ecuInfo.manufacturer,
@@ -208,7 +208,7 @@ function HistoryPage() {
               status: firstWork.ecu.status || ecuInfo.status
             }
           }
-          if (firstWork && firstWork.acu) {
+          if (firstWork && firstWork.acu && typeof firstWork.acu === 'object') {
             acuInfo = {
               ...acuInfo,
               manufacturer: firstWork.acu.manufacturer || acuInfo.manufacturer,
@@ -299,7 +299,7 @@ function HistoryPage() {
       console.log('보강된 데이터:', enrichedData)
       
       setWorkRecords(enrichedData)
-      setTotalCount(basicData.totalCount || 0)
+              setTotalCount(basicData.total || 0)
       setTotalPages(basicData.totalPages || 0)
       setCurrentPage(page)
       

@@ -1637,15 +1637,14 @@ export default function WorkPage() {
           workDate: formData.workDate,
           workType: 'ECU 튜닝',
           totalPrice: totalCalculatedPrice,
-          status: remappingWork.ecu?.status || remappingWork.acu?.status || '예약',
           // ECU 정보
-          ecuMaker: remappingWork.ecu?.maker || null,
-          ecuModel: remappingWork.ecu?.type || remappingWork.ecu?.typeCustom || null,
+          ecuMaker: remappingWork.ecu?.maker || undefined,
+          ecuModel: remappingWork.ecu?.type || remappingWork.ecu?.typeCustom || undefined,
           // ACU 정보
-          acuManufacturer: remappingWork.acu?.manufacturer || null,
-          acuModel: remappingWork.acu?.model || remappingWork.acu?.modelCustom || null,
+          acuManufacturer: remappingWork.acu?.manufacturer || undefined,
+          acuModel: remappingWork.acu?.model || remappingWork.acu?.modelCustom || undefined,
           // 연결 방법 (ECU 우선, 없으면 ACU)
-          connectionMethod: remappingWork.ecu?.connectionMethod || remappingWork.acu?.connectionMethod || null,
+          connectionMethod: remappingWork.ecu?.connectionMethod || remappingWork.acu?.connectionMethod || undefined,
           // 사용된 도구들
           toolsUsed: [
             ...(remappingWork.ecu?.toolCategory ? [remappingWork.ecu.toolCategory] : []),
@@ -1655,7 +1654,7 @@ export default function WorkPage() {
           workDescription: [
             ...(remappingWork.ecu?.workDetails ? [`ECU: ${remappingWork.ecu.workDetails}`] : []),
             ...(remappingWork.acu?.workDetails ? [`ACU: ${remappingWork.acu.workDetails}`] : [])
-          ].join(', ') || null,
+          ].join(', ') || undefined,
           // 리매핑 작업 데이터
           remappingWorks: [
             {

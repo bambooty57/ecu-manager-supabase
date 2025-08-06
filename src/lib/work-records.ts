@@ -87,6 +87,18 @@ export interface WorkRecordData {
   files?: any
   remappingWorks: RemappingWork[]
   isActive?: boolean
+  // ECU 관련 속성들
+  ecuMaker?: string
+  ecuModel?: string
+  ecuType?: string
+  ecuPrice?: number
+  ecuStatus?: string
+  // ACU 관련 속성들
+  acuManufacturer?: string
+  acuModel?: string
+  acuType?: string
+  acuPrice?: number
+  acuStatus?: string
 }
 
 // 상태 색상 매핑 함수
@@ -144,16 +156,11 @@ export const createWorkRecord = async (data: WorkRecordData): Promise<WorkRecord
     workDescription,
     files,
     remappingWorks,
-    isActive = true,
-    status = 'pending'
+    isActive = true
   } = data
 
   // 총 가격 계산
   const calculatedTotalPrice = totalPrice || calculateTotalPrice(remappingWorks)
-
-  // 전체 상태 결정
-  const { overallStatus } = extractStatusFromRemapping(remappingWorks)
-  const finalStatus = status || overallStatus || 'pending'
 
   const { data: workRecord, error } = await supabase
     .from('work_records')
@@ -168,8 +175,7 @@ export const createWorkRecord = async (data: WorkRecordData): Promise<WorkRecord
       work_description: workDescription,
       files: files,
       remapping_works: remappingWorks,
-      is_active: isActive,
-      status: finalStatus
+      is_active: isActive
     })
     .select()
     .single()
