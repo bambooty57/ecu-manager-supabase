@@ -303,6 +303,34 @@ body {
   transition: all 0.2s ease;
 }
 
+/* 커스텀 테이블 호버 스타일 */
+table tbody tr:hover {
+  background-color: #000F7D !important;
+}
+
+/* 테이블 행 호버 효과 강화 */
+.bg-gray-900:hover,
+.bg-gray-800:hover {
+  background-color: #000F7D !important;
+  transition: background-color 0.2s ease;
+}
+
+/* 더 구체적인 선택자로 호버 효과 적용 */
+table tbody tr.bg-gray-900:hover,
+table tbody tr.bg-gray-800:hover {
+  background-color: #000F7D !important;
+}
+
+/* 인라인 스타일이 적용된 경우에도 호버 효과 적용 */
+table tbody tr[style*="background-color"]:hover {
+  background-color: #000F7D !important;
+}
+
+/* 모든 테이블 행에 대한 호버 효과 */
+table tbody tr:hover {
+  background-color: #000F7D !important;
+}
+
 /* 모달 효과 */
 .modal-backdrop {
   background: rgba(0, 0, 0, 0.5);

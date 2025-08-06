@@ -725,26 +725,31 @@ function HistoryPage() {
     if (filters.dateFrom && record.workDate < filters.dateFrom) return false
     if (filters.dateTo && record.workDate > filters.dateTo) return false
     
-    // 고객명 필터링
-    if (filters.customer && !record.customerName.toLowerCase().includes(filters.customer.toLowerCase())) return false
+    // ✅ 고객명 필터링 - undefined 체크 추가
+    if (filters.customer && record.customerName) {
+      if (!record.customerName.toLowerCase().includes(filters.customer.toLowerCase())) return false
+    } else if (filters.customer && !record.customerName) {
+      // 고객명이 없는데 필터가 설정된 경우 제외
+      return false
+    }
     
-    // 장비종류 필터링
-    if (filters.equipmentType && record.equipmentType !== filters.equipmentType) return false
+    // ✅ 장비종류 필터링 - undefined 체크 추가
+    if (filters.equipmentType && record.equipmentType && record.equipmentType !== filters.equipmentType) return false
     
-    // 제조사 필터링
-    if (filters.manufacturer && record.manufacturer !== filters.manufacturer) return false
+    // ✅ 제조사 필터링 - undefined 체크 추가
+    if (filters.manufacturer && record.manufacturer && record.manufacturer !== filters.manufacturer) return false
     
-    // 모델명 필터링
-    if (filters.model && record.model !== filters.model) return false
+    // ✅ 모델명 필터링 - undefined 체크 추가
+    if (filters.model && record.model && record.model !== filters.model) return false
     
-    // ECU 타입 필터링
-    if (filters.ecuType && record.ecuType !== filters.ecuType) return false
+    // ✅ ECU 타입 필터링 - undefined 체크 추가
+    if (filters.ecuType && record.ecuType && record.ecuType !== filters.ecuType) return false
     
     // ACU 타입 필터링 (temporarily disabled - acuType field removed from WorkRecordData)
     // if (filters.acuType && record.acuType !== filters.acuType) return false
     
-    // 튜닝작업 필터링
-    if (filters.tuningWork && record.tuningWork !== filters.tuningWork) {
+    // ✅ 튜닝작업 필터링 - undefined 체크 추가
+    if (filters.tuningWork && record.tuningWork && record.tuningWork !== filters.tuningWork) {
       // "기타"가 선택된 경우 customTuningWork도 확인
       if (filters.tuningWork === '기타' && record.tuningWork === '기타') {
         // 통과 (기타끼리 매칭)
@@ -753,8 +758,8 @@ function HistoryPage() {
       }
     }
     
-    // 작업상태 필터링
-    if (filters.status && record.status !== filters.status) return false
+    // ✅ 작업상태 필터링 - undefined 체크 추가
+    if (filters.status && record.status && record.status !== filters.status) return false
     
     return true
   })
@@ -880,10 +885,9 @@ function HistoryPage() {
     }
 
     if (filters.customer) {
-      const searchTerm = filters.customer.toLowerCase()
+      // 고객 ID로 필터링
       result = result.filter(record => {
-        const customerName = record.customer_name?.toLowerCase() || ''
-        return customerName.includes(searchTerm)
+        return record.customer_id?.toString() === filters.customer
       })
     }
 
@@ -926,13 +930,28 @@ function HistoryPage() {
     }
 
     if (filters.status) {
-      result = result.filter(record => record.status === filters.status)
+      result = result.filter(record => {
+        // remapping_works에서 ECU와 ACU 상태 확인
+        if (record.remapping_works && Array.isArray(record.remapping_works) && record.remapping_works.length > 0) {
+          const firstWork = record.remapping_works[0] as any
+          const ecuStatus = firstWork?.ecu?.status
+          const acuStatus = firstWork?.acu?.status
+          
+          // ECU 또는 ACU 상태 중 하나라도 일치하면 포함
+          return ecuStatus === filters.status || acuStatus === filters.status
+        }
+        return false
+      })
     }
 
     // 정렬 적용
     result.sort((a, b) => {
       let valueA = a[sortField]
       let valueB = b[sortField]
+
+      // ✅ undefined 체크 추가
+      if (valueA === undefined || valueA === null) valueA = ''
+      if (valueB === undefined || valueB === null) valueB = ''
 
       // 날짜 필드인 경우 Date 객체로 변환
       if (sortField === 'created_at' || sortField === 'work_date') {
@@ -1624,7 +1643,7 @@ function HistoryPage() {
                         <thead>
                           <tr className="bg-gradient-to-r from-gray-800 to-gray-700 border-b-2 border-gray-600" role="row">
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors"
+                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-blue-900 transition-colors"
                               onClick={() => handleSort('work_date')}
                               role="columnheader"
                               aria-sort={sortField === 'work_date' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
@@ -1639,7 +1658,7 @@ function HistoryPage() {
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors"
+                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-blue-900 transition-colors"
                               onClick={() => handleSort('customer_name')}
                               role="columnheader"
                               aria-sort={sortField === 'customer_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
@@ -1654,7 +1673,7 @@ function HistoryPage() {
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors"
+                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-blue-900 transition-colors"
                               onClick={() => handleSort('equipment_model')}
                               role="columnheader"
                               aria-sort={sortField === 'equipment_model' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
@@ -1681,7 +1700,7 @@ function HistoryPage() {
                               ⚙️ ACU 정보
                             </th>
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors hidden sm:table-cell"
+                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-blue-900 transition-colors hidden sm:table-cell"
                               onClick={() => handleSort('price')}
                               role="columnheader"
                               aria-sort={sortField === 'price' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
@@ -1771,7 +1790,7 @@ function HistoryPage() {
                               const acuInfo = firstWork?.acu
                               
                               // ECU와 ACU 각각의 개별 상태 추출
-                              const ecuStatus = ecuInfo?.status || 'N/A'
+                              const ecuStatus = (ecuInfo && ecuInfo.maker) ? ecuInfo.status : 'N/A'
                               const acuStatus = (acuInfo && acuInfo.manufacturer) ? acuInfo.status : 'N/A'
                               
                               // ECU와 ACU 금액 계산
@@ -1782,7 +1801,11 @@ function HistoryPage() {
                               const totalPrice = ecuPrice + acuPrice
                               
                               return (
-                                <tr key={record.id} className={`${index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800'} hover:bg-gray-700 transition-colors border-b border-gray-700`} role="row">
+                                <tr 
+                                  key={record.id} 
+                                  className={`${index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800'} hover:bg-custom-dark-blue transition-colors border-b border-gray-700`} 
+                                  role="row"
+                                >
                                   {/* 작업일 */}
                                   <td className="py-3 px-4" role="cell">
                                     <div>
@@ -1809,7 +1832,7 @@ function HistoryPage() {
                                   
                                   {/* ECU 정보 */}
                                   <td className="py-3 px-4 hidden md:table-cell" role="cell">
-                                    {ecuInfo ? (
+                                    {ecuInfo && ecuInfo.maker ? (
                                       <div>
                                         <p className="text-base font-semibold text-blue-300">
                                           {ecuInfo.maker} {ecuInfo.type}
@@ -1827,8 +1850,10 @@ function HistoryPage() {
                                     ) : (
                                       <div>
                                         <p className="text-base text-gray-400">N/A</p>
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${getStatusColor(ecuStatus)}`}>
-                                          {ecuStatus}
+                                        <p className="text-sm text-gray-300">N/A</p>
+                                        <p className="text-sm font-bold text-blue-200">₩0</p>
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium text-gray-600 bg-gray-100">
+                                          N/A
                                         </span>
                                       </div>
                                     )}
@@ -1856,8 +1881,8 @@ function HistoryPage() {
                                         <p className="text-base text-gray-400">N/A</p>
                                         <p className="text-sm text-gray-300">N/A</p>
                                         <p className="text-sm font-bold text-green-200">₩0</p>
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${getStatusColor(acuStatus)}`}>
-                                          {acuStatus}
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium text-gray-600 bg-gray-100">
+                                          N/A
                                         </span>
                                       </div>
                                     )}
@@ -1875,7 +1900,7 @@ function HistoryPage() {
                                     <div className="flex items-center space-x-3">
                                       <button
                                         onClick={() => handleViewDetail(record)}
-                                        className="text-blue-400 hover:text-blue-300 hover:bg-gray-800 p-2 rounded-lg transition-colors"
+                                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 p-2 rounded-lg transition-colors"
                                         title="상세보기"
                                       >
                                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1885,7 +1910,7 @@ function HistoryPage() {
                                       </button>
                                       <button
                                         onClick={() => showDeleteConfirm(record)}
-                                        className="text-red-400 hover:text-red-300 hover:bg-gray-800 p-2 rounded-lg transition-colors"
+                                        className="text-red-400 hover:text-red-300 hover:bg-blue-900 p-2 rounded-lg transition-colors"
                                         title="삭제"
                                       >
                                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">

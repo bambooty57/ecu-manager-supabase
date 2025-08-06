@@ -12,22 +12,31 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  // 🔧 개발 모드에서 인증 우회 (환경변수로 제어)
-  const isDevelopment = process.env.NODE_ENV === 'development'
-  const skipAuth = true // 임시로 인증 우회 활성화
+  // ✅ 개발 환경 체크 최적화
+  const isDevelopment = process.env.NODE_ENV === 'development' || 
+                       (typeof window !== 'undefined' && 
+                        (window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1'))
   
   useEffect(() => {
-    // 개발 모드에서 인증 우회가 활성화되어 있으면 로그인 페이지로 리다이렉트하지 않음
-    if (isDevelopment && skipAuth) {
+    // ✅ 개발 환경에서는 인증 우회
+    if (isDevelopment) {
       console.log('🔧 개발 모드: 인증 우회 활성화됨')
       return
     }
     
+    // ✅ 프로덕션 환경에서만 인증 체크
     if (!loading && !user) {
       router.push('/login')
     }
-  }, [user, loading, router, isDevelopment, skipAuth])
+  }, [user, loading, router, isDevelopment])
 
+  // ✅ 개발 환경에서는 즉시 렌더링
+  if (isDevelopment) {
+    return <>{children}</>
+  }
+
+  // ✅ 로딩 중일 때만 로딩 화면 표시
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -39,16 +48,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     )
   }
 
-  // 개발 모드에서 인증 우회가 활성화되어 있으면 바로 렌더링
-  if (isDevelopment && skipAuth) {
-    return <>{children}</>
-  }
-
+  // ✅ 사용자가 없으면 null 반환
   if (!user) {
     return null
   }
 
-  // bambooty57@gmail.com만 허용
+  // ✅ bambooty57@gmail.com만 허용 (프로덕션 환경에서만)
   if (user.email?.toLowerCase() !== 'bambooty57@gmail.com') {
     return (
       <div className="min-h-screen flex items-center justify-center">

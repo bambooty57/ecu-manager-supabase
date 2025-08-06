@@ -107,20 +107,23 @@ export const getStatusColor = (status: string): string => {
   switch (status?.toLowerCase()) {
     case '완료':
     case 'completed':
-      return 'text-green-600 bg-green-100'
+      return 'text-green-600 bg-green-100 rounded-full'
     case '진행중':
     case 'in-progress':
-      return 'text-blue-600 bg-blue-100'
+      return 'text-blue-600 bg-blue-100 rounded-full'
     case '대기':
     case 'pending':
-      return 'text-yellow-600 bg-yellow-100'
+      return 'text-yellow-600 bg-yellow-100 rounded-full'
     case '실패':
     case 'failed':
-      return 'text-red-600 bg-red-100'
+      return 'text-red-600 bg-red-100 rounded-full'
     case 'as':
-      return 'text-purple-600 bg-purple-100'
+      return 'text-purple-600 bg-purple-100 rounded-full'
+    case 'n/a':
+    case 'na':
+      return 'text-gray-600 bg-gray-100 rounded-full'
     default:
-      return 'text-gray-600 bg-gray-100'
+      return 'text-gray-600 bg-gray-100 rounded-full'
   }
 }
 
@@ -203,7 +206,7 @@ export const getWorkRecords = async (options: {
     .select(`
       *,
       customer:customers(name),
-      equipment:equipment(model, type, manufacturer)
+      equipment:equipment(model, equipment_type, manufacturer)
     `)
     .order('work_date', { ascending: false })
 

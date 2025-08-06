@@ -1,19 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 개발 모드 환경변수 설정
-  env: {
-    NEXT_PUBLIC_DEV_SKIP_AUTH: process.env.NODE_ENV === 'development' ? 'true' : 'false',
+  // ✅ 개발 환경 최적화
+  experimental: {
+    // RSC 안정성 향상
+    serverComponentsExternalPackages: ['@supabase/supabase-js'],
+    // Fast Refresh 안정성 향상
+    optimizePackageImports: ['react-hot-toast', 'lucide-react'],
   },
-  webpack: (config, { isServer }) => {
-    // xlsx 모듈을 위한 설정
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      path: false,
-      crypto: false,
-    };
+  
+  // ✅ 웹팩 최적화
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      // 개발 환경에서 HMR 안정성 향상
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      }
+    }
     
-    // 모듈 로딩 최적화
+    // ✅ 번들 크기 최적화
     config.optimization = {
       ...config.optimization,
       splitChunks: {
@@ -26,10 +31,37 @@ const nextConfig = {
           },
         },
       },
-    };
+    }
     
-    return config;
+    return config
   },
-};
+  
+  // ✅ 이미지 최적화
+  images: {
+    domains: ['ewxzampbdpuaawzrvsln.supabase.co'],
+    formats: ['image/webp', 'image/avif'],
+  },
+  
+  // ✅ 환경 변수 최적화
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  },
+  
+  // ✅ 개발 서버 설정
+  devIndicators: {
+    buildActivity: false,
+  },
+  
+  // ✅ 타입스크립트 설정
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  
+  // ✅ ESLint 설정
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+}
 
-module.exports = nextConfig; 
+module.exports = nextConfig 
