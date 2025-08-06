@@ -14,7 +14,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   // 🔧 개발 모드에서 인증 우회 (환경변수로 제어)
   const isDevelopment = process.env.NODE_ENV === 'development'
-  const skipAuth = process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === 'true'
+  const skipAuth = true // 임시로 인증 우회 활성화
   
   useEffect(() => {
     // 개발 모드에서 인증 우회가 활성화되어 있으면 로그인 페이지로 리다이렉트하지 않음

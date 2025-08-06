@@ -73,12 +73,12 @@ const transformECUData = (record: WorkRecord) => {
   }
 
   const result = {
-    manufacturer: record.ecu_maker || record.ecu_manufacturer || 'Unknown',
+    manufacturer: record.ecu_maker || 'Unknown',
     model: record.ecu_model || 'Unknown Model',
     tuning_stage: record.tuning_stage || extractTuningStage(record.ecu_model || ''),
     connection_method: record.connection_method,
     tools_used: record.tools_used,
-    status: record.status || 'Unknown',
+    status: record.ecu_status || record.status || 'Unknown', // ECU 전용 상태 사용
     price: record.total_price || null
   }
   
@@ -106,8 +106,10 @@ const transformACUData = (record: WorkRecord) => {
     manufacturer: record.acu_manufacturer || 'Unknown',
     model: record.acu_model || 'Unknown Model',
     type: record.acu_type || 'Unknown Type',
+    connection_method: record.connection_method || null,
+    tools_used: record.tools_used || null,
     is_active: record.is_active ?? isActive,
-    status: record.status || 'Unknown',
+    status: record.acu_status || record.status || 'Unknown', // ACU 전용 상태 사용
     price: record.total_price || null
   }
   
@@ -124,8 +126,8 @@ const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
   console.log('📁 WorkDetailModal - Record files:', record.files)
   console.log('📁 WorkDetailModal - Record files length:', record.files?.length || 0)
   
-  // 테스트용: ID 49 작업에 대해 더미 파일 데이터 추가 (실제 Supabase Storage에 존재하는 파일)
-  const testFiles = (record.id === '49' || record.id.toString() === '49') ? [
+  // 테스트용: ID 49, 51 작업에 대해 더미 파일 데이터 추가 (실제 Supabase Storage에 존재하는 파일)
+  const testFiles = (record.id === '49' || record.id === '51' || record.id.toString() === '49' || record.id.toString() === '51') ? [
     {
       id: 1,
       work_record_id: 49,
@@ -295,7 +297,7 @@ const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
                         )}
                       </div>
 
-                      {/* ACU 정보 섹션 (초록색 계열) */}
+                      {/* ACU 정보 섹션 (초록색 계열) - ECU와 동일한 항목 구조 */}
                       <div className="bg-green-900/30 border border-green-700 rounded-lg p-6">
                         <h4 className="font-medium text-green-300 text-lg mb-4 flex items-center">
                           <span className="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
@@ -311,18 +313,31 @@ const WorkDetailModal = ({ isOpen, onClose, record }: WorkDetailModalProps) => {
                               <p className="text-sm text-green-200 mb-1">모델</p>
                               <p className="text-white">{acuData.model}</p>
                             </div>
+
                             <div>
-                              <p className="text-sm text-green-200 mb-1">타입</p>
-                              <p className="text-white">{acuData.type}</p>
+                              <p className="text-sm text-green-200 mb-1">연결방법</p>
+                              <span className="px-2 py-1 bg-green-800 text-green-200 rounded text-sm">
+                                {acuData.connection_method || 'N/A'}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-sm text-green-200 mb-1">사용 도구</p>
+                              <p className="text-white">{acuData.tools_used || 'N/A'}</p>
                             </div>
                             <div>
                               <p className="text-sm text-green-200 mb-1">상태</p>
                               <span className={`px-2 py-1 rounded text-sm ${
-                                acuData.is_active 
+                                acuData.status === '완료' || acuData.status === '완료됨' 
                                   ? 'bg-green-700 text-green-100' 
+                                  : acuData.status === '진행중' 
+                                  ? 'bg-yellow-700 text-yellow-100'
+                                  : acuData.status === 'AS'
+                                  ? 'bg-blue-700 text-blue-100'
+                                  : acuData.status === '실패'
+                                  ? 'bg-red-700 text-red-100'
                                   : 'bg-gray-700 text-gray-300'
                               }`}>
-                                {acuData.is_active ? '✅ 활성화' : '❌ 비활성화'}
+                                {acuData.status}
                               </span>
                             </div>
                             {acuData.price && (

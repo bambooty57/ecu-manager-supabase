@@ -1,0 +1,134 @@
+# 🛡️ MCP 서버 보호 프로세스 관리 규칙
+
+## 🚨 **절대 금지 행동**
+
+### ❌ **절대 사용 금지 명령어**
+```bash
+# ❌ 모든 Node.js 프로세스 종료 (MCP 서버도 종료됨)
+taskkill /f /im node.exe
+
+# ❌ 전체 시스템 프로세스 종료
+taskkill /f /im *
+
+# ❌ MCP 서버와 개발 서버를 동시에 종료하는 명령어
+taskkill /f /im node.exe
+```
+
+### ⚠️ **위험한 행동**
+- MCP 서버와 개발 서버를 구분하지 않고 모두 종료
+- 사용자 확인 없이 강제로 프로세스 종료
+- 규칙 확인 없이 임의로 프로세스 관리
+
+---
+
+## ✅ **안전한 프로세스 관리 방법**
+
+### 🎯 **1단계: 프로세스 확인**
+```bash
+# 포트 사용 프로세스 확인
+netstat -ano | findstr :3000
+
+# Node.js 프로세스 상세 확인
+tasklist | findstr node
+```
+
+### 🎯 **2단계: 특정 프로세스만 종료**
+```bash
+# 특정 PID만 종료 (MCP 서버 보호)
+taskkill /f /pid [개발서버_PID]
+
+# 포트 기반 안전한 종료
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3000') do (
+    echo "PID %%a 종료 중..."
+    taskkill /f /pid %%a
+)
+```
+
+### 🎯 **3단계: 안전한 서버 재시작**
+```bash
+# 개발 서버만 안전하게 재시작
+@echo off
+echo "개발 서버 재시작 중..."
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3000') do (
+    echo "PID %%a 종료 중..."
+    taskkill /f /pid %%a
+)
+timeout /t 3 /nobreak
+npm run dev
+```
+
+---
+
+## 🔒 **강제 적용 규칙**
+
+### 📋 **프로세스 종료 전 필수 체크리스트**
+1. [ ] **규칙 확인**: 이 규칙 파일을 먼저 읽기
+2. [ ] **MCP 서버 보호**: `taskkill /f /im node.exe` 사용 금지
+3. [ ] **특정 프로세스 확인**: `netstat`으로 포트 사용 프로세스 확인
+4. [ ] **사용자 확인**: 프로세스 종료 전 사용자에게 확인
+5. [ ] **안전한 종료**: PID 기반으로 정확한 프로세스만 종료
+
+### 🚨 **위반 시 즉시 중단**
+- 규칙 위반 발견 시 즉시 작업 중단
+- 사용자에게 사과 및 올바른 방법 제시
+- 규칙 재확인 후 안전한 방법으로 재시도
+
+---
+
+## 🎯 **실용적인 스크립트**
+
+### 🔧 **안전한 개발 서버 재시작**
+```batch
+@echo off
+echo "🔧 개발 서버 안전 재시작 중..."
+
+REM 포트 3000 사용 프로세스 찾기
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3000') do (
+    echo "PID %%a 종료 중..."
+    taskkill /f /pid %%a 2>nul
+)
+
+echo "⏳ 3초 대기 중..."
+timeout /t 3 /nobreak >nul
+
+echo "🚀 개발 서버 시작..."
+npm run dev
+```
+
+### 🔍 **MCP 서버 상태 확인**
+```batch
+@echo off
+echo "🔍 MCP 서버 상태 확인 중..."
+
+REM MCP 관련 프로세스 확인
+netstat -ano | findstr :3000
+netstat -ano | findstr :3001
+
+echo "✅ 확인 완료"
+pause
+```
+
+---
+
+## 📚 **참조 규칙**
+
+- [development_workflow.mdc](mdc:.cursor/rules/development_workflow.mdc) - 개발 워크플로우 규칙
+- [cursor_rules.mdc](mdc:.cursor/rules/cursor_rules.mdc) - Cursor 규칙 구조
+
+---
+
+## 🎯 **핵심 원칙**
+
+**"MCP 서버를 보호하면서 개발 서버만 안전하게 관리하세요!"**
+
+1. **규칙 우선**: 항상 이 규칙을 먼저 확인
+2. **MCP 서버 보호**: `taskkill /f /im node.exe` 사용 금지
+3. **특정 프로세스만**: PID 기반으로 정확한 프로세스만 종료
+4. **사용자 확인**: 프로세스 종료 전 사용자에게 확인
+5. **안전한 재시작**: 개발 서버만 재시작하고 MCP 서버는 보호
+
+**"규칙을 어기지 않고 안전하게 작업하겠습니다!"** 🛡️
+description:
+globs:
+alwaysApply: false
+---

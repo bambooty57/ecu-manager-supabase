@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { getStatusColor } from '../lib/work-records'
 
 interface WorkRecord {
   id: string
@@ -18,443 +19,229 @@ interface WorkRecord {
   equipment_model?: string
   equipment_type?: string
   equipment_manufacturer?: string
-  ecu_maker?: string
-  ecu_model?: string
-  ecu_type?: string
-  ecu_price?: number
-  ecu_status?: string
-  tuning_stage?: string
   connection_method?: string
-  acu_manufacturer?: string
-  acu_model?: string
-  acu_type?: string
-  acu_price?: number
-  acu_status?: string
   is_active?: boolean
   status?: string
   total_price?: number
-  // 추가 필드들
-  ecu_data?: any
-  acu_data?: any
+  // remapping_works 기반 데이터
   remapping_works?: any[]
 }
 
 interface WorkRecordRowProps {
   record: WorkRecord
-  onRowClick: (record: WorkRecord) => void
-  onEdit: (record: WorkRecord) => void
-  onDelete: (record: WorkRecord) => void
+  onEdit?: (record: WorkRecord) => void
+  onDelete?: (id: string) => void
 }
 
-// ✅ 개선된 상태별 색상 함수
-const getStatusColor = (status: string) => {
-  const statusLower = status.toLowerCase()
-  
-  if (statusLower.includes('완료') || statusLower.includes('complete')) {
-    return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200'
-  }
-  if (statusLower.includes('진행') || statusLower.includes('progress')) {
-    return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200'
-  }
-  if (statusLower.includes('대기') || statusLower.includes('pending')) {
-    return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-200'
-  }
-  if (statusLower.includes('취소') || statusLower.includes('cancel')) {
-    return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-200'
-  }
-  if (statusLower.includes('검토') || statusLower.includes('review')) {
-    return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-200'
-  }
-  
-  return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-200'
-}
+export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
 
-// ✅ 날짜 포맷팅 함수
-const formatDate = (dateString: string) => {
-  if (!dateString) return '날짜 없음'
-  
-  try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short'
-    })
-  } catch (error) {
-    console.error('날짜 포맷 오류:', error)
-    return '잘못된 날짜'
-  }
-}
+  // 간단한 상태 표시
+  const overallStatus = record.status || 'pending'
 
-// ✅ 금액 포맷팅 함수
-const formatPrice = (price: number | null | undefined) => {
-  if (!price || price === 0) return 'N/A'
-  
-  try {
-    return new Intl.NumberFormat('ko-KR', { 
-      style: 'currency', 
-      currency: 'KRW',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price)
-  } catch (error) {
-    console.error('금액 포맷 오류:', error)
-    return 'N/A'
-  }
-}
+  // 고객명 추출
+  const customerName = record.customer?.name || record.customer_name || 'N/A'
 
-// ✅ 차종 정보 추출 함수
-const getVehicleType = (record: WorkRecord): string => {
-  // equipment_type에서 차종 추출
-  if (record.equipment?.type || record.equipment_type) {
-    const type = record.equipment?.type || record.equipment_type || ''
-    
-    // 차종 매핑
-    const vehicleTypeMap: { [key: string]: string } = {
-      'excavator': '굴삭기',
-      'bulldozer': '불도저',
-      'wheel_loader': '휠로더',
-      'crane': '크레인',
-      'dump_truck': '덤프트럭',
-      'truck': '트럭',
-      'car': '승용차',
-      'bus': '버스',
-      'tractor': '트랙터',
-      'forklift': '지게차',
-      'generator': '발전기',
-      'compressor': '압축기'
-    }
-    
-    const lowerType = type.toLowerCase()
-    for (const [key, value] of Object.entries(vehicleTypeMap)) {
-      if (lowerType.includes(key)) {
-        return value
-      }
-    }
-    
-    // 매핑되지 않은 경우 원본 반환
-    return type
-  }
-  
-  // manufacturer에서 차종 추정
-  const manufacturer = record.equipment?.manufacturer || record.equipment_manufacturer || ''
-  if (manufacturer) {
-    const lowerManufacturer = manufacturer.toLowerCase()
-    if (lowerManufacturer.includes('caterpillar') || lowerManufacturer.includes('cat')) {
-      return '굴삭기'
-    }
-    if (lowerManufacturer.includes('komatsu')) {
-      return '굴삭기'
-    }
-    if (lowerManufacturer.includes('hitachi')) {
-      return '굴삭기'
-    }
-    if (lowerManufacturer.includes('volvo')) {
-      return '굴삭기'
-    }
-    if (lowerManufacturer.includes('hyundai')) {
-      return '굴삭기'
-    }
-    if (lowerManufacturer.includes('doosan')) {
-      return '굴삭기'
-    }
-  }
-  
-  return '알 수 없음'
-}
+  // 장비 정보 추출
+  const equipmentModel = record.equipment?.model || record.equipment_model || 'N/A'
+  const equipmentType = record.equipment?.type || record.equipment_type || 'N/A'
+  const equipmentManufacturer = record.equipment?.manufacturer || record.equipment_manufacturer || 'N/A'
 
-// ✅ ECU 정보 추출 및 개선
-const getECUInfo = (record: WorkRecord) => {
-  // remapping_works에서 ECU 정보 추출
-  let ecuInfo = {
-    manufacturer: record.ecu_maker || 'Unknown',
-    model: record.ecu_model || 'Unknown Model',
-    type: record.ecu_type || '',
-    price: record.ecu_price || 0,
-    status: record.ecu_status || record.status || '알 수 없음',
-    connectionMethod: record.connection_method || '',
-    toolCategory: ''
-  }
-  
-  // remapping_works에서 추가 정보 추출
-  if (record.remapping_works && Array.isArray(record.remapping_works) && record.remapping_works.length > 0) {
-    const firstWork = record.remapping_works[0]
-    if (firstWork && firstWork.ecu) {
-      ecuInfo = {
-        ...ecuInfo,
-        manufacturer: firstWork.ecu.maker || ecuInfo.manufacturer,
-        model: firstWork.ecu.type || ecuInfo.model,
-        type: firstWork.ecu.type || ecuInfo.type,
-        price: parseFloat(firstWork.ecu.price) || ecuInfo.price,
-        status: firstWork.ecu.status || ecuInfo.status,
-        connectionMethod: firstWork.ecu.connectionMethod || ecuInfo.connectionMethod,
-        toolCategory: firstWork.ecu.toolCategory || ecuInfo.toolCategory
-      }
-    }
-  }
-  
-  return ecuInfo
-}
+  // remapping_works에서 ECU/ACU 정보 추출
+  const firstWork = record.remapping_works?.[0]
+  const ecuInfo = firstWork?.ecu
+  const acuInfo = firstWork?.acu
 
-// ✅ ACU 정보 추출 및 개선
-const getACUInfo = (record: WorkRecord) => {
-  // remapping_works에서 ACU 정보 추출
-  let acuInfo = {
-    manufacturer: record.acu_manufacturer || '',
-    model: record.acu_model || '',
-    type: record.acu_type || '',
-    price: record.acu_price || 0,
-    status: record.acu_status || record.status || '알 수 없음',
-    connectionMethod: record.connection_method || '',
-    toolCategory: ''
-  }
-  
-  // remapping_works에서 추가 정보 추출
-  if (record.remapping_works && Array.isArray(record.remapping_works) && record.remapping_works.length > 0) {
-    const firstWork = record.remapping_works[0]
-    if (firstWork && firstWork.acu) {
-      acuInfo = {
-        ...acuInfo,
-        manufacturer: firstWork.acu.manufacturer || acuInfo.manufacturer,
-        model: firstWork.acu.model || acuInfo.model,
-        type: firstWork.acu.type || acuInfo.type,
-        price: parseFloat(firstWork.acu.price) || acuInfo.price,
-        status: firstWork.acu.status || acuInfo.status,
-        connectionMethod: firstWork.acu.connectionMethod || acuInfo.connectionMethod,
-        toolCategory: firstWork.acu.toolCategory || acuInfo.toolCategory
-      }
-    }
-  }
-  
-  return acuInfo
-}
+  // 총 가격 계산
+  const totalPrice = record.total_price || 0
 
-// ✅ ECU 정보 셀 컴포넌트 (개선됨)
-const ECUInfoCell = ({ record }: { record: WorkRecord }) => {
-  const ecuInfo = getECUInfo(record)
-  const statusColor = getStatusColor(ecuInfo.status)
-  
+  // 상태 색상 클래스
+  const statusColorClass = getStatusColor(record.status || overallStatus || 'pending')
+
   return (
-    <div className="space-y-2">
-      <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
-        {ecuInfo.manufacturer}
-      </div>
-      <div className="text-xs text-gray-600 dark:text-gray-400">
-        {ecuInfo.model}
-      </div>
-      {ecuInfo.type && (
-        <div className="text-xs text-blue-600 dark:text-blue-400">
-          {ecuInfo.type}
-        </div>
-      )}
-      {ecuInfo.price > 0 && (
-        <div className="text-xs font-medium text-green-600 dark:text-green-400">
-          {formatPrice(ecuInfo.price)}
-        </div>
-      )}
-      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
-        {ecuInfo.status}
-      </span>
-    </div>
-  )
-}
+    <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-white dark:bg-gray-800">
+      {/* 기본 정보 행 */}
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <div className="flex items-center space-x-4">
+            {/* 고객 정보 */}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {customerName}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {new Date(record.work_date).toLocaleDateString('ko-KR')}
+              </p>
+            </div>
 
-// ✅ ACU 정보 셀 컴포넌트 (개선됨)
-const ACUInfoCell = ({ record }: { record: WorkRecord }) => {
-  const acuInfo = getACUInfo(record)
-  const statusColor = getStatusColor(acuInfo.status)
-  
-  if (!acuInfo.manufacturer && !acuInfo.model && !acuInfo.type) {
-    return (
-      <div className="text-gray-500 dark:text-gray-400 text-sm">
-        ACU 정보 없음
-      </div>
-    )
-  }
-  
-  return (
-    <div className="space-y-2">
-      {acuInfo.manufacturer && (
-        <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
-          {acuInfo.manufacturer}
-        </div>
-      )}
-      {acuInfo.model && (
-        <div className="text-xs text-gray-600 dark:text-gray-400">
-          {acuInfo.model}
-        </div>
-      )}
-      {acuInfo.type && (
-        <div className="text-xs text-purple-600 dark:text-purple-400">
-          {acuInfo.type}
-        </div>
-      )}
-      {acuInfo.price > 0 && (
-        <div className="text-xs font-medium text-green-600 dark:text-green-400">
-          {formatPrice(acuInfo.price)}
-        </div>
-      )}
-      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
-        {acuInfo.status}
-      </span>
-    </div>
-  )
-}
+            {/* 장비 정보 */}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-gray-900 dark:text-white truncate">
+                {equipmentManufacturer} {equipmentModel}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {equipmentType}
+              </p>
+            </div>
 
-export default function WorkRecordRow({ record, onRowClick, onEdit, onDelete }: WorkRecordRowProps) {
-  const [isHovered, setIsHovered] = useState(false)
-  
-  const handleRowClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    onRowClick(record)
-  }
-  
-  const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
-    e.stopPropagation()
-    action()
-  }
-  
-  const formattedDate = formatDate(record.work_date)
-  const formattedPrice = formatPrice(record.total_price)
-  const vehicleType = getVehicleType(record)
-  
-  return (
-    <tr 
-      className={`
-        border-b border-gray-200 dark:border-gray-700 
-        hover:bg-gray-50 dark:hover:bg-gray-800 
-        transition-all duration-200 ease-in-out
-        cursor-pointer
-        ${isHovered ? 'transform scale-[1.01] shadow-md' : ''}
-      `}
-      onClick={handleRowClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      role="row"
-      aria-label={`작업 기록: ${record.customer?.name || '알 수 없음'} - ${formattedDate}`}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onRowClick(record)
-        }
-      }}
-    >
-      {/* 작업일 - 모바일에서도 항상 표시 */}
-      <td 
-        className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100"
-        role="cell"
-        aria-label={`작업일: ${formattedDate}`}
-      >
-        <div className="font-medium">{formattedDate}</div>
-      </td>
-      
-      {/* 고객/차량 정보 - 개선됨 */}
-      <td 
-        className="py-3 px-4"
-        role="cell"
-        aria-label={`고객: ${record.customer?.name || record.customer_name || '알 수 없음'}, 차량: ${record.equipment?.model || record.equipment_model || '알 수 없음'}`}
-      >
-        <div className="space-y-1">
-          <div className="font-medium text-gray-900 dark:text-gray-100">
-            {record.customer?.name || record.customer_name || '알 수 없음'}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {record.equipment?.model || record.equipment_model || '모델 정보 없음'}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-500">
-            {vehicleType}
+            {/* ECU 정보 */}
+            {ecuInfo && (
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-gray-900 dark:text-white truncate">
+                  ECU: {ecuInfo.maker} {ecuInfo.type}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {ecuInfo.selectedWorks?.join(', ') || 'N/A'}
+                </p>
+              </div>
+            )}
+
+            {/* ACU 정보 */}
+            {acuInfo && (
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-gray-900 dark:text-white truncate">
+                  ACU: {acuInfo.manufacturer} {acuInfo.model}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {acuInfo.selectedWorks?.join(', ') || 'N/A'}
+                </p>
+              </div>
+            )}
+
+            {/* 가격 정보 */}
+            <div className="min-w-0 flex-1 text-right">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                ₩{totalPrice.toLocaleString()}
+              </p>
+            </div>
+
+            {/* 상태 정보 */}
+            <div className="min-w-0 flex-1 text-right">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorClass}`}>
+                {record.status || overallStatus || 'pending'}
+              </span>
+            </div>
           </div>
         </div>
-      </td>
-      
-      {/* ECU 정보 - 개선됨 */}
-      <td 
-        className="py-3 px-4 hidden md:table-cell"
-        role="cell"
-        aria-label="ECU 정보"
-      >
-        <ECUInfoCell record={record} />
-      </td>
-      
-      {/* ACU 정보 - 개선됨 */}
-      <td 
-        className="py-3 px-4 hidden md:table-cell"
-        role="cell"
-        aria-label="ACU 정보"
-      >
-        <ACUInfoCell record={record} />
-      </td>
-      
-      {/* 금액 - 전체 금액 표시 */}
-      <td 
-        className="py-3 px-4 hidden sm:table-cell"
-        role="cell"
-        aria-label={`전체 금액: ${formattedPrice}`}
-      >
-        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-          {formattedPrice}
-        </div>
-      </td>
-      
-      {/* 액션 버튼 - 개선됨 */}
-      <td 
-        className="py-3 px-4"
-        role="cell"
-        aria-label="작업 버튼"
-      >
-        <div className="flex items-center space-x-2">
+
+        {/* 액션 버튼들 */}
+        <div className="flex items-center space-x-2 ml-4">
           <button
-            onClick={(e) => handleButtonClick(e, () => onRowClick(record))}
-            className="
-              text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300
-              font-medium text-sm transition-colors duration-200
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-              dark:focus:ring-offset-gray-800
-              px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900
-            "
-            aria-label="상세보기"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
-            상세보기
+            {isExpanded ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            )}
           </button>
-          
-          <div className="flex space-x-1">
+
+          {onEdit && (
             <button
-              onClick={(e) => handleButtonClick(e, () => onEdit(record))}
-              className="
-                p-1 text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300
-                transition-colors duration-200 rounded
-                focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2
-                dark:focus:ring-offset-gray-800
-                hover:bg-yellow-50 dark:hover:bg-yellow-900
-              "
-              aria-label="수정"
+              onClick={() => onEdit(record)}
+              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </button>
-            
+          )}
+
+          {onDelete && (
             <button
-              onClick={(e) => handleButtonClick(e, () => onDelete(record))}
-              className="
-                p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300
-                transition-colors duration-200 rounded
-                focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
-                dark:focus:ring-offset-gray-800
-                hover:bg-red-50 dark:hover:bg-red-900
-              "
-              aria-label="삭제"
+              onClick={() => onDelete(record.id)}
+              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
+          )}
+        </div>
+      </div>
+
+      {/* 확장된 상세 정보 */}
+      {isExpanded && (
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* ECU 상세 정보 */}
+            {ecuInfo && (
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">ECU 정보</h4>
+                <div className="space-y-1 text-xs">
+                  <p><span className="font-medium">제조사:</span> {ecuInfo.maker}</p>
+                  <p><span className="font-medium">모델:</span> {ecuInfo.type}</p>
+                  <p><span className="font-medium">연결방법:</span> {ecuInfo.connectionMethod}</p>
+                  <p><span className="font-medium">작업내용:</span> {ecuInfo.selectedWorks?.join(', ')}</p>
+                  <p><span className="font-medium">상세내용:</span> {ecuInfo.workDetails}</p>
+                  <p><span className="font-medium">가격:</span> ₩{parseInt(ecuInfo.price || '0').toLocaleString()}</p>
+                  <p>
+                    <span className="font-medium">상태:</span>
+                    <span className={`ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(ecuInfo.status)}`}>
+                      {ecuInfo.status}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ACU 상세 정보 */}
+            {acuInfo && (
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">ACU 정보</h4>
+                <div className="space-y-1 text-xs">
+                  <p><span className="font-medium">제조사:</span> {acuInfo.manufacturer}</p>
+                  <p><span className="font-medium">모델:</span> {acuInfo.model}</p>
+                  <p><span className="font-medium">연결방법:</span> {acuInfo.connectionMethod}</p>
+                  <p><span className="font-medium">작업내용:</span> {acuInfo.selectedWorks?.join(', ')}</p>
+                  <p><span className="font-medium">상세내용:</span> {acuInfo.workDetails}</p>
+                  <p><span className="font-medium">가격:</span> ₩{parseInt(acuInfo.price || '0').toLocaleString()}</p>
+                  <p>
+                    <span className="font-medium">상태:</span>
+                    <span className={`ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(acuInfo.status)}`}>
+                      {acuInfo.status}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 연결 방법 정보 */}
+            {record.connection_method && (
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">연결 정보</h4>
+                <div className="space-y-1 text-xs">
+                  <p><span className="font-medium">연결방법:</span> {record.connection_method}</p>
+                </div>
+              </div>
+            )}
+
+            {/* 파일 정보 */}
+            {firstWork?.files && (
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">파일 정보</h4>
+                <div className="space-y-1 text-xs">
+                  {Object.entries(firstWork.files).map(([key, value]) => {
+                    if (value && typeof value === 'object' && Object.keys(value).length > 0) {
+                      return (
+                        <p key={key}>
+                          <span className="font-medium">{key}:</span> 파일 첨부됨
+                        </p>
+                      )
+                    }
+                    return null
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </td>
-    </tr>
+      )}
+    </div>
   )
 }

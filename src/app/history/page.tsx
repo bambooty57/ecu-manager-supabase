@@ -10,7 +10,8 @@ import {
   getWorkRecordDetailsStable,
   updateWorkRecord, 
   deleteWorkRecord, 
-  WorkRecordData 
+  WorkRecordData,
+  getStatusColor
 } from '@/lib/work-records'
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getAllEquipment, EquipmentData } from '@/lib/equipment'
@@ -22,7 +23,7 @@ import Navigation from '@/components/Navigation'
 import WorkRecordRow from '@/components/WorkRecordRow'
 import AuthGuard from '@/components/AuthGuard'
 import WorkDetailModal from '@/components/WorkDetailModal'
-import JSZip from 'jszip'
+// import JSZip from 'jszip' // 임시 주석 처리
 import { FileDownloadSection } from '@/components/FileDownloadSection'
 import { LoadingSkeleton, WorkRecordSkeleton, DetailSkeleton } from '@/components/LoadingSkeleton'
 import { LoadingIndicator, DataLoadingIndicator, FileLoadingIndicator, SearchLoadingIndicator, SaveLoadingIndicator, DeleteLoadingIndicator } from '@/components/LoadingIndicator'
@@ -150,7 +151,7 @@ function HistoryPage() {
       setLastError(null)
       
       // 1단계: 기본 메타데이터 로드 (빠른 초기 렌더링)
-      const basicData = await getWorkRecordsPaginatedStable(page, pageSize)
+      const basicData = await getWorkRecordsPaginatedStable({ page, pageSize })
       console.log('기본 데이터:', basicData.data)
       
       // 2단계: 고객/장비 정보 병렬 로드
@@ -181,7 +182,7 @@ function HistoryPage() {
         let ecuInfo = {
           manufacturer: record.ecu_maker || 'Unknown',
           model: record.ecu_model || 'Unknown Model',
-          type: record.ecu_type || '',
+          type: '',
           price: record.ecu_price || 0,
           status: record.status || '알 수 없음'
         }
@@ -560,11 +561,6 @@ function HistoryPage() {
     }
   }, [loadAllData, currentPage])
 
-  // ✅ 초기 데이터 로딩
-  useEffect(() => {
-    loadAllData(1)
-  }, [loadAllData])
-
   // ✅ 컴포넌트 언마운트 시 cleanup
   useEffect(() => {
     return () => {
@@ -607,12 +603,6 @@ function HistoryPage() {
     </div>
   )
 
-  // 데이터 로드 및 검색 엔진 초기화
-  useEffect(() => {
-    loadAllData()
-    initializeSearchEngine()
-  }, [])
-
   // 검색 엔진 초기화
   const initializeSearchEngine = async () => {
     try {
@@ -622,6 +612,12 @@ function HistoryPage() {
       console.error('❌ 검색 엔진 초기화 실패:', error)
     }
   }
+
+  // 데이터 로드 및 검색 엔진 초기화
+  useEffect(() => {
+    loadAllData(1)
+    initializeSearchEngine()
+  }, [])
 
   // 페이지 포커스 시 데이터 새로고침
   useEffect(() => {
@@ -1619,76 +1615,91 @@ function HistoryPage() {
                 {/* 작업 기록 테이블 */}
                 <div className="mb-6">
                   {renderLoadingSkeleton() || (
-                    <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-700">
+                    <div className="overflow-x-auto shadow-2xl rounded-xl border-2 border-gray-600 bg-gray-900">
                       <table 
-                        className="min-w-full bg-gray-800 table-modern"
+                        className="min-w-full bg-gray-900 table-modern"
                         role="grid" 
                         aria-label="작업 이력 테이블"
                       >
                         <thead>
-                          <tr className="bg-gradient-to-r from-blue-600 to-blue-700" role="row">
+                          <tr className="bg-gradient-to-r from-gray-800 to-gray-700 border-b-2 border-gray-600" role="row">
                             <th 
-                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium cursor-pointer hover:bg-blue-500 transition-colors"
+                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors"
                               onClick={() => handleSort('work_date')}
                               role="columnheader"
                               aria-sort={sortField === 'work_date' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
                               <div className="flex items-center space-x-1">
-                                <span>작업일</span>
+                                <span>📅 작업일</span>
                                 {sortField === 'work_date' && (
-                                  <span aria-hidden="true" className="text-blue-200">
+                                  <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
                                   </span>
                                 )}
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium cursor-pointer hover:bg-blue-500 transition-colors"
+                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors"
                               onClick={() => handleSort('customer_name')}
                               role="columnheader"
                               aria-sort={sortField === 'customer_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
                               <div className="flex items-center space-x-1">
-                                <span>고객/장비</span>
+                                <span>👤 고객명</span>
                                 {sortField === 'customer_name' && (
-                                  <span aria-hidden="true" className="text-blue-200">
+                                  <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
                                   </span>
                                 )}
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium hidden md:table-cell"
+                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors"
+                              onClick={() => handleSort('equipment_model')}
                               role="columnheader"
+                              aria-sort={sortField === 'equipment_model' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
-                              🔧 ECU 정보 (상태 포함)
+                              <div className="flex items-center space-x-1">
+                                <span>🚜 장비 정보</span>
+                                {sortField === 'equipment_model' && (
+                                  <span aria-hidden="true" className="text-yellow-300">
+                                    {sortDirection === 'asc' ? '↑' : '↓'}
+                                  </span>
+                                )}
+                              </div>
                             </th>
                             <th 
-                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium hidden md:table-cell"
+                              className="py-3 px-4 text-left text-white font-bold hidden md:table-cell"
                               role="columnheader"
                             >
-                              ⚙️ ACU 정보 (상태 포함)
+                              🔧 ECU 정보
                             </th>
                             <th 
-                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium cursor-pointer hover:bg-blue-500 transition-colors hidden sm:table-cell"
+                              className="py-3 px-4 text-left text-white font-bold hidden md:table-cell"
+                              role="columnheader"
+                            >
+                              ⚙️ ACU 정보
+                            </th>
+                            <th 
+                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors hidden sm:table-cell"
                               onClick={() => handleSort('price')}
                               role="columnheader"
                               aria-sort={sortField === 'price' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
                               <div className="flex items-center space-x-1">
-                                <span>전체 금액</span>
+                                <span>💰 전체 금액</span>
                                 {sortField === 'price' && (
-                                  <span aria-hidden="true" className="text-blue-200">
+                                  <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
                                   </span>
                                 )}
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 border-b border-blue-500 text-left text-white font-medium"
+                              className="py-3 px-4 text-left text-white font-bold"
                               role="columnheader"
                             >
-                              작업
+                              ⚡ 작업
                             </th>
                           </tr>
                         </thead>
@@ -1696,48 +1707,196 @@ function HistoryPage() {
                           {isLoadingRecords ? (
                             // 스켈레톤 로딩 (5개 행)
                             Array(5).fill(0).map((_, index) => (
-                              <tr key={`skeleton-${index}`} className="animate-pulse" role="row">
-                                <td className="py-3 px-4 border-b border-gray-700" role="cell">
-                                  <div className="h-4 bg-gray-600 rounded w-24"></div>
+                              <tr key={`skeleton-${index}`} className="animate-pulse bg-gray-900" role="row">
+                                <td className="py-3 px-4" role="cell">
+                                  <div className="h-6 bg-gray-700 rounded w-24"></div>
                                 </td>
-                                <td className="py-3 px-4 border-b border-gray-700" role="cell">
-                                  <div className="h-4 bg-gray-600 rounded w-32 mb-2"></div>
-                                  <div className="h-3 bg-gray-600 rounded w-24"></div>
+                                <td className="py-3 px-4" role="cell">
+                                  <div className="h-6 bg-gray-700 rounded w-32"></div>
                                 </td>
-                                <td className="py-3 px-4 border-b border-gray-700 hidden md:table-cell" role="cell">
-                                  <div className="h-4 bg-gray-600 rounded w-28 mb-2"></div>
-                                  <div className="h-3 bg-gray-600 rounded w-20"></div>
-                                  <div className="h-3 bg-gray-600 rounded w-16"></div>
+                                <td className="py-3 px-4" role="cell">
+                                  <div className="h-6 bg-gray-700 rounded w-28 mb-2"></div>
+                                  <div className="h-4 bg-gray-700 rounded w-24"></div>
                                 </td>
-                                <td className="py-3 px-4 border-b border-gray-700 hidden md:table-cell" role="cell">
-                                  <div className="h-4 bg-gray-600 rounded w-28 mb-2"></div>
-                                  <div className="h-3 bg-gray-600 rounded w-20"></div>
-                                  <div className="h-3 bg-gray-600 rounded w-16"></div>
+                                <td className="py-3 px-4 hidden md:table-cell" role="cell">
+                                  <div className="h-4 bg-gray-700 rounded w-28 mb-2"></div>
+                                  <div className="h-3 bg-gray-700 rounded w-20 mb-2"></div>
+                                  <div className="h-3 bg-gray-700 rounded w-16 mb-2"></div>
+                                  <div className="h-4 bg-gray-700 rounded w-12"></div>
                                 </td>
-                                <td className="py-3 px-4 border-b border-gray-700 hidden sm:table-cell" role="cell">
-                                  <div className="h-4 bg-gray-600 rounded w-20"></div>
+                                <td className="py-3 px-4 hidden md:table-cell" role="cell">
+                                  <div className="h-4 bg-gray-700 rounded w-28 mb-2"></div>
+                                  <div className="h-3 bg-gray-700 rounded w-20 mb-2"></div>
+                                  <div className="h-3 bg-gray-700 rounded w-16 mb-2"></div>
+                                  <div className="h-4 bg-gray-700 rounded w-12"></div>
                                 </td>
-                                <td className="py-3 px-4 border-b border-gray-700" role="cell">
-                                  <div className="h-8 bg-gray-600 rounded w-20"></div>
+                                <td className="py-3 px-4 hidden sm:table-cell" role="cell">
+                                  <div className="h-4 bg-gray-700 rounded w-20"></div>
+                                </td>
+                                <td className="py-3 px-4" role="cell">
+                                  <div className="flex space-x-3">
+                                    <div className="h-8 w-8 bg-gray-700 rounded"></div>
+                                    <div className="h-8 w-8 bg-gray-700 rounded"></div>
+                                  </div>
                                 </td>
                               </tr>
                             ))
                           ) : filteredRecords.length === 0 ? (
                             <tr role="row">
-                              <td colSpan={6} className="py-8 text-center text-gray-400" role="cell">
-                                {workRecords.length === 0 ? '작업 이력이 없습니다.' : '검색 결과가 없습니다.'}
+                              <td colSpan={8} className="py-12 text-center" role="cell">
+                                <div className="flex flex-col items-center space-y-2">
+                                  <div className="text-6xl mb-4">📋</div>
+                                  <p className="text-lg font-medium text-gray-300">
+                                    {workRecords.length === 0 ? '작업 이력이 없습니다.' : '검색 결과가 없습니다.'}
+                                  </p>
+                                  <p className="text-sm text-gray-500">
+                                    {workRecords.length === 0 ? '새로운 작업을 등록해보세요.' : '다른 검색어를 시도해보세요.'}
+                                  </p>
+                                </div>
                               </td>
                             </tr>
                           ) : (
-                            filteredRecords.map((record) => (
-                              <WorkRecordRow
-                                key={record.id}
-                                record={record}
-                                onRowClick={handleViewDetail}
-                                onEdit={handleEdit}
-                                onDelete={showDeleteConfirm}
-                              />
-                            ))
+                            filteredRecords.map((record, index) => {
+                              // 고객명 추출
+                              const customerName = record.customer?.name || record.customer_name || 'N/A'
+                              
+                              // 장비 정보 추출
+                              const equipmentModel = record.equipment?.model || record.equipment_model || 'N/A'
+                              const equipmentType = record.equipment?.type || record.equipment_type || 'N/A'
+                              const equipmentManufacturer = record.equipment?.manufacturer || record.equipment_manufacturer || 'N/A'
+                              
+                              // remapping_works에서 ECU/ACU 정보 추출
+                              const firstWork = record.remapping_works?.[0]
+                              const ecuInfo = firstWork?.ecu
+                              const acuInfo = firstWork?.acu
+                              
+                              // ECU와 ACU 각각의 개별 상태 추출
+                              const ecuStatus = ecuInfo?.status || 'N/A'
+                              const acuStatus = (acuInfo && acuInfo.manufacturer) ? acuInfo.status : 'N/A'
+                              
+                              // ECU와 ACU 금액 계산
+                              const ecuPrice = ecuInfo?.price ? parseInt(ecuInfo.price) : 0
+                              const acuPrice = (acuInfo && acuInfo.manufacturer && acuInfo.price) ? parseInt(acuInfo.price) : 0
+                              
+                              // 총 가격 계산 (ECU + ACU)
+                              const totalPrice = ecuPrice + acuPrice
+                              
+                              return (
+                                <tr key={record.id} className={`${index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800'} hover:bg-gray-700 transition-colors border-b border-gray-700`} role="row">
+                                  {/* 작업일 */}
+                                  <td className="py-3 px-4" role="cell">
+                                    <div>
+                                      <p className="text-base font-semibold text-white">
+                                        {new Date(record.work_date).toLocaleDateString('ko-KR')}
+                                      </p>
+                                    </div>
+                                  </td>
+                                  
+                                  {/* 고객명 */}
+                                  <td className="py-3 px-4" role="cell">
+                                    <div>
+                                      <p className="text-base font-semibold text-white">{customerName}</p>
+                                    </div>
+                                  </td>
+                                  
+                                  {/* 장비 정보 */}
+                                  <td className="py-3 px-4" role="cell">
+                                    <div>
+                                      <p className="text-base font-semibold text-white">{equipmentManufacturer} {equipmentModel}</p>
+                                      <p className="text-sm text-gray-300">{equipmentType}</p>
+                                    </div>
+                                  </td>
+                                  
+                                  {/* ECU 정보 */}
+                                  <td className="py-3 px-4 hidden md:table-cell" role="cell">
+                                    {ecuInfo ? (
+                                      <div>
+                                        <p className="text-base font-semibold text-blue-300">
+                                          {ecuInfo.maker} {ecuInfo.type}
+                                        </p>
+                                        <p className="text-sm text-gray-300">
+                                          {ecuInfo.selectedWorks?.join(', ') || 'N/A'}
+                                        </p>
+                                        <p className="text-sm font-bold text-blue-200">
+                                          ₩{(ecuInfo.price || 0).toLocaleString()}
+                                        </p>
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${getStatusColor(ecuStatus)}`}>
+                                          {ecuStatus}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div>
+                                        <p className="text-base text-gray-400">N/A</p>
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${getStatusColor(ecuStatus)}`}>
+                                          {ecuStatus}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </td>
+                                  
+                                  {/* ACU 정보 */}
+                                  <td className="py-3 px-4 hidden md:table-cell" role="cell">
+                                    {acuInfo && acuInfo.manufacturer ? (
+                                      <div>
+                                        <p className="text-base font-semibold text-green-300">
+                                          {acuInfo.manufacturer} {acuInfo.model}
+                                        </p>
+                                        <p className="text-sm text-gray-300">
+                                          {acuInfo.selectedWorks?.join(', ') || 'N/A'}
+                                        </p>
+                                        <p className="text-sm font-bold text-green-200">
+                                          ₩{(acuInfo.price || 0).toLocaleString()}
+                                        </p>
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${getStatusColor(acuStatus)}`}>
+                                          {acuStatus}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div>
+                                        <p className="text-base text-gray-400">N/A</p>
+                                        <p className="text-sm text-gray-300">N/A</p>
+                                        <p className="text-sm font-bold text-green-200">₩0</p>
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${getStatusColor(acuStatus)}`}>
+                                          {acuStatus}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </td>
+                                  
+                                  {/* 전체 금액 */}
+                                  <td className="py-3 px-4 hidden sm:table-cell" role="cell">
+                                    <p className="text-base font-bold text-yellow-300">
+                                      ₩{totalPrice.toLocaleString()}
+                                    </p>
+                                  </td>
+                                  
+                                  {/* 작업 */}
+                                  <td className="py-3 px-4" role="cell">
+                                    <div className="flex items-center space-x-3">
+                                      <button
+                                        onClick={() => handleViewDetail(record)}
+                                        className="text-blue-400 hover:text-blue-300 hover:bg-gray-800 p-2 rounded-lg transition-colors"
+                                        title="상세보기"
+                                      >
+                                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                      </button>
+                                      <button
+                                        onClick={() => showDeleteConfirm(record)}
+                                        className="text-red-400 hover:text-red-300 hover:bg-gray-800 p-2 rounded-lg transition-colors"
+                                        title="삭제"
+                                      >
+                                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            })
                           )}
                         </tbody>
                       </table>
