@@ -2021,12 +2021,6 @@ export default function WorkPage() {
             <span>
               ⚡ 성능 최적화 + 실시간 동기화 활성화: 이미지 자동 압축, 캐시 시스템, 데이터 실시간 반영이 적용되었습니다.
             </span>
-            <a 
-              href="/optimization-dashboard" 
-              className="text-green-400 hover:text-green-300 underline ml-2"
-            >
-              관리 대시보드 →
-            </a>
           </div>
           
           {/* 수동 새로고침 버튼 */}
