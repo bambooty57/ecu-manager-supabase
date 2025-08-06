@@ -71,6 +71,7 @@ export interface RemappingWork {
     before?: any
     after?: any
   }
+  [key: string]: any // Json 타입과 호환성을 위한 인덱스 시그니처
 }
 
 // 최적화된 작업 기록 데이터 타입
@@ -174,7 +175,7 @@ export const createWorkRecord = async (data: WorkRecordData): Promise<WorkRecord
       tools_used: toolsUsed,
       work_description: workDescription,
       files: files,
-      remapping_works: remappingWorks,
+      remapping_works: remappingWorks as any, // Json 타입으로 캐스팅
       is_active: isActive
     })
     .select()
@@ -260,12 +261,10 @@ export const updateWorkRecord = async (
   if (data.remappingWorks) {
     updateData.remapping_works = data.remappingWorks
     
-    // 총 가격과 상태 자동 계산
+        // 총 가격 자동 계산
     const calculatedTotalPrice = calculateTotalPrice(data.remappingWorks)
-    const { overallStatus } = extractStatusFromRemapping(data.remappingWorks)
-    
+
     updateData.total_price = calculatedTotalPrice
-    updateData.status = overallStatus || data.status || 'pending'
   }
 
   const { data: workRecord, error } = await supabase
