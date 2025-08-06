@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { getStatusColor } from '../lib/work-records'
 
 interface WorkRecord {
@@ -8,11 +8,14 @@ interface WorkRecord {
   work_date: string
   customer?: {
     name: string
+    phone?: string
+    roadAddress?: string
   }
   equipment?: {
     model?: string
     type?: string
     manufacturer?: string
+    serialNumber?: string
   }
   // 새로운 데이터 구조 지원
   customer_name?: string
@@ -23,6 +26,12 @@ interface WorkRecord {
   is_active?: boolean
   status?: string
   total_price?: number
+  ecu_work_amount?: number
+  acu_work_amount?: number
+  ecu_work_content?: string
+  acu_work_content?: string
+  ecu_status?: string
+  acu_status?: string
   // remapping_works 기반 데이터
   remapping_works?: any[]
 }
@@ -33,9 +42,9 @@ interface WorkRecordRowProps {
   onDelete?: (id: string) => void
 }
 
-// 상태 표시 컴포넌트 개선
-const StatusBadge = ({ status, amount }: { status: string; amount: number }) => {
-  const getStatusConfig = (status: string) => {
+// 🎨 최적화된 상태 표시 컴포넌트
+const StatusBadge = React.memo(({ status, amount }: { status: string; amount: number }) => {
+  const getStatusConfig = useCallback((status: string) => {
     switch (status) {
       case '완료':
         return {
@@ -80,7 +89,7 @@ const StatusBadge = ({ status, amount }: { status: string; amount: number }) => 
           borderColor: 'border-gray-400'
         };
     }
-  };
+  }, []);
 
   const config = getStatusConfig(status);
 
@@ -101,10 +110,12 @@ const StatusBadge = ({ status, amount }: { status: string; amount: number }) => 
       </div>
     </div>
   );
-};
+});
 
-// ECU/ACU 정보 컴포넌트 개선
-const EcuAcuInfo = ({ 
+StatusBadge.displayName = 'StatusBadge';
+
+// 🎨 최적화된 ECU/ACU 정보 컴포넌트
+const EcuAcuInfo = React.memo(({ 
   model, 
   services, 
   amount, 
@@ -139,35 +150,73 @@ const EcuAcuInfo = ({
       </div>
     </div>
   );
-};
+});
 
-export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRowProps) {
+EcuAcuInfo.displayName = 'EcuAcuInfo';
+
+// 🚀 최적화된 메인 컴포넌트
+const WorkRecordRow = React.memo(({ record, onEdit, onDelete }: WorkRecordRowProps) => {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // 간단한 상태 표시
-  const overallStatus = record.status || 'pending'
+  // 🎯 메모이제이션된 계산값들
+  const overallStatus = useMemo(() => record.status || 'pending', [record.status]);
 
-  // 고객명 추출
-  const customerName = record.customer?.name || record.customer_name || 'N/A'
+  const customerName = useMemo(() => 
+    record.customer?.name || record.customer_name || 'N/A', 
+    [record.customer?.name, record.customer_name]
+  );
 
-  // 장비 정보 추출
-  const equipmentModel = record.equipment?.model || record.equipment_model || 'N/A'
-  const equipmentType = record.equipment?.type || record.equipment_type || 'N/A'
-  const equipmentManufacturer = record.equipment?.manufacturer || record.equipment_manufacturer || 'N/A'
+  const equipmentInfo = useMemo(() => ({
+    model: record.equipment?.model || record.equipment_model || 'N/A',
+    type: record.equipment?.type || record.equipment_type || 'N/A',
+    manufacturer: record.equipment?.manufacturer || record.equipment_manufacturer || 'N/A',
+    serialNumber: record.equipment?.serialNumber
+  }), [record.equipment, record.equipment_model, record.equipment_type, record.equipment_manufacturer]);
 
-  // remapping_works에서 ECU/ACU 정보 추출
-  const firstWork = record.remapping_works?.[0]
-  const ecuInfo = firstWork?.ecu
-  const acuInfo = firstWork?.acu
+  const remappingInfo = useMemo(() => {
+    const firstWork = record.remapping_works?.[0];
+    return {
+      ecuInfo: firstWork?.ecu,
+      acuInfo: firstWork?.acu,
+      files: firstWork?.files
+    };
+  }, [record.remapping_works]);
 
-  // 총 가격 계산
-  const totalPrice = record.total_price || 0
+  const totalPrice = useMemo(() => 
+    record.total_price || 
+    (record.ecu_work_amount || 0) + (record.acu_work_amount || 0) || 0, 
+    [record.total_price, record.ecu_work_amount, record.acu_work_amount]
+  );
 
-  // 상태 색상 클래스
-  const statusColorClass = getStatusColor(record.status || overallStatus || 'pending')
+  const statusColorClass = useMemo(() => 
+    getStatusColor(record.status || overallStatus || 'pending'), 
+    [record.status, overallStatus]
+  );
+
+  // 🔄 최적화된 이벤트 핸들러들
+  const handleToggleExpanded = useCallback(() => {
+    setIsExpanded(prev => !prev);
+  }, []);
+
+  const handleEdit = useCallback(() => {
+    onEdit?.(record);
+  }, [onEdit, record]);
+
+  const handleDelete = useCallback(() => {
+    onDelete?.(record.id);
+  }, [onDelete, record.id]);
+
+  // 📅 날짜 포맷팅
+  const formattedDate = useMemo(() => {
+    try {
+      return new Date(record.work_date).toLocaleDateString('ko-KR');
+    } catch {
+      return record.work_date;
+    }
+  }, [record.work_date]);
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-white dark:bg-gray-800">
+    <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-white dark:bg-gray-800 hover:shadow-lg transition-shadow duration-200">
       {/* 기본 정보 행 */}
       <div className="flex items-center justify-between">
         <div className="flex-1">
@@ -178,40 +227,40 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
                 {customerName}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {new Date(record.work_date).toLocaleDateString('ko-KR')}
+                {formattedDate}
               </p>
             </div>
 
             {/* 장비 정보 */}
             <div className="min-w-0 flex-1">
               <p className="text-sm text-gray-900 dark:text-white truncate">
-                {equipmentManufacturer} {equipmentModel}
+                {equipmentInfo.manufacturer} {equipmentInfo.model}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {equipmentType}
+                {equipmentInfo.type}
               </p>
             </div>
 
             {/* ECU 정보 */}
-            {ecuInfo && (
+            {remappingInfo.ecuInfo && (
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-gray-900 dark:text-white truncate">
-                  ECU: {ecuInfo.maker} {ecuInfo.type}
+                  ECU: {remappingInfo.ecuInfo.maker} {remappingInfo.ecuInfo.type}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {ecuInfo.selectedWorks?.join(', ') || 'N/A'}
+                  {remappingInfo.ecuInfo.selectedWorks?.join(', ') || 'N/A'}
                 </p>
               </div>
             )}
 
             {/* ACU 정보 */}
-            {acuInfo && (
+            {remappingInfo.acuInfo && (
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-gray-900 dark:text-white truncate">
-                  ACU: {acuInfo.manufacturer} {acuInfo.model}
+                  ACU: {remappingInfo.acuInfo.manufacturer} {remappingInfo.acuInfo.model}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {acuInfo.selectedWorks?.join(', ') || 'N/A'}
+                  {remappingInfo.acuInfo.selectedWorks?.join(', ') || 'N/A'}
                 </p>
               </div>
             )}
@@ -235,8 +284,9 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
         {/* 액션 버튼들 */}
         <div className="flex items-center space-x-2 ml-4">
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            onClick={handleToggleExpanded}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+            title={isExpanded ? '접기' : '펼치기'}
           >
             {isExpanded ? (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,8 +301,9 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
 
           {onEdit && (
             <button
-              onClick={() => onEdit(record)}
-              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+              onClick={handleEdit}
+              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+              title="수정"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -262,8 +313,9 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
 
           {onDelete && (
             <button
-              onClick={() => onDelete(record.id)}
-              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+              onClick={handleDelete}
+              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
+              title="삭제"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -278,40 +330,40 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* ECU 상세 정보 */}
-            {ecuInfo && (
+            {remappingInfo.ecuInfo && (
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">ECU 정보</h4>
                 <div className="space-y-1 text-xs">
-                  <p><span className="font-medium">제조사:</span> {ecuInfo.maker}</p>
-                  <p><span className="font-medium">모델:</span> {ecuInfo.type}</p>
-                  <p><span className="font-medium">연결방법:</span> {ecuInfo.connectionMethod}</p>
-                  <p><span className="font-medium">작업내용:</span> {ecuInfo.selectedWorks?.join(', ')}</p>
-                  <p><span className="font-medium">상세내용:</span> {ecuInfo.workDetails}</p>
-                  <p><span className="font-medium">가격:</span> ₩{parseInt(ecuInfo.price || '0').toLocaleString()}</p>
+                  <p><span className="font-medium">제조사:</span> {remappingInfo.ecuInfo.maker}</p>
+                  <p><span className="font-medium">모델:</span> {remappingInfo.ecuInfo.type}</p>
+                  <p><span className="font-medium">연결방법:</span> {remappingInfo.ecuInfo.connectionMethod}</p>
+                  <p><span className="font-medium">작업내용:</span> {remappingInfo.ecuInfo.selectedWorks?.join(', ')}</p>
+                  <p><span className="font-medium">상세내용:</span> {remappingInfo.ecuInfo.workDetails}</p>
+                  <p><span className="font-medium">가격:</span> ₩{parseInt(remappingInfo.ecuInfo.price || '0').toLocaleString()}</p>
                   <p>
                     <span className="font-medium">상태:</span>
                     <div className="flex items-center gap-2 mt-1">
                       <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
-                        ecuInfo.status === '완료' ? 'bg-green-500 border-green-400' :
-                        ecuInfo.status === '진행중' ? 'bg-blue-500 border-blue-400' :
-                        ecuInfo.status === '실패' ? 'bg-red-500 border-red-400' :
-                        ecuInfo.status === 'AS' ? 'bg-gray-600 border-gray-500' :
+                        remappingInfo.ecuInfo.status === '완료' ? 'bg-green-500 border-green-400' :
+                        remappingInfo.ecuInfo.status === '진행중' ? 'bg-blue-500 border-blue-400' :
+                        remappingInfo.ecuInfo.status === '실패' ? 'bg-red-500 border-red-400' :
+                        remappingInfo.ecuInfo.status === 'AS' ? 'bg-gray-600 border-gray-500' :
                         'bg-gray-400 border-gray-300'
                       } border-2 shadow-sm`}>
                         <span className="text-xs font-medium">
-                          {ecuInfo.status === '완료' ? '✅' :
-                           ecuInfo.status === '진행중' ? '⏳' :
-                           ecuInfo.status === '실패' ? '❌' :
-                           ecuInfo.status === 'AS' ? '🔧' :
+                          {remappingInfo.ecuInfo.status === '완료' ? '✅' :
+                           remappingInfo.ecuInfo.status === '진행중' ? '⏳' :
+                           remappingInfo.ecuInfo.status === '실패' ? '❌' :
+                           remappingInfo.ecuInfo.status === 'AS' ? '🔧' :
                            '➖'}
                         </span>
                       </div>
                       <span className={`text-xs font-medium ${
-                        ecuInfo.status === 'AS' ? 'text-white' :
-                        ecuInfo.status === 'N/A' ? 'text-gray-700' :
+                        remappingInfo.ecuInfo.status === 'AS' ? 'text-white' :
+                        remappingInfo.ecuInfo.status === 'N/A' ? 'text-gray-700' :
                         'text-white'
                       }`}>
-                        {ecuInfo.status}
+                        {remappingInfo.ecuInfo.status}
                       </span>
                     </div>
                   </p>
@@ -320,40 +372,40 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
             )}
 
             {/* ACU 상세 정보 */}
-            {acuInfo && (
+            {remappingInfo.acuInfo && (
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">ACU 정보</h4>
                 <div className="space-y-1 text-xs">
-                  <p><span className="font-medium">제조사:</span> {acuInfo.manufacturer}</p>
-                  <p><span className="font-medium">모델:</span> {acuInfo.model}</p>
-                  <p><span className="font-medium">연결방법:</span> {acuInfo.connectionMethod}</p>
-                  <p><span className="font-medium">작업내용:</span> {acuInfo.selectedWorks?.join(', ')}</p>
-                  <p><span className="font-medium">상세내용:</span> {acuInfo.workDetails}</p>
-                  <p><span className="font-medium">가격:</span> ₩{parseInt(acuInfo.price || '0').toLocaleString()}</p>
+                  <p><span className="font-medium">제조사:</span> {remappingInfo.acuInfo.manufacturer}</p>
+                  <p><span className="font-medium">모델:</span> {remappingInfo.acuInfo.model}</p>
+                  <p><span className="font-medium">연결방법:</span> {remappingInfo.acuInfo.connectionMethod}</p>
+                  <p><span className="font-medium">작업내용:</span> {remappingInfo.acuInfo.selectedWorks?.join(', ')}</p>
+                  <p><span className="font-medium">상세내용:</span> {remappingInfo.acuInfo.workDetails}</p>
+                  <p><span className="font-medium">가격:</span> ₩{parseInt(remappingInfo.acuInfo.price || '0').toLocaleString()}</p>
                   <p>
                     <span className="font-medium">상태:</span>
                     <div className="flex items-center gap-2 mt-1">
                       <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
-                        acuInfo.status === '완료' ? 'bg-green-500 border-green-400' :
-                        acuInfo.status === '진행중' ? 'bg-blue-500 border-blue-400' :
-                        acuInfo.status === '실패' ? 'bg-red-500 border-red-400' :
-                        acuInfo.status === 'AS' ? 'bg-gray-600 border-gray-500' :
+                        remappingInfo.acuInfo.status === '완료' ? 'bg-green-500 border-green-400' :
+                        remappingInfo.acuInfo.status === '진행중' ? 'bg-blue-500 border-blue-400' :
+                        remappingInfo.acuInfo.status === '실패' ? 'bg-red-500 border-red-400' :
+                        remappingInfo.acuInfo.status === 'AS' ? 'bg-gray-600 border-gray-500' :
                         'bg-gray-400 border-gray-300'
                       } border-2 shadow-sm`}>
                         <span className="text-xs font-medium">
-                          {acuInfo.status === '완료' ? '✅' :
-                           acuInfo.status === '진행중' ? '⏳' :
-                           acuInfo.status === '실패' ? '❌' :
-                           acuInfo.status === 'AS' ? '🔧' :
+                          {remappingInfo.acuInfo.status === '완료' ? '✅' :
+                           remappingInfo.acuInfo.status === '진행중' ? '⏳' :
+                           remappingInfo.acuInfo.status === '실패' ? '❌' :
+                           remappingInfo.acuInfo.status === 'AS' ? '🔧' :
                            '➖'}
                         </span>
                       </div>
                       <span className={`text-xs font-medium ${
-                        acuInfo.status === 'AS' ? 'text-white' :
-                        acuInfo.status === 'N/A' ? 'text-gray-700' :
+                        remappingInfo.acuInfo.status === 'AS' ? 'text-white' :
+                        remappingInfo.acuInfo.status === 'N/A' ? 'text-gray-700' :
                         'text-white'
                       }`}>
-                        {acuInfo.status}
+                        {remappingInfo.acuInfo.status}
                       </span>
                     </div>
                   </p>
@@ -372,11 +424,11 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
             )}
 
             {/* 파일 정보 */}
-            {firstWork?.files && (
+            {remappingInfo.files && (
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">파일 정보</h4>
                 <div className="space-y-1 text-xs">
-                  {Object.entries(firstWork.files).map(([key, value]) => {
+                  {Object.entries(remappingInfo.files).map(([key, value]) => {
                     if (value && typeof value === 'object' && Object.keys(value).length > 0) {
                       return (
                         <p key={key}>
@@ -394,4 +446,8 @@ export default function WorkRecordRow({ record, onEdit, onDelete }: WorkRecordRo
       )}
     </div>
   )
-}
+});
+
+WorkRecordRow.displayName = 'WorkRecordRow';
+
+export default WorkRecordRow;
