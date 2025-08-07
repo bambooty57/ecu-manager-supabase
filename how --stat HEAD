@@ -1,3 +1,0 @@
-[33m3df871f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m  ECU Manager 시스템 업데이트 - 성능 최적화 및 기능 개선
-[33mbcd3a36[m Fix customer and status search filtering in history page - Fix customer search to use customer_id instead of customer_name - Fix status search to use remapping_works.ecu.status and remapping_works.acu.status - Add undefined checks to prevent runtime errors - Resolve TypeError: Cannot read properties of undefined (reading 'toLowerCase')
-[33md99a57e[m fix: 타입 오류 완전 해결\n\n- RemappingWork 타입에 인덱스 시그니처 추가하여 Json 타입과 호환\n- createWorkRecord에서 remappingWorks를 Json 타입으로 캐스팅\n- updateWorkRecord에서 extractStatusFromRemapping 함수 제거\n- 모든 TypeScript 컴파일 오류 해결 완료
