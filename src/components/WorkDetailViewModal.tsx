@@ -111,55 +111,58 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
               <style>
                 @page { 
                   size: A4; 
-                  margin: 10mm; 
+                  margin: 15mm; 
                 }
                 body { 
                   font-family: Arial, sans-serif; 
                   margin: 0; 
                   padding: 0; 
-                  font-size: 10px; 
-                  line-height: 1.2; 
+                  font-size: 16px; 
+                  line-height: 1.5; 
                 }
                 
                 .section { 
-                  margin-bottom: 8px; 
+                  margin-bottom: 15px; 
                   page-break-inside: avoid; 
                 }
                 .section h3 { 
                   color: #333; 
-                  border-bottom: 1px solid #ccc; 
-                  padding-bottom: 2px; 
-                  margin: 0 0 5px 0; 
-                  font-size: 12px; 
+                  border-bottom: 2px solid #ccc; 
+                  padding-bottom: 6px; 
+                  margin: 0 0 10px 0; 
+                  font-size: 20px; 
+                  font-weight: bold;
                 }
                 .info-grid { 
                   display: grid; 
                   grid-template-columns: 1fr 1fr; 
-                  gap: 5px; 
-                  margin-bottom: 8px; 
+                  gap: 10px; 
+                  margin-bottom: 15px; 
                 }
                 .info-item { 
-                  margin-bottom: 3px; 
-                  font-size: 9px; 
+                  margin-bottom: 8px; 
+                  font-size: 14px; 
                 }
                 .info-label { 
                   font-weight: bold; 
                   color: #555; 
+                  font-size: 14px;
                 }
                 .info-value { 
-                  margin-left: 5px; 
+                  margin-left: 10px; 
+                  font-size: 14px;
                 }
                 .ecu-acu-grid { 
                   display: grid; 
                   grid-template-columns: 1fr 1fr; 
-                  gap: 10px; 
-                  margin-bottom: 8px; 
+                  gap: 15px; 
+                  margin-bottom: 15px; 
                 }
                 .ecu-box, .acu-box { 
-                  border: 1px solid #ddd; 
-                  padding: 8px; 
-                  border-radius: 3px; 
-                  font-size: 9px; 
+                  border: 2px solid #ddd; 
+                  padding: 15px; 
+                  border-radius: 8px; 
+                  font-size: 14px; 
                 }
                 .ecu-box { 
                   background-color: #f0f8ff; 
@@ -168,18 +171,20 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                   background-color: #f0fff0; 
                 }
                 .ecu-box h4, .acu-box h4 { 
-                  margin: 0 0 5px 0; 
-                  font-size: 10px; 
+                  margin: 0 0 10px 0; 
+                  font-size: 16px; 
                   font-weight: bold; 
                 }
                 .price { 
                   font-weight: bold; 
                   color: #0066cc; 
+                  font-size: 15px;
                 }
                 .status { 
-                  padding: 1px 4px; 
-                  border-radius: 2px; 
-                  font-size: 8px; 
+                  padding: 4px 10px; 
+                  border-radius: 5px; 
+                  font-size: 13px; 
+                  font-weight: bold;
                 }
                 .status-complete { 
                   background-color: #d4edda; 
@@ -194,42 +199,42 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                   color: #721c24; 
                 }
                 .files-section { 
-                  margin-top: 8px; 
+                  margin-top: 15px; 
                 }
                 .file-item { 
-                  border: 1px solid #eee; 
-                  padding: 5px; 
-                  margin-bottom: 3px; 
-                  border-radius: 2px; 
-                  font-size: 8px; 
+                  border: 2px solid #eee; 
+                  padding: 10px; 
+                  margin-bottom: 8px; 
+                  border-radius: 5px; 
+                  font-size: 13px; 
                 }
                 .file-name { 
                   font-weight: bold; 
-                  font-size: 9px; 
+                  font-size: 14px; 
                 }
                 .file-details { 
                   color: #666; 
-                  font-size: 7px; 
+                  font-size: 12px; 
                 }
                 .total-price { 
                   text-align: right; 
-                  font-size: 12px; 
+                  font-size: 18px; 
                   font-weight: bold; 
                   color: #d4af37; 
-                  margin-top: 5px; 
+                  margin-top: 10px; 
                 }
                 .footer { 
                   text-align: center; 
-                  margin-top: 10px; 
-                  padding-top: 5px; 
-                  border-top: 1px solid #ccc; 
+                  margin-top: 20px; 
+                  padding-top: 10px; 
+                  border-top: 2px solid #ccc; 
                   color: #666; 
-                  font-size: 8px; 
+                  font-size: 13px; 
                 }
                 .work-description { 
-                  font-size: 9px; 
-                  line-height: 1.3; 
-                  margin-top: 3px; 
+                  font-size: 14px; 
+                  line-height: 1.6; 
+                  margin-top: 8px; 
                 }
                 @media print {
                   body { 

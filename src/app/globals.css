@@ -388,3 +388,135 @@ table tbody tr:hover {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* 인쇄 스타일 개선 */
+@media print {
+  /* 기본 인쇄 설정 */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* 페이지 설정 */
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+  
+  /* 기본 글자 크기 개선 */
+  body {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    color: #000 !important;
+    background: white !important;
+  }
+  
+  /* 제목 글자 크기 */
+  h1, h2, h3, h4, h5, h6 {
+    font-size: 18px !important;
+    font-weight: bold !important;
+    margin-bottom: 8px !important;
+  }
+  
+  /* 테이블 글자 크기 */
+  table {
+    font-size: 12px !important;
+  }
+  
+  th, td {
+    font-size: 12px !important;
+    padding: 6px !important;
+  }
+  
+  /* 버튼과 네비게이션 숨김 */
+  button, 
+  .no-print,
+  nav,
+  .navigation,
+  .sidebar {
+    display: none !important;
+  }
+  
+  /* 모달 배경 제거 */
+  .modal-backdrop,
+  .dialog-overlay {
+    background: none !important;
+  }
+  
+  /* 모달 내용을 일반 페이지처럼 표시 */
+  .modal-content,
+  .dialog-panel {
+    position: static !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+  }
+  
+  /* 스크롤바 숨김 */
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  /* 페이지 나누기 방지 */
+  .section,
+  .card,
+  .info-grid {
+    page-break-inside: avoid !important;
+  }
+  
+  /* 링크 스타일 */
+  a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+  
+  /* 상태 배지 개선 */
+  .badge,
+  .status {
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+    border-radius: 4px !important;
+    font-weight: bold !important;
+  }
+  
+  /* 정보 그리드 개선 */
+  .info-grid,
+  .grid {
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  
+  /* 파일 목록 개선 */
+  .file-item,
+  .file-details {
+    font-size: 11px !important;
+    padding: 8px !important;
+    border: 2px solid #eee !important;
+    margin-bottom: 6px !important;
+  }
+  
+  /* 가격 정보 강조 */
+  .price,
+  .total-price {
+    font-size: 16px !important;
+    font-weight: bold !important;
+    color: #d4af37 !important;
+  }
+  
+  /* 설명 텍스트 개선 */
+  .description,
+  .work-description {
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* 푸터 정보 */
+  .footer {
+    font-size: 11px !important;
+    text-align: center !important;
+    margin-top: 15px !important;
+    padding-top: 8px !important;
+    border-top: 2px solid #ccc !important;
+  }
+}

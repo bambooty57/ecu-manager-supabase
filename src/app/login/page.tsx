@@ -28,9 +28,28 @@ export default function LoginPage() {
     setMessage('')
 
     try {
+      console.log('🔧 로그인 시도:', formData.email)
       await signInWithEmail(formData.email, formData.password)
+      console.log('✅ 로그인 성공')
     } catch (error: any) {
-      setMessage(`로그인 실패: ${error.message}`)
+      console.error('❌ 로그인 실패:', error)
+      
+      // 오류 메시지 개선
+      let errorMessage = '로그인에 실패했습니다.'
+      
+      if (error.message) {
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.'
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = '이메일 인증이 필요합니다.'
+        } else if (error.message.includes('권한이 없는 사용자')) {
+          errorMessage = '권한이 없는 사용자입니다.'
+        } else {
+          errorMessage = `로그인 실패: ${error.message}`
+        }
+      }
+      
+      setMessage(errorMessage)
     } finally {
       setLoading(false)
     }

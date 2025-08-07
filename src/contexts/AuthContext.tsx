@@ -34,14 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('🔍 hostname:', typeof window !== 'undefined' ? window.location.hostname : 'undefined')
     console.log('🔍 isDevelopment:', isDevelopment)
     
-    // ✅ 개발 환경에서도 로그인 필요 (자동 로그인 비활성화)
-    if (isDevelopment) {
-      console.log('🚀 개발 환경: 로그인 필요')
-      setLoading(false)
-      return
-    }
-
-    // ✅ 프로덕션 환경에서만 세션 확인
+    // ✅ 모든 환경에서 세션 확인 (개발 환경에서도 로그인 필요)
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
@@ -70,39 +63,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // ✅ 프로덕션 환경에서만 세션 확인 및 리스너 설정
-    if (!isDevelopment) {
-      getInitialSession()
+    // ✅ 모든 환경에서 세션 확인 및 리스너 설정
+    getInitialSession()
 
-      // ✅ 인증 상태 변경 리스너 최적화
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          console.log('🔄 인증 상태 변경:', event, session?.user?.email)
-          
-          if (session?.user) {
-            // bambooty57@gmail.com만 허용
-            if (session.user.email?.toLowerCase() === 'bambooty57@gmail.com') {
-              console.log('✅ 관리자 인증 성공:', session.user.email)
-              setUser(session.user)
-              
-              // 로그인 페이지에서만 홈으로 리다이렉트
-              if (event === 'SIGNED_IN' && window.location.pathname === '/login') {
-                router.push('/')
-              }
-            } else {
-              console.log('❌ 권한 없는 사용자:', session.user.email)
-              await supabase.auth.signOut()
-              setUser(null)
+    // ✅ 인증 상태 변경 리스너 최적화
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔄 인증 상태 변경:', event, session?.user?.email)
+        
+        if (session?.user) {
+          // bambooty57@gmail.com만 허용
+          if (session.user.email?.toLowerCase() === 'bambooty57@gmail.com') {
+            console.log('✅ 관리자 인증 성공:', session.user.email)
+            setUser(session.user)
+            
+            // 로그인 페이지에서만 홈으로 리다이렉트
+            if (event === 'SIGNED_IN' && window.location.pathname === '/login') {
+              router.push('/')
             }
           } else {
+            console.log('❌ 권한 없는 사용자:', session.user.email)
+            await supabase.auth.signOut()
             setUser(null)
           }
+        } else {
+          setUser(null)
         }
-      )
+      }
+    )
 
-      return () => subscription.unsubscribe()
-    }
-  }, [isDevelopment, router])
+    return () => subscription.unsubscribe()
+  }, [router])
 
   // ✅ 개발 환경에서도 실제 로그인 처리
   const signInWithGoogle = async () => {
@@ -130,23 +121,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signInWithEmail = async (email: string, password: string) => {
-    if (isDevelopment) {
-      console.log('🔧 개발 모드: 이메일 로그인 처리')
-      // 개발 환경에서도 실제 로그인 시도
-    }
+    console.log('🔧 이메일 로그인 시도:', email)
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
       
       if (error) {
-        console.error('이메일 로그인 오류:', error)
+        console.error('❌ 이메일 로그인 오류:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        })
         throw error
       }
+      
+      if (data.user) {
+        console.log('✅ 로그인 성공:', data.user.email)
+        
+        // bambooty57@gmail.com만 허용
+        if (data.user.email?.toLowerCase() === 'bambooty57@gmail.com') {
+          console.log('✅ 관리자 권한 확인됨')
+          setUser(data.user)
+        } else {
+          console.log('❌ 권한 없는 사용자:', data.user.email)
+          await supabase.auth.signOut()
+          throw new Error('권한이 없는 사용자입니다.')
+        }
+      }
     } catch (error) {
-      console.error('이메일 로그인 실패:', error)
+      console.error('❌ 이메일 로그인 실패:', error)
       throw error
     }
   }
