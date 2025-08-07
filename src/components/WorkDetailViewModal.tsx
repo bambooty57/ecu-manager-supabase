@@ -120,17 +120,7 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                   font-size: 10px; 
                   line-height: 1.2; 
                 }
-                .header { 
-                  text-align: center; 
-                  border-bottom: 1px solid #333; 
-                  padding-bottom: 5px; 
-                  margin-bottom: 10px; 
-                }
-                .header h1 { 
-                  margin: 0; 
-                  font-size: 16px; 
-                  font-weight: bold; 
-                }
+                
                 .section { 
                   margin-bottom: 8px; 
                   page-break-inside: avoid; 
@@ -256,12 +246,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                 }
               </style>
             </head>
-            <body>
-              <div class="header">
-                <h1>T-Box 작업 상세보기</h1>
-              </div>
-              
-              <div class="section">
+                         <body>
+               <div class="section">
                 <h3>📋 기본 정보</h3>
                 <div class="info-grid">
                   <div class="info-item">

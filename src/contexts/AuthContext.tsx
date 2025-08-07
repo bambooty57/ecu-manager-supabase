@@ -34,22 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('🔍 hostname:', typeof window !== 'undefined' ? window.location.hostname : 'undefined')
     console.log('🔍 isDevelopment:', isDevelopment)
     
-    // ✅ 개발 환경에서는 즉시 더미 사용자로 자동 로그인
+    // ✅ 개발 환경에서도 로그인 필요 (자동 로그인 비활성화)
     if (isDevelopment) {
-      console.log('🚀 개발 환경: 자동 로그인 처리')
-      const dummyUser = {
-        id: 'dev-user-id',
-        email: 'dev@example.com',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        app_metadata: {},
-        user_metadata: {},
-        aud: 'authenticated',
-        role: 'authenticated'
-      } as User
-      
-      // ✅ 즉시 상태 설정으로 로딩 시간 단축
-      setUser(dummyUser)
+      console.log('🚀 개발 환경: 로그인 필요')
       setLoading(false)
       return
     }
@@ -117,11 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isDevelopment, router])
 
-  // ✅ 개발 환경에서는 더미 사용자 반환
+  // ✅ 개발 환경에서도 실제 로그인 처리
   const signInWithGoogle = async () => {
     if (isDevelopment) {
-      console.log('🔧 개발 모드: Google 로그인 우회')
-      return
+      console.log('🔧 개발 모드: Google 로그인 처리')
+      // 개발 환경에서도 실제 로그인 시도
     }
     
     try {
@@ -144,8 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     if (isDevelopment) {
-      console.log('🔧 개발 모드: 이메일 로그인 우회')
-      return
+      console.log('🔧 개발 모드: 이메일 로그인 처리')
+      // 개발 환경에서도 실제 로그인 시도
     }
     
     try {
@@ -166,8 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithEmail = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
     if (isDevelopment) {
-      console.log('🔧 개발 모드: 회원가입 우회')
-      return { success: true, message: '개발 모드에서는 회원가입이 비활성화됩니다.' }
+      console.log('🔧 개발 모드: 회원가입 처리')
+      // 개발 환경에서도 실제 회원가입 시도
     }
     
     try {
@@ -190,9 +177,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     if (isDevelopment) {
-      console.log('🔧 개발 모드: 로그아웃 우회')
-      setUser(null)
-      return
+      console.log('🔧 개발 모드: 로그아웃 처리')
+      // 개발 환경에서도 실제 로그아웃 처리
     }
     
     try {

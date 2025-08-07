@@ -19,22 +19,15 @@ export default function AuthGuard({ children }: AuthGuardProps) {
                          window.location.hostname === '127.0.0.1'))
   
   useEffect(() => {
-    // ✅ 개발 환경에서는 인증 우회
-    if (isDevelopment) {
-      console.log('🔧 개발 모드: 인증 우회 활성화됨')
-      return
-    }
-    
-    // ✅ 프로덕션 환경에서만 인증 체크
+    // ✅ 모든 환경에서 인증 체크
     if (!loading && !user) {
+      console.log('🔧 인증 필요: 로그인 페이지로 리다이렉트')
       router.push('/login')
     }
-  }, [user, loading, router, isDevelopment])
+  }, [user, loading, router])
 
-  // ✅ 개발 환경에서는 즉시 렌더링
-  if (isDevelopment) {
-    return <>{children}</>
-  }
+  // ✅ 모든 환경에서 인증 체크
+  // 개발 환경에서도 인증 필요
 
   // ✅ 로딩 중일 때만 로딩 화면 표시
   if (loading) {
