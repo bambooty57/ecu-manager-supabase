@@ -748,6 +748,24 @@ export default function WorkPage() {
     const initializeApp = async () => {
       console.log('🚀 작업등록 페이지 초기화 시작...')
       
+      // 클라이언트 사이드 렌더링 설정
+      setIsClient(true)
+      
+      // 메모리 사용량 및 페이지 로드 시간 업데이트
+      if (typeof window !== 'undefined') {
+        // 메모리 사용량
+        if ((performance as any).memory) {
+          const memoryMB = ((performance as any).memory.usedJSHeapSize / 1024 / 1024).toFixed(1)
+          setMemoryUsage(`${memoryMB}MB`)
+        }
+        
+        // 페이지 로드 시간
+        if (performance.timing) {
+          const loadTime = (performance.timing.loadEventEnd - performance.timing.navigationStart).toFixed(0)
+          setPageLoadTime(`${loadTime}ms`)
+        }
+      }
+      
       try {
         // 1단계: 로컬스토리지 정리 (한 번만 실행)
         if (typeof window !== 'undefined') {
@@ -1587,56 +1605,155 @@ export default function WorkPage() {
     
     for (const [index, remappingWork] of remappingWorks.entries()) {
       try {
-        // 파일 데이터 처리 - File 객체를 그대로 전달 (Storage 업로드용)
-        const files: any = {
-          // ECU 파일들
-          originalFile: remappingWork.files.originalFile || null,
-          originalFileDescription: remappingWork.files.originalFileDescription || '원본 ECU 파일',
-          
-          stage1File: remappingWork.files.stage1File || null,
-          stage1FileDescription: remappingWork.files.stage1FileDescription || 'Stage 1 튜닝 파일',
-
-          // ECU 파일들 (계속)
-          stage2File: remappingWork.files.stage2File || null,
-          stage2FileDescription: remappingWork.files.stage2FileDescription || 'Stage 2 튜닝 파일',
-          
-          stage3File: remappingWork.files.stage3File || null,
-          stage3FileDescription: remappingWork.files.stage3FileDescription || 'Stage 3 튜닝 파일',
-
-          // ACU 파일들
-          acuOriginalFile: remappingWork.files.acuOriginalFile || null,
-          acuOriginalFileDescription: remappingWork.files.acuOriginalFileDescription || '원본 ACU 파일',
-          
-          acuStage1File: remappingWork.files.acuStage1File || null,
-          acuStage1FileDescription: remappingWork.files.acuStage1FileDescription || 'ACU Stage 1 튜닝 파일',
-          
-          acuStage2File: remappingWork.files.acuStage2File || null,
-          acuStage2FileDescription: remappingWork.files.acuStage2FileDescription || 'ACU Stage 2 튜닝 파일',
-          
-          acuStage3File: remappingWork.files.acuStage3File || null,
-          acuStage3FileDescription: remappingWork.files.acuStage3FileDescription || 'ACU Stage 3 튜닝 파일',
-
-          // 미디어 파일들
-          mediaFile1: remappingWork.files.mediaFile1 || null,
-          mediaFile1Description: remappingWork.files.mediaFile1Description || '미디어 파일 1',
-          
-          mediaFile2: remappingWork.files.mediaFile2 || null,
-          mediaFile2Description: remappingWork.files.mediaFile2Description || '미디어 파일 2',
-          
-          mediaFile3: remappingWork.files.mediaFile3 || null,
-          mediaFile3Description: remappingWork.files.mediaFile3Description || '미디어 파일 3',
-          
-          mediaFile4: remappingWork.files.mediaFile4 || null,
-          mediaFile4Description: remappingWork.files.mediaFile4Description || '미디어 파일 4',
-          
-          mediaFile5: remappingWork.files.mediaFile5 || null,
-          mediaFile5Description: remappingWork.files.mediaFile5Description || '미디어 파일 5'
+        console.log(`🔄 작업 기록 ${index + 1} 처리 시작...`)
+        
+        // 파일 업로드 처리
+        const uploadedFiles: any = {}
+        const filesToUpload = []
+        
+        // 업로드할 파일 목록 생성
+        const fileFields = [
+          'originalFile', 'stage1File', 'stage2File', 'stage3File',
+          'acuOriginalFile', 'acuStage1File', 'acuStage2File', 'acuStage3File',
+          'mediaFile1', 'mediaFile2', 'mediaFile3', 'mediaFile4', 'mediaFile5'
+        ]
+        
+        for (const field of fileFields) {
+          const file = remappingWork.files[field as keyof typeof remappingWork.files] as File
+          if (file) {
+            filesToUpload.push({
+              file,
+              field,
+              category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
+              description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
+            })
+          }
         }
-
-        // 미디어 파일 추가 (before, after)
-        const media = {
-          before: remappingWork.media?.before || null,
-          after: remappingWork.media?.after || null
+        
+        // 미디어 파일 추가
+        if (remappingWork.media?.before) {
+          filesToUpload.push({
+            file: remappingWork.media.before,
+            field: 'mediaBefore',
+            category: 'media',
+            description: 'Before 이미지'
+          })
+        }
+        if (remappingWork.media?.after) {
+          filesToUpload.push({
+            file: remappingWork.media.after,
+            field: 'mediaAfter',
+            category: 'media',
+            description: 'After 이미지'
+          })
+        }
+        
+        console.log(`📁 업로드할 파일 개수: ${filesToUpload.length}`)
+        
+        // 파일들을 Supabase Storage에 업로드
+        if (filesToUpload.length > 0) {
+          console.log('🚀 파일 업로드 시작...')
+          
+          // 업로드 진행 상황 초기화
+          setUploadProgress({
+            isUploading: true,
+            currentFile: '',
+            totalFiles: filesToUpload.length,
+            currentIndex: 0,
+            progress: 0
+          })
+          
+          for (let i = 0; i < filesToUpload.length; i++) {
+            const fileInfo = filesToUpload[i]
+            
+            try {
+              // 업로드 진행 상황 업데이트
+              setUploadProgress(prev => ({
+                ...prev,
+                currentFile: fileInfo.file.name,
+                currentIndex: i + 1,
+                progress: Math.round(((i + 1) / filesToUpload.length) * 100)
+              }))
+              
+              console.log(`📤 파일 업로드 중: ${fileInfo.file.name} (${i + 1}/${filesToUpload.length})`)
+              
+              // 파일 ID 생성 (고유한 식별자)
+              const fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+              
+              // 파일 타입에 따른 버킷 선택
+              let bucketName = 'work-files' // 기본값
+              let category = fileInfo.category
+              
+              if (fileInfo.category === 'media' || fileInfo.field.startsWith('media')) {
+                bucketName = 'work-media'
+                category = 'media'
+              } else if (fileInfo.file.type.includes('pdf') || fileInfo.file.type.includes('document') || fileInfo.file.type.includes('text')) {
+                bucketName = 'work-documents'
+                category = 'document'
+              } else {
+                bucketName = 'work-files'
+                category = fileInfo.category // ecu, acu
+              }
+              
+              console.log(`📦 선택된 버킷: ${bucketName} (파일 타입: ${fileInfo.file.type})`)
+              
+              // Storage 경로 생성
+              const storagePath = `${formData.customerId}/${formData.equipmentId}/${category}_${fileId}_${fileInfo.file.name}`
+              
+              // Supabase Storage에 업로드
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from(bucketName)
+                .upload(storagePath, fileInfo.file, {
+                  cacheControl: '3600',
+                  upsert: true,
+                  contentType: fileInfo.file.type
+                })
+              
+              if (uploadError) {
+                console.error(`❌ 파일 업로드 실패: ${fileInfo.file.name}`, uploadError)
+                throw new Error(`파일 업로드 실패: ${uploadError.message}`)
+              }
+              
+              // 공개 URL 생성
+              const { data: urlData } = supabase.storage
+                .from(bucketName)
+                .getPublicUrl(uploadData.path)
+              
+              console.log(`✅ 파일 업로드 성공: ${fileInfo.file.name}`)
+              console.log(`📍 Storage 경로: ${uploadData.path}`)
+              console.log(`🔗 공개 URL: ${urlData.publicUrl}`)
+              console.log(`📦 저장된 버킷: ${bucketName}`)
+              
+              // 업로드된 파일 정보 저장
+              uploadedFiles[fileInfo.field] = {
+                url: urlData.publicUrl,
+                path: uploadData.path,
+                bucket: bucketName,
+                name: fileInfo.file.name,
+                size: fileInfo.file.size,
+                type: fileInfo.file.type,
+                category: category,
+                description: fileInfo.description
+              }
+              
+            } catch (error) {
+              console.error(`❌ 파일 업로드 중 오류: ${fileInfo.file.name}`, error)
+              throw new Error(`파일 업로드 실패: ${fileInfo.file.name}`)
+            }
+          }
+          
+          // 업로드 완료
+          setUploadProgress({
+            isUploading: false,
+            currentFile: '',
+            totalFiles: 0,
+            currentIndex: 0,
+            progress: 0
+          })
+          
+          console.log('✅ 모든 파일 업로드 완료')
+        } else {
+          console.log('📝 업로드할 파일이 없습니다.')
         }
 
         // 모델명 → id 변환
@@ -1678,12 +1795,17 @@ export default function WorkPage() {
             ...(remappingWork.ecu?.workDetails ? [`ECU: ${remappingWork.ecu.workDetails}`] : []),
             ...(remappingWork.acu?.workDetails ? [`ACU: ${remappingWork.acu.workDetails}`] : [])
           ].join(', ') || undefined,
+          // 업로드된 파일 정보
+          files: uploadedFiles,
           // 리매핑 작업 데이터
           remappingWorks: [
             {
               ...remappingWork, // RemappingWork 전체 구조(jsonb)
-              files: files, // File 객체들 포함 (Storage 업로드용)
-              media: media  // 미디어 파일들 포함
+              files: uploadedFiles, // 업로드된 파일 정보 포함
+              media: {
+                before: uploadedFiles.mediaBefore || null,
+                after: uploadedFiles.mediaAfter || null
+              }
             }
           ] as any
         }
@@ -1697,6 +1819,7 @@ export default function WorkPage() {
         console.log('  - totalPrice:', workRecordData.totalPrice)
         console.log('  - toolsUsed:', workRecordData.toolsUsed)
         console.log('  - workDescription:', workRecordData.workDescription)
+        console.log('  - uploadedFiles:', Object.keys(uploadedFiles))
 
         // Supabase에 작업 기록 저장
         const savedRecord = await createWorkRecord(workRecordData)
@@ -1710,7 +1833,7 @@ export default function WorkPage() {
         }
       } catch (error) {
         console.error(`❌ 작업 기록 ${index + 1} 처리 중 오류:`, error)
-        alert(`작업 기록 ${index + 1} 처리 중 오류가 발생했습니다.`)
+        alert(`작업 기록 ${index + 1} 처리 중 오류가 발생했습니다: ${error}`)
       }
     }
     
@@ -2018,6 +2141,26 @@ export default function WorkPage() {
     return true
   }
 
+  // 파일 업로드 진행 상황 상태
+  const [uploadProgress, setUploadProgress] = useState<{
+    isUploading: boolean
+    currentFile: string
+    totalFiles: number
+    currentIndex: number
+    progress: number
+  }>({
+    isUploading: false,
+    currentFile: '',
+    totalFiles: 0,
+    currentIndex: 0,
+    progress: 0
+  })
+  
+  // 클라이언트 사이드 렌더링 상태
+  const [isClient, setIsClient] = useState(false)
+  const [memoryUsage, setMemoryUsage] = useState<string>('N/A')
+  const [pageLoadTime, setPageLoadTime] = useState<string>('N/A')
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gray-900">
@@ -2105,19 +2248,13 @@ export default function WorkPage() {
           <div className="bg-gray-700 p-2 rounded">
             <div className="text-gray-400">메모리 사용량</div>
             <div className="text-green-400 font-mono">
-              {typeof window !== 'undefined' && (performance as any).memory 
-                ? `${((performance as any).memory.usedJSHeapSize / 1024 / 1024).toFixed(1)}MB`
-                : 'N/A'
-              }
+              {isClient ? memoryUsage : 'N/A'}
             </div>
           </div>
           <div className="bg-gray-700 p-2 rounded">
             <div className="text-gray-400">페이지 로드 시간</div>
             <div className="text-blue-400 font-mono">
-              {typeof window !== 'undefined' && performance.timing
-                ? `${(performance.timing.loadEventEnd - performance.timing.navigationStart).toFixed(0)}ms`
-                : 'N/A'
-              }
+              {isClient ? pageLoadTime : 'N/A'}
             </div>
           </div>
           <div className="bg-gray-700 p-2 rounded">
@@ -2135,11 +2272,53 @@ export default function WorkPage() {
         </div>
       </div>
 
+      {/* 파일 업로드 진행 상황 */}
+      {uploadProgress.isUploading && (
+        <div className="bg-blue-900/20 border border-blue-600 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
+              <span className="text-blue-300 font-medium">파일 업로드 중...</span>
+            </div>
+            <span className="text-blue-400 text-sm">
+              {uploadProgress.currentIndex}/{uploadProgress.totalFiles}
+            </span>
+          </div>
+          
+          <div className="mb-2">
+            <div className="text-sm text-blue-300 mb-1">
+              현재 파일: {uploadProgress.currentFile}
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div 
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress.progress}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          <div className="text-xs text-blue-400">
+            진행률: {uploadProgress.progress}%
+          </div>
+        </div>
+      )}
+
       {/* 작업 등록 폼 */}
       <div className="bg-gray-800 shadow rounded-lg p-6">
         <h2 className="text-lg font-medium text-white mb-6">새 작업 등록</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 업로드 중 폼 비활성화 */}
+          {uploadProgress.isUploading && (
+            <div className="absolute inset-0 bg-gray-900/50 rounded-lg flex items-center justify-center z-10">
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400"></div>
+                  <span className="text-white">파일 업로드 중... 잠시만 기다려주세요.</span>
+                </div>
+              </div>
+            </div>
+          )}
           {/* 고객 및 장비 정보 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="relative" ref={dropdownRef}>
@@ -2437,6 +2616,24 @@ export default function WorkPage() {
                               }).length
                               return mediaCount > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-900 text-purple-200">📷 미디어({mediaCount})</span>
                             })()}
+                          </div>
+                          
+                          {/* 버킷별 저장 정보 표시 */}
+                          <div className="mt-2 text-xs text-gray-400">
+                            <div className="flex items-center space-x-4">
+                              <span className="flex items-center">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+                                work-files: ECU/ACU 파일
+                              </span>
+                              <span className="flex items-center">
+                                <span className="w-2 h-2 bg-purple-500 rounded-full mr-1"></span>
+                                work-media: 미디어 파일
+                              </span>
+                              <span className="flex items-center">
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                work-documents: 문서 파일
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -3475,7 +3672,7 @@ export default function WorkPage() {
                                 type="file"
                                 id={`media-file-${index}`}
                                 className="hidden"
-                                accept="image/*,video/*"
+                                accept="*"
                                 onChange={(e) => {
                                   const selectedFile = e.target.files?.[0] || null
                                   handleFileChange(`mediaFile${index}`, selectedFile)
@@ -3521,11 +3718,46 @@ export default function WorkPage() {
                                         🎥 동영상
                                       </div>
                                     </div>
+                                  ) : file.type.includes('pdf') ? (
+                                    <div className="w-full h-32 bg-red-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                      <div className="text-center text-white">
+                                        <div className="text-lg">📄</div>
+                                        <div className="text-xs">PDF 문서</div>
+                                      </div>
+                                    </div>
+                                  ) : file.type.includes('excel') || file.type.includes('spreadsheet') || file.name.toLowerCase().includes('.xlsx') || file.name.toLowerCase().includes('.xls') ? (
+                                    <div className="w-full h-32 bg-green-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                      <div className="text-center text-white">
+                                        <div className="text-lg">📊</div>
+                                        <div className="text-xs">엑셀 파일</div>
+                                      </div>
+                                    </div>
+                                  ) : file.type.includes('word') || file.type.includes('document') || file.name.toLowerCase().includes('.docx') || file.name.toLowerCase().includes('.doc') ? (
+                                    <div className="w-full h-32 bg-blue-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                      <div className="text-center text-white">
+                                        <div className="text-lg">📝</div>
+                                        <div className="text-xs">워드 문서</div>
+                                      </div>
+                                    </div>
+                                  ) : file.name.toLowerCase().includes('.hwp') ? (
+                                    <div className="w-full h-32 bg-orange-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                      <div className="text-center text-white">
+                                        <div className="text-lg">📄</div>
+                                        <div className="text-xs">한글 문서</div>
+                                      </div>
+                                    </div>
+                                  ) : file.name.toLowerCase().includes('.txt') ? (
+                                    <div className="w-full h-32 bg-gray-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                      <div className="text-center text-white">
+                                        <div className="text-lg">📄</div>
+                                        <div className="text-xs">텍스트 파일</div>
+                                      </div>
+                                    </div>
                                   ) : (
                                     <div className="w-full h-32 bg-gray-700 rounded-lg border border-purple-600 flex items-center justify-center">
                                       <div className="text-center text-gray-400">
                                         <div className="text-lg">📄</div>
-                                        <div className="text-xs">미리보기 불가</div>
+                                        <div className="text-xs">기타 파일</div>
                                       </div>
                                     </div>
                                   )}
@@ -3544,11 +3776,11 @@ export default function WorkPage() {
                                   className="flex items-center justify-center px-2 py-2 border-2 border-dashed border-purple-600 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-900/30 transition-colors text-xs w-full h-32"
                                 >
                                   <div className="text-center text-purple-300">
-                                    <div className="text-2xl mb-1">📷</div>
+                                    <div className="text-2xl mb-1">📁</div>
                                     <div>파일 선택</div>
-                                    <div className="text-purple-400">이미지/동영상</div>
+                                    <div className="text-purple-400">모든 파일 형식</div>
                                     <div className="text-xs text-purple-500 mt-1">
-                                      지원 형식: JPG, PNG, GIF, MP4, AVI, MOV
+                                      지원 형식: 이미지, 동영상, 문서, PDF, 엑셀, 워드, 한글, 텍스트 등
                                     </div>
                                   </div>
                                 </label>
@@ -3602,9 +3834,14 @@ export default function WorkPage() {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={uploadProgress.isUploading}
+              className={`px-6 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                uploadProgress.isUploading
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
-              작업 등록
+              {uploadProgress.isUploading ? '업로드 중...' : '작업 등록'}
             </button>
           </div>
         </form>

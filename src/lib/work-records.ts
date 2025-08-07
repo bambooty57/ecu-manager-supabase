@@ -435,3 +435,133 @@ export const getWorkRecordWithFiles = async (id: number): Promise<WorkRecord | n
 
   return data
 } 
+
+// 작업 기록과 관련된 파일 메타데이터 조회
+export const getWorkRecordFiles = async (workRecordId: number) => {
+  try {
+    console.log(`📁 작업 기록 ${workRecordId}의 파일 메타데이터 조회 중...`)
+    
+    // 1. 먼저 file_metadata 테이블에서 조회
+    const { data: metadataData, error: metadataError } = await supabase
+      .from('file_metadata')
+      .select('*')
+      .eq('work_record_id', workRecordId)
+      .order('created_at', { ascending: true })
+    
+    if (metadataData && metadataData.length > 0) {
+      console.log(`✅ ${metadataData.length}개 파일 메타데이터 조회 완료`)
+      return metadataData
+    }
+    
+    // 2. file_metadata가 비어있으면 Storage에서 직접 조회
+    console.log('📁 Storage에서 직접 파일 조회 중...')
+    
+    // 작업 기록 정보 가져오기
+    const { data: workRecord, error: workRecordError } = await supabase
+      .from('work_records')
+      .select('customer_id, equipment_id')
+      .eq('id', workRecordId)
+      .single()
+    
+    if (workRecordError || !workRecord) {
+      console.error('❌ 작업 기록 조회 실패:', workRecordError)
+      return []
+    }
+    
+    // 모든 버킷에서 파일 목록 가져오기
+    const buckets = ['work-files', 'work-media', 'work-documents']
+    let allFiles: any[] = []
+    
+    for (const bucket of buckets) {
+      try {
+        const { data: storageFiles, error: storageError } = await supabase.storage
+          .from(bucket)
+          .list(`${workRecord.customer_id}/${workRecord.equipment_id}`)
+        
+        if (storageError) {
+          console.warn(`⚠️ ${bucket} 버킷 조회 실패:`, storageError)
+          continue
+        }
+        
+        if (storageFiles && storageFiles.length > 0) {
+          const bucketFiles = storageFiles.map((file, index) => ({
+            id: Date.now() + index + allFiles.length, // 고유한 숫자 ID
+            work_record_id: workRecordId,
+            file_name: file.name,
+            original_name: file.name.replace(/^\d+_\d+_/, ''), // 타임스탬프 제거
+            file_size: file.metadata?.size || 0,
+            file_type: file.metadata?.mimetype || 'application/octet-stream',
+            category: bucket === 'work-files' ? 
+              (file.name.toLowerCase().includes('ecu') ? 'ecu' : 
+               file.name.toLowerCase().includes('acu') ? 'acu' : 'media') :
+              bucket === 'work-media' ? 'media' : 'document',
+            bucket_name: bucket,
+            storage_path: `${workRecord.customer_id}/${workRecord.equipment_id}/${file.name}`,
+            storage_url: `https://ewxzampbdpuaawzrvsln.supabase.co/storage/v1/object/public/${bucket}/${workRecord.customer_id}/${workRecord.equipment_id}/${file.name}`,
+            created_at: file.created_at,
+            is_migrated: false,
+            migrated_at: null
+          }))
+          
+          allFiles = [...allFiles, ...bucketFiles]
+        }
+      } catch (error) {
+        console.warn(`⚠️ ${bucket} 버킷 처리 중 오류:`, error)
+        continue
+      }
+    }
+    
+    const files = allFiles
+    
+    console.log(`✅ Storage에서 ${files.length}개 파일 조회 완료`)
+    return files
+    
+  } catch (error) {
+    console.error('❌ 파일 메타데이터 조회 중 오류:', error)
+    return []
+  }
+}
+
+// 파일 타입별 아이콘 매핑
+export const getFileIcon = (fileName: string): string => {
+  const ext = fileName.split('.').pop()?.toLowerCase()
+  
+  // 이미지 파일
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'svg', 'tiff', 'tif'].includes(ext || '')) {
+    return '🖼️'
+  }
+  
+  // 비디오 파일
+  if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v', 'mpg', 'mpeg'].includes(ext || '')) {
+    return '🎥'
+  }
+  
+  // 문서 파일
+  if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf'].includes(ext || '')) {
+    return '📄'
+  }
+  
+  // ECU/ACU 파일
+  if (['bin', 'hex', 'map', 'ecu', 'acu', 'cal', 'ori', 'mod', 'tuned'].includes(ext || '')) {
+    return '🔧'
+  }
+  
+  // 압축 파일
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext || '')) {
+    return '📁'
+  }
+  
+  // 기본값
+  return '📄'
+}
+
+// 파일 크기 포맷팅
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes'
+  
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+} 

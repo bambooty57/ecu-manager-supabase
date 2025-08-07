@@ -17,12 +17,29 @@ import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getAllEquipment, EquipmentData } from '@/lib/equipment'
 import { searchEngine } from '@/lib/search-engine'
 import { cacheManager, CacheKeys, CacheTTL } from '@/lib/cache-manager'
-import { FileDownloadManager, FileMetadata } from '@/lib/file-download-manager'
+import { downloadSingleFile, downloadAllFilesAsZip } from '@/lib/file-download-manager'
+
+// 파일 메타데이터 타입 정의
+interface FileMetadata {
+  id: number;
+  work_record_id: number;
+  file_name: string;
+  original_name: string;
+  file_size: number;
+  file_type: string;
+  category: string;
+  bucket_name: string;
+  storage_path: string;
+  storage_url: string;
+  description?: string;
+  created_at: string;
+}
 import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/Navigation'
 import WorkRecordRow from '@/components/WorkRecordRow'
 import AuthGuard from '@/components/AuthGuard'
 import WorkDetailModal from '@/components/WorkDetailModal'
+import WorkDetailViewModal from '@/components/WorkDetailViewModal'
 // import JSZip from 'jszip' // 임시 주석 처리
 import { FileDownloadSection } from '@/components/FileDownloadSection'
 import { LoadingSkeleton, WorkRecordSkeleton, DetailSkeleton } from '@/components/LoadingSkeleton'
@@ -124,8 +141,7 @@ function HistoryPage() {
   const [newEcuModelManagement, setNewEcuModelManagement] = useState('')
   const [newAcuTypeManagement, setNewAcuTypeManagement] = useState('')
 
-  // ✅ 파일 다운로드 매니저 인스턴스
-  const downloadManager = useMemo(() => new FileDownloadManager(supabase), [])
+
 
   // ✅ 검색 관련 상태
   const [searchQuery, setSearchQuery] = useState('')
@@ -319,135 +335,7 @@ function HistoryPage() {
     }
   }, [])
 
-  // ✅ 파일 다운로드 함수들 (에러 처리 개선)
-  const handleSingleFileDownload = useCallback(async (file: FileMetadata) => {
-    const toastId = toast.loading(`${file.original_name} 다운로드 중...`)
-    
-    try {
-      setIsDownloading(true)
-      setDownloadStatus(`다운로드 중: ${file.original_name}`)
-      setDownloadProgress(0)
-      
-      await downloadManager.downloadFile(file)
-      
-      setDownloadProgress(100)
-      setDownloadStatus('다운로드 완료!')
-      
-      toast.success(`${file.original_name} 다운로드 완료!`, { id: toastId })
-      
-      setTimeout(() => {
-        setIsDownloading(false)
-        setDownloadProgress(0)
-        setDownloadStatus('')
-      }, 2000)
-      
-    } catch (error) {
-      console.error('파일 다운로드 실패:', error)
-      setDownloadStatus('다운로드 실패')
-      
-      // 오류 유형에 따른 맞춤형 메시지
-      let errorMessage = '파일 다운로드 중 오류가 발생했습니다.'
-      
-      if (error instanceof Error) {
-        if (error.message.includes('not found')) {
-          errorMessage = '파일을 찾을 수 없습니다. 관리자에게 문의하세요.'
-        } else if (error.message.includes('permission')) {
-          errorMessage = '파일 다운로드 권한이 없습니다.'
-        } else if (error.message.includes('network')) {
-          errorMessage = '네트워크 연결을 확인해주세요.'
-        } else if (error.message.includes('timeout')) {
-          errorMessage = '다운로드 시간이 초과되었습니다.'
-        }
-      }
-      
-      toast.error(errorMessage, { id: toastId })
-      
-      setTimeout(() => {
-        setIsDownloading(false)
-        setDownloadProgress(0)
-        setDownloadStatus('')
-      }, 3000)
-    }
-  }, [downloadManager])
 
-  const handleBulkDownload = useCallback(async (files: FileMetadata[], zipName: string) => {
-    const toastId = toast.loading('ZIP 파일 생성 중...')
-    
-    try {
-      setIsDownloading(true)
-      setDownloadStatus(`ZIP 파일 생성 중...`)
-      setDownloadProgress(0)
-      
-      await downloadManager.downloadMultipleFiles(files, zipName)
-      
-      setDownloadProgress(100)
-      setDownloadStatus('다운로드 완료!')
-      
-      toast.success('모든 파일이 ZIP으로 다운로드되었습니다.', { id: toastId })
-      
-      setTimeout(() => {
-        setIsDownloading(false)
-        setDownloadProgress(0)
-        setDownloadStatus('')
-      }, 2000)
-      
-    } catch (error) {
-      console.error('다중 파일 다운로드 실패:', error)
-      setDownloadStatus('다운로드 실패')
-      
-      // 오류 유형에 따른 맞춤형 메시지
-      let errorMessage = '파일 일괄 다운로드 중 오류가 발생했습니다.'
-      
-      if (error instanceof Error) {
-        if (error.message.includes('not found')) {
-          errorMessage = '일부 파일을 찾을 수 없습니다.'
-        } else if (error.message.includes('permission')) {
-          errorMessage = '파일 다운로드 권한이 없습니다.'
-        } else if (error.message.includes('network')) {
-          errorMessage = '네트워크 연결을 확인해주세요.'
-        } else if (error.message.includes('timeout')) {
-          errorMessage = '다운로드 시간이 초과되었습니다.'
-        }
-      }
-      
-      toast.error(errorMessage, { id: toastId })
-      
-      setTimeout(() => {
-        setIsDownloading(false)
-        setDownloadProgress(0)
-        setDownloadStatus('')
-      }, 3000)
-    }
-  }, [downloadManager])
-
-  // ✅ 카테고리별 파일 다운로드
-  const handleCategoryDownload = useCallback(async (files: FileMetadata[], categoryName: string, customFilenames?: string[]) => {
-    try {
-      setIsDownloading(true)
-      setDownloadStatus(`${categoryName} 파일 다운로드 중...`)
-      setDownloadProgress(0)
-      
-      await downloadManager.downloadFilesByCategory(files, categoryName, customFilenames)
-      
-      setDownloadProgress(100)
-      setDownloadStatus('다운로드 완료!')
-      
-      setTimeout(() => {
-        setIsDownloading(false)
-        setDownloadProgress(0)
-        setDownloadStatus('')
-      }, 2000)
-      
-    } catch (error) {
-      console.error('카테고리별 다운로드 실패:', error)
-      setDownloadStatus('다운로드 실패')
-      setTimeout(() => {
-        setIsDownloading(false)
-        setDownloadProgress(0)
-        setDownloadStatus('')
-      }, 3000)
-    }
-  }, [downloadManager])
 
   // ✅ 주기적 데이터 갱신 (메모리 누수 방지)
   useEffect(() => {
@@ -2006,13 +1894,10 @@ function HistoryPage() {
                                     <div className="flex items-center space-x-3">
                                       <button
                                         onClick={() => handleViewDetail(record)}
-                                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 p-2 rounded-lg transition-colors"
+                                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-3 py-2 rounded transition-all duration-200 cursor-pointer text-sm"
                                         title="상세보기"
                                       >
-                                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
+                                        상세보기
                                       </button>
                                       <button
                                         onClick={() => handleEdit(record)}
@@ -2145,15 +2030,14 @@ function HistoryPage() {
             </div>
           </div>
 
-          {/* 작업 상세보기 모달 (Task #5: HeadlessUI 기반 리팩토링) */}
-          <WorkDetailModal 
+          {/* 작업 상세보기 모달 */}
+          <WorkDetailViewModal 
             isOpen={showDetailModal}
             onClose={() => setShowDetailModal(false)}
             workRecord={selectedRecord}
-            onSave={() => {}}
           />
 
-          {/* 편집 모달 */}
+          {/* 수정하기 모달 */}
           <WorkDetailModal
             isOpen={showEditModal}
             onClose={() => setShowEditModal(false)}
