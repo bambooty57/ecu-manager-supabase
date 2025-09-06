@@ -31,9 +31,9 @@ export const uploadFileToStorage = async (
     } else if (file.type.includes('pdf') || file.type.includes('document') || file.type.includes('text')) {
       bucketName = 'work-documents'
       console.log(`📄 문서 파일 감지: ${file.name} → work-documents 버킷`)
-    } else if (fileExtension.toLowerCase() === 'zip' || file.type === 'application/zip') {
+    } else if (fileExtension.toLowerCase() === 'zip' || file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
       bucketName = 'work-files'
-      console.log(`📦 ZIP 파일 감지: ${file.name} → work-files 버킷`)
+      console.log(`📦 ZIP 파일 감지: ${file.name} (${file.type}) → work-files 버킷`)
     } else {
       bucketName = 'work-files'
       console.log(`🔧 ECU/ACU 파일 감지: ${file.name} → work-files 버킷`)

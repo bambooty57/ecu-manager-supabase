@@ -1723,10 +1723,10 @@ export default function WorkPage() {
               } else if (fileInfo.file.type.includes('pdf') || fileInfo.file.type.includes('document') || fileInfo.file.type.includes('text')) {
                 bucketName = 'work-documents'
                 category = 'document'
-              } else if (fileExtension === 'zip' || fileInfo.file.type === 'application/zip') {
+              } else if (fileExtension === 'zip' || fileInfo.file.type === 'application/zip' || fileInfo.file.type === 'application/x-zip-compressed') {
                 bucketName = 'work-files'
                 category = fileInfo.category // ecu, acu
-                console.log(`📦 ZIP 파일 감지: ${fileInfo.file.name} → work-files 버킷`)
+                console.log(`📦 ZIP 파일 감지: ${fileInfo.file.name} (${fileInfo.file.type}) → work-files 버킷`)
               } else {
                 bucketName = 'work-files'
                 category = fileInfo.category // ecu, acu
@@ -1737,17 +1737,33 @@ export default function WorkPage() {
               // Storage 경로 생성
               const storagePath = `${formData.customerId}/${formData.equipmentId}/${category}_${fileId}_${fileInfo.file.name}`
               
+              // ZIP 파일인 경우 특별 처리
+              let uploadOptions = {
+                cacheControl: '3600',
+                upsert: true,
+                contentType: fileInfo.file.type
+              }
+              
+              // ZIP 파일의 경우 MIME 타입 강제 설정
+              if (fileExtension === 'zip') {
+                uploadOptions.contentType = 'application/zip'
+                console.log(`📦 ZIP 파일 MIME 타입 강제 설정: application/zip`)
+              }
+              
+              console.log(`📤 업로드 옵션:`, uploadOptions)
+              console.log(`📁 파일 크기: ${(fileInfo.file.size / 1024 / 1024).toFixed(2)}MB`)
+              
               // Supabase Storage에 업로드
               const { data: uploadData, error: uploadError } = await supabase.storage
                 .from(bucketName)
-                .upload(storagePath, fileInfo.file, {
-                  cacheControl: '3600',
-                  upsert: true,
-                  contentType: fileInfo.file.type
-                })
+                .upload(storagePath, fileInfo.file, uploadOptions)
               
               if (uploadError) {
                 console.error(`❌ 파일 업로드 실패: ${fileInfo.file.name}`, uploadError)
+                console.error(`❌ 오류 상세:`, {
+                  message: uploadError.message,
+                  error: uploadError
+                })
                 throw new Error(`파일 업로드 실패: ${uploadError.message}`)
               }
               
