@@ -1734,8 +1734,14 @@ export default function WorkPage() {
               
               console.log(`📦 선택된 버킷: ${bucketName} (파일 타입: ${fileInfo.file.type})`)
               
+              // 파일명을 안전하게 처리 (한글, 특수문자 제거)
+              const safeFileName = fileInfo.file.name
+                .replace(/[^\w\-_.]/g, '_') // 한글, 특수문자를 언더스코어로 변경
+                .replace(/_+/g, '_') // 연속된 언더스코어를 하나로
+                .replace(/^_|_$/g, '') // 앞뒤 언더스코어 제거
+              
               // Storage 경로 생성
-              const storagePath = `${formData.customerId}/${formData.equipmentId}/${category}_${fileId}_${fileInfo.file.name}`
+              const storagePath = `${formData.customerId}/${formData.equipmentId}/${category}_${fileId}_${safeFileName}`
               
               // ZIP 파일인 경우 특별 처리
               let uploadOptions = {

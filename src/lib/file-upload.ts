@@ -39,8 +39,14 @@ export const uploadFileToStorage = async (
       console.log(`🔧 ECU/ACU 파일 감지: ${file.name} → work-files 버킷`)
     }
     
-    // Storage 경로 생성: {bucketName}/{workRecordId}/{category}_{fileId}_{originalName}
-    const storagePath = `${workRecordId}/${category}_${fileId}_${file.name}`
+    // 파일명을 안전하게 처리 (한글, 특수문자 제거)
+    const safeFileName = file.name
+      .replace(/[^\w\-_.]/g, '_') // 한글, 특수문자를 언더스코어로 변경
+      .replace(/_+/g, '_') // 연속된 언더스코어를 하나로
+      .replace(/^_|_$/g, '') // 앞뒤 언더스코어 제거
+    
+    // Storage 경로 생성: {bucketName}/{workRecordId}/{category}_{fileId}_{safeFileName}
+    const storagePath = `${workRecordId}/${category}_${fileId}_${safeFileName}`
     
     console.log(`📂 업로드 경로: ${storagePath}`)
     console.log(`📦 선택된 버킷: ${bucketName}`)
