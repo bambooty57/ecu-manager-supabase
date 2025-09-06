@@ -3345,7 +3345,7 @@ export default function WorkPage() {
                         type="file"
                         id="original-file"
                         className="hidden"
-                        accept="*,.zip"
+                        accept="*"
                         multiple
                         onChange={(e) => {
                           const files = Array.from(e.target.files || [])
@@ -3541,7 +3541,7 @@ export default function WorkPage() {
                           type="file"
                           id="acu-original-file"
                           className="hidden"
-                          accept="*,.zip"
+                          accept="*"
                           multiple
                           onChange={(e) => {
                             const files = Array.from(e.target.files || [])
