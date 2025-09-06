@@ -1216,7 +1216,7 @@ export default function WorkPage() {
     // 파일 크기 및 형식 검증
     if (file) {
       if (Array.isArray(file)) {
-        // 폴더 선택의 경우
+        // 다중 파일 선택의 경우
         for (const f of file) {
           if (!validateFileSize(f, 50)) { // 폴더 파일은 50MB 제한
             alert(`파일 크기가 너무 큽니다: ${f.name} (최대 50MB)`)
@@ -1232,14 +1232,33 @@ export default function WorkPage() {
       }
     }
 
-    setCurrentRemappingWork(prev => ({
-      ...prev,
-      files: {
-        ...prev.files,
-        ...(file !== null && { [fileType]: file }),
-        ...(description !== undefined && { [`${fileType}Description`]: description })
+    setCurrentRemappingWork(prev => {
+      const currentFiles = prev.files[fileType as keyof typeof prev.files] as File | File[] | undefined
+      
+      let newFiles: File | File[] | null = file
+      
+      // 다중 파일 선택 필드인 경우 기존 파일들과 합치기
+      if ((fileType === 'originalFile' || fileType === 'acuOriginalFile') && file && Array.isArray(file)) {
+        if (Array.isArray(currentFiles)) {
+          // 기존 파일들과 새 파일들 합치기 (최대 5개)
+          const combinedFiles = [...currentFiles, ...file]
+          if (combinedFiles.length > 5) {
+            alert('최대 5개 파일까지만 선택할 수 있습니다.')
+            return prev
+          }
+          newFiles = combinedFiles
+        }
       }
-    }))
+      
+      return {
+        ...prev,
+        files: {
+          ...prev.files,
+          ...(newFiles !== null && { [fileType]: newFiles }),
+          ...(description !== undefined && { [`${fileType}Description`]: description })
+        }
+      }
+    })
   }
 
   // 파일 설명만 업데이트하는 함수
