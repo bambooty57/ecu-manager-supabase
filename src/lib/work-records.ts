@@ -287,14 +287,35 @@ export const updateWorkRecord = async (
 
 // 작업 기록 삭제 함수
 export const deleteWorkRecord = async (id: number): Promise<void> => {
-  const { error } = await supabase
-    .from('work_records')
-    .delete()
-    .eq('id', id)
+  try {
+    console.log(`🗑️ 작업 기록 ${id} 삭제 시작`)
+    
+    // 1. 먼저 Supabase Storage에서 관련 파일들 삭제
+    const { deleteWorkRecordFiles } = await import('./file-upload')
+    const filesDeleted = await deleteWorkRecordFiles(id)
+    
+    if (filesDeleted) {
+      console.log(`✅ 작업 기록 ${id}의 파일들 삭제 완료`)
+    } else {
+      console.log(`⚠️ 작업 기록 ${id}의 파일 삭제 중 일부 오류 발생`)
+    }
+    
+    // 2. 데이터베이스에서 작업 기록 삭제
+    const { error } = await supabase
+      .from('work_records')
+      .delete()
+      .eq('id', id)
 
-  if (error) {
-    console.error('작업 기록 삭제 오류:', error)
-    throw new Error(`작업 기록 삭제 실패: ${error.message}`)
+    if (error) {
+      console.error('작업 기록 삭제 오류:', error)
+      throw new Error(`작업 기록 삭제 실패: ${error.message}`)
+    }
+    
+    console.log(`✅ 작업 기록 ${id} 삭제 완료`)
+    
+  } catch (error) {
+    console.error('❌ 작업 기록 삭제 중 오류:', error)
+    throw error
   }
 }
 
