@@ -1619,14 +1619,27 @@ export default function WorkPage() {
         ]
         
         for (const field of fileFields) {
-          const file = remappingWork.files[field as keyof typeof remappingWork.files] as File
+          const file = remappingWork.files[field as keyof typeof remappingWork.files] as File | File[]
           if (file) {
-            filesToUpload.push({
-              file,
-              field,
-              category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
-              description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
-            })
+            if (Array.isArray(file)) {
+              // 다중 파일 처리 (originalFile, acuOriginalFile)
+              file.forEach((f, index) => {
+                filesToUpload.push({
+                  file: f,
+                  field: `${field}_${index}`,
+                  category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
+                  description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
+                })
+              })
+            } else {
+              // 단일 파일 처리
+              filesToUpload.push({
+                file,
+                field,
+                category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
+                description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
+              })
+            }
           }
         }
         
@@ -1683,6 +1696,7 @@ export default function WorkPage() {
               // 파일 타입에 따른 버킷 선택
               let bucketName = 'work-files' // 기본값
               let category = fileInfo.category
+              const fileExtension = fileInfo.file.name.split('.').pop()?.toLowerCase() || ''
               
               if (fileInfo.category === 'media' || fileInfo.field.startsWith('media')) {
                 bucketName = 'work-media'
@@ -1690,6 +1704,10 @@ export default function WorkPage() {
               } else if (fileInfo.file.type.includes('pdf') || fileInfo.file.type.includes('document') || fileInfo.file.type.includes('text')) {
                 bucketName = 'work-documents'
                 category = 'document'
+              } else if (fileExtension === 'zip' || fileInfo.file.type === 'application/zip') {
+                bucketName = 'work-files'
+                category = fileInfo.category // ecu, acu
+                console.log(`📦 ZIP 파일 감지: ${fileInfo.file.name} → work-files 버킷`)
               } else {
                 bucketName = 'work-files'
                 category = fileInfo.category // ecu, acu
@@ -3320,17 +3338,22 @@ export default function WorkPage() {
                   {/* 원본 ECU 파일 */}
                   <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
                     <label className="block text-sm font-medium text-gray-300 mb-3">
-                      📁 원본 ECU 폴더
+                      📁 원본 ECU 폴더 (최대 5개 파일)
                     </label>
                     <div className="flex items-center space-x-3 mb-3">
                       <input
                         type="file"
                         id="original-file"
                         className="hidden"
-                        accept="*"
+                        accept="*,.zip"
+                        multiple
                         onChange={(e) => {
-                          const file = e.target.files?.[0] || null
-                          handleFileChange('originalFile', file)
+                          const files = Array.from(e.target.files || [])
+                          if (files.length > 5) {
+                            alert('최대 5개 파일까지만 선택할 수 있습니다.')
+                            return
+                          }
+                          handleFileChange('originalFile', files)
                         }}
                       />
                       <label
@@ -3341,15 +3364,37 @@ export default function WorkPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <span className="text-sm text-gray-300">
-                          {currentRemappingWork.files.originalFile 
-                            ? `📄 ${(currentRemappingWork.files.originalFile as File).name} (${((currentRemappingWork.files.originalFile as File).size / 1024).toFixed(1)} KB)` 
-                            : '📄 원본 ECU 파일 선택'}
+                          {Array.isArray(currentRemappingWork.files.originalFile) 
+                            ? `📄 ${currentRemappingWork.files.originalFile.length}개 파일 선택됨` 
+                            : '📄 원본 ECU 파일 선택 (최대 5개)'}
                         </span>
                         <div className="text-xs text-gray-500 mt-1">
-                          모든 파일 형식 지원
+                          모든 파일 형식 지원 (ZIP 포함)
                         </div>
                       </label>
                     </div>
+                    {/* 선택된 파일 목록 표시 */}
+                    {Array.isArray(currentRemappingWork.files.originalFile) && currentRemappingWork.files.originalFile.length > 0 && (
+                      <div className="mb-3 p-3 bg-gray-700 rounded-lg">
+                        <div className="text-xs text-gray-400 mb-2">선택된 파일들:</div>
+                        {currentRemappingWork.files.originalFile.map((file, index) => (
+                          <div key={index} className="text-sm text-gray-300 flex items-center justify-between">
+                            <span>📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newFiles = currentRemappingWork.files.originalFile as File[]
+                                const updatedFiles = newFiles.filter((_, i) => i !== index)
+                                handleFileChange('originalFile', updatedFiles.length > 0 ? updatedFiles : null)
+                              }}
+                              className="text-red-400 hover:text-red-300 text-xs"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <input
                       type="text"
                       value={currentRemappingWork.files.originalFileDescription || ''}
@@ -3487,17 +3532,22 @@ export default function WorkPage() {
                     {/* 원본 ACU 파일 */}
                     <div className="mb-8 bg-gray-800 border border-gray-700 rounded-lg p-6">
                       <label className="block text-sm font-medium text-gray-300 mb-3">
-                        📁 원본 ACU 폴더
+                        📁 원본 ACU 폴더 (최대 5개 파일)
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
                         <input
                           type="file"
                           id="acu-original-file"
                           className="hidden"
-                          accept="*"
+                          accept="*,.zip"
+                          multiple
                           onChange={(e) => {
-                            const file = e.target.files?.[0] || null
-                            handleFileChange('acuOriginalFile', file)
+                            const files = Array.from(e.target.files || [])
+                            if (files.length > 5) {
+                              alert('최대 5개 파일까지만 선택할 수 있습니다.')
+                              return
+                            }
+                            handleFileChange('acuOriginalFile', files)
                           }}
                         />
                         <label
@@ -3508,15 +3558,37 @@ export default function WorkPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
                           <span className="text-sm text-green-300">
-                            {currentRemappingWork.files.acuOriginalFile 
-                              ? `📄 ${(currentRemappingWork.files.acuOriginalFile as File).name} (${((currentRemappingWork.files.acuOriginalFile as File).size / 1024).toFixed(1)} KB)` 
-                              : '📄 ACU 원본 파일 선택'}
+                            {Array.isArray(currentRemappingWork.files.acuOriginalFile) 
+                              ? `📄 ${currentRemappingWork.files.acuOriginalFile.length}개 파일 선택됨` 
+                              : '📄 ACU 원본 파일 선택 (최대 5개)'}
                           </span>
                           <div className="text-xs text-gray-500 mt-1">
-                            모든 파일 형식 지원
+                            모든 파일 형식 지원 (ZIP 포함)
                           </div>
                         </label>
                       </div>
+                      {/* 선택된 파일 목록 표시 */}
+                      {Array.isArray(currentRemappingWork.files.acuOriginalFile) && currentRemappingWork.files.acuOriginalFile.length > 0 && (
+                        <div className="mb-3 p-3 bg-gray-700 rounded-lg">
+                          <div className="text-xs text-gray-400 mb-2">선택된 파일들:</div>
+                          {currentRemappingWork.files.acuOriginalFile.map((file, index) => (
+                            <div key={index} className="text-sm text-gray-300 flex items-center justify-between">
+                              <span>📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newFiles = currentRemappingWork.files.acuOriginalFile as File[]
+                                  const updatedFiles = newFiles.filter((_, i) => i !== index)
+                                  handleFileChange('acuOriginalFile', updatedFiles.length > 0 ? updatedFiles : null)
+                                }}
+                                className="text-red-400 hover:text-red-300 text-xs"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <input
                         type="text"
                         value={currentRemappingWork.files.acuOriginalFileDescription || ''}
