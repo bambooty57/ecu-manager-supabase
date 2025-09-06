@@ -1760,35 +1760,42 @@ export default function WorkPage() {
               console.log(`📤 업로드 옵션:`, uploadOptions)
               console.log(`📁 파일 크기: ${(fileInfo.file.size / 1024 / 1024).toFixed(2)}MB`)
               
-              // uploadFileToStorage 함수 사용 (file_metadata 자동 저장)
-              const uploadResult = await uploadFileToStorage(
-                fileInfo.file,
-                workRecordId, // 작업 기록 ID 전달
-                fileId,
-                category
-              )
+              // Supabase Storage에 직접 업로드 (기존 방식)
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from(bucketName)
+                .upload(storagePath, fileInfo.file, uploadOptions)
               
-              if (!uploadResult.success) {
-                console.error(`❌ 파일 업로드 실패: ${fileInfo.file.name}`, uploadResult.error)
-                throw new Error(`파일 업로드 실패: ${uploadResult.error}`)
+              if (uploadError) {
+                console.error(`❌ 파일 업로드 실패: ${fileInfo.file.name}`, uploadError)
+                console.error(`❌ 오류 상세:`, {
+                  message: uploadError.message,
+                  error: uploadError
+                })
+                throw new Error(`파일 업로드 실패: ${uploadError.message}`)
               }
+              
+              // 공개 URL 생성
+              const { data: urlData } = supabase.storage
+                .from(bucketName)
+                .getPublicUrl(uploadData.path)
               
               console.log(`✅ 파일 업로드 성공: ${fileInfo.file.name}`)
-              console.log(`📍 Storage 경로: ${uploadResult.path}`)
-              console.log(`🔗 공개 URL: ${uploadResult.url}`)
-              console.log(`📦 저장된 버킷: ${uploadResult.bucket}`)
+              console.log(`📍 Storage 경로: ${uploadData.path}`)
+              console.log(`🔗 공개 URL: ${urlData.publicUrl}`)
+              console.log(`📦 저장된 버킷: ${bucketName}`)
               
-              // 업로드된 파일 정보 저장
-              uploadedFiles[fileInfo.field] = {
-                url: uploadResult.url,
-                path: uploadResult.path,
-                bucket: uploadResult.bucket,
+              // 업로드 결과 저장
+              uploadedFiles[fileId] = {
                 name: fileInfo.file.name,
+                url: urlData.publicUrl,
+                path: uploadData.path,
+                bucket: bucketName,
                 size: fileInfo.file.size,
                 type: fileInfo.file.type,
-                category: category,
-                description: fileInfo.description
+                description: fileInfo.description || ''
               }
+              
+              console.log(`📋 업로드된 파일 정보:`, uploadedFiles[fileId])
               
             } catch (error) {
               console.error(`❌ 파일 업로드 중 오류: ${fileInfo.file.name}`, error)
@@ -1886,7 +1893,7 @@ export default function WorkPage() {
           const workRecordId = savedRecord.id
           console.log(`📁 작업 기록 ${workRecordId}의 파일 업로드 시작...`)
           
-          // 파일 업로드 처리
+          // 파일 업로드 처리 (uploadFileToStorage 함수 사용)
           const uploadedFiles: any = {}
           const filesToUpload = []
           
@@ -1967,19 +1974,21 @@ export default function WorkPage() {
                   progress: Math.round(((i + 1) / filesToUpload.length) * 100)
                 }))
                 
-                // 파일 확장자 추출
-                const fileExtension = fileInfo.file.name.split('.').pop()?.toLowerCase() || ''
-                
-                // 파일 카테고리에 따른 버킷 결정
-                let bucketName = 'work-files'
+                // 파일 카테고리에 따른 카테고리 결정
                 let category = 'original'
                 
                 if (fileInfo.category === 'media') {
-                  bucketName = 'work-media'
                   category = 'media'
                 } else if (fileInfo.category === 'acu') {
-                  bucketName = 'work-documents'
-                  category = 'acu-original'
+                  if (fileInfo.field.includes('stage1')) {
+                    category = 'acu-stage1'
+                  } else if (fileInfo.field.includes('stage2')) {
+                    category = 'acu-stage2'
+                  } else if (fileInfo.field.includes('stage3')) {
+                    category = 'acu-stage3'
+                  } else {
+                    category = 'acu-original'
+                  }
                 } else {
                   // ECU 파일의 경우 파일명에 따라 카테고리 결정
                   if (fileInfo.field.includes('stage1')) {
@@ -1996,14 +2005,14 @@ export default function WorkPage() {
                 // 고유한 파일 ID 생성
                 const fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
                 
-                console.log(`📦 선택된 버킷: ${bucketName} (파일 타입: ${fileInfo.file.type})`)
+                console.log(`📦 파일 업로드 시작: ${fileInfo.file.name} (카테고리: ${category})`)
                 
                 // uploadFileToStorage 함수 사용 (file_metadata 자동 저장)
                 const uploadResult = await uploadFileToStorage(
                   fileInfo.file,
                   workRecordId, // 작업 기록 ID 전달
                   fileId,
-                  category
+                  category as 'original' | 'stage1' | 'stage2' | 'stage3' | 'acu-original' | 'acu-stage1' | 'acu-stage2' | 'acu-stage3' | 'media'
                 )
                 
                 if (!uploadResult.success) {
