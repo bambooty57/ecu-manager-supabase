@@ -1,0 +1,11 @@
+[33mcommit 5e778cdd5ed3e7b74e3850dab585991d1e9b680f[m
+Author: bambooty <bambooty@example.com>
+Date:   Thu Aug 7 09:48:08 2025 +0900
+
+     전체 프로젝트 정리 완료 - 불필요한 파일/폴더 제거 및 구조 최적화
+
+public/file.svg
+public/globe.svg
+public/next.svg
+public/vercel.svg
+public/window.svg
