@@ -1760,42 +1760,8 @@ export default function WorkPage() {
               console.log(`📤 업로드 옵션:`, uploadOptions)
               console.log(`📁 파일 크기: ${(fileInfo.file.size / 1024 / 1024).toFixed(2)}MB`)
               
-              // Supabase Storage에 직접 업로드 (기존 방식)
-              const { data: uploadData, error: uploadError } = await supabase.storage
-                .from(bucketName)
-                .upload(storagePath, fileInfo.file, uploadOptions)
-              
-              if (uploadError) {
-                console.error(`❌ 파일 업로드 실패: ${fileInfo.file.name}`, uploadError)
-                console.error(`❌ 오류 상세:`, {
-                  message: uploadError.message,
-                  error: uploadError
-                })
-                throw new Error(`파일 업로드 실패: ${uploadError.message}`)
-              }
-              
-              // 공개 URL 생성
-              const { data: urlData } = supabase.storage
-                .from(bucketName)
-                .getPublicUrl(uploadData.path)
-              
-              console.log(`✅ 파일 업로드 성공: ${fileInfo.file.name}`)
-              console.log(`📍 Storage 경로: ${uploadData.path}`)
-              console.log(`🔗 공개 URL: ${urlData.publicUrl}`)
-              console.log(`📦 저장된 버킷: ${bucketName}`)
-              
-              // 업로드 결과 저장
-              uploadedFiles[fileId] = {
-                name: fileInfo.file.name,
-                url: urlData.publicUrl,
-                path: uploadData.path,
-                bucket: bucketName,
-                size: fileInfo.file.size,
-                type: fileInfo.file.type,
-                description: fileInfo.description || ''
-              }
-              
-              console.log(`📋 업로드된 파일 정보:`, uploadedFiles[fileId])
+              // 파일 업로드는 작업 기록 생성 후에 uploadFileToStorage 함수로 처리됨
+              console.log(`📋 파일 준비 완료: ${fileInfo.file.name} (${(fileInfo.file.size / 1024 / 1024).toFixed(2)}MB)`)
               
             } catch (error) {
               console.error(`❌ 파일 업로드 중 오류: ${fileInfo.file.name}`, error)
