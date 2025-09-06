@@ -136,21 +136,42 @@ export const deleteWorkRecordFiles = async (workRecordId: number): Promise<boole
   try {
     console.log(`🗑️ 작업 기록 ${workRecordId}의 파일들 삭제 시작`)
     
+    // 먼저 작업 기록 정보를 가져와서 customerId와 equipmentId를 확인
+    const { data: workRecord, error: recordError } = await supabase
+      .from('work_records')
+      .select('customer_id, equipment_id')
+      .eq('id', workRecordId)
+      .single()
+    
+    if (recordError) {
+      console.error(`❌ 작업 기록 ${workRecordId} 정보 조회 실패:`, recordError)
+      return false
+    }
+    
+    const customerId = workRecord.customer_id
+    const equipmentId = workRecord.equipment_id
+    
+    console.log(`📋 작업 기록 정보: customerId=${customerId}, equipmentId=${equipmentId}`)
+    
     // 모든 버킷에서 파일 삭제
     const buckets = ['work-files', 'work-media', 'work-documents']
     let totalDeletedFiles = 0
+    let hasErrors = false
     
     for (const bucketName of buckets) {
       try {
-        console.log(`🔍 ${bucketName} 버킷에서 파일 검색 중...`)
+        // 실제 파일 경로: {customerId}/{equipmentId}/...
+        const searchPath = `${customerId}/${equipmentId}/`
+        console.log(`🔍 ${bucketName} 버킷에서 파일 검색 중... (경로: ${searchPath})`)
         
         // 해당 작업 기록의 모든 파일 목록 조회
         const { data: files, error: listError } = await supabase.storage
           .from(bucketName)
-          .list(`${workRecordId}/`)
+          .list(searchPath)
         
         if (listError) {
           console.error(`❌ ${bucketName} 버킷 파일 목록 조회 실패:`, listError)
+          hasErrors = true
           continue // 다음 버킷으로 진행
         }
         
@@ -159,10 +180,24 @@ export const deleteWorkRecordFiles = async (workRecordId: number): Promise<boole
           continue
         }
         
-        // 파일 경로들 생성
-        const filePaths = files.map(file => `${workRecordId}/${file.name}`)
+        // 작업 기록 ID로 시작하는 파일들만 필터링
+        const workRecordFiles = files.filter(file => 
+          file.name.includes(`_${workRecordId}_`) || 
+          file.name.startsWith(`${workRecordId}_`)
+        )
         
-        console.log(`🗑️ ${bucketName} 버킷에서 ${files.length}개 파일 삭제 중...`)
+        if (workRecordFiles.length === 0) {
+          console.log(`📂 ${bucketName} 버킷에 작업 기록 ${workRecordId} 관련 파일이 없습니다.`)
+          continue
+        }
+        
+        console.log(`📋 ${bucketName} 버킷에서 발견된 파일들:`, workRecordFiles.map(f => f.name))
+        
+        // 파일 경로들 생성
+        const filePaths = workRecordFiles.map(file => `${searchPath}${file.name}`)
+        
+        console.log(`🗑️ ${bucketName} 버킷에서 ${workRecordFiles.length}개 파일 삭제 중...`)
+        console.log(`📁 삭제할 파일 경로들:`, filePaths)
         
         // 파일들 삭제
         const { error: deleteError } = await supabase.storage
@@ -171,18 +206,20 @@ export const deleteWorkRecordFiles = async (workRecordId: number): Promise<boole
         
         if (deleteError) {
           console.error(`❌ ${bucketName} 버킷 파일 삭제 실패:`, deleteError)
+          hasErrors = true
         } else {
-          console.log(`✅ ${bucketName} 버킷에서 ${files.length}개 파일 삭제 완료`)
-          totalDeletedFiles += files.length
+          console.log(`✅ ${bucketName} 버킷에서 ${workRecordFiles.length}개 파일 삭제 완료`)
+          totalDeletedFiles += workRecordFiles.length
         }
         
       } catch (error) {
         console.error(`❌ ${bucketName} 버킷 처리 중 오류:`, error)
+        hasErrors = true
       }
     }
     
     console.log(`✅ 총 ${totalDeletedFiles}개 파일 삭제 완료`)
-    return true
+    return !hasErrors
     
   } catch (error) {
     console.error('❌ 파일 삭제 중 예외 발생:', error)
