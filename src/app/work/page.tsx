@@ -86,7 +86,7 @@ export default function WorkPage() {
     }
     notes: string
     files: {
-      originalFile?: File
+      originalFile?: File | File[]
       originalFileDescription?: string
       stage1File?: File
       stage1FileDescription?: string
@@ -94,7 +94,7 @@ export default function WorkPage() {
       stage2FileDescription?: string
       stage3File?: File
       stage3FileDescription?: string
-      acuOriginalFile?: File
+      acuOriginalFile?: File | File[]
       acuOriginalFileDescription?: string
       acuStage1File?: File
       acuStage1FileDescription?: string
@@ -3365,7 +3365,7 @@ export default function WorkPage() {
                         </svg>
                         <span className="text-sm text-gray-300">
                           {Array.isArray(currentRemappingWork.files.originalFile) 
-                            ? `📄 ${currentRemappingWork.files.originalFile.length}개 파일 선택됨` 
+                            ? `📄 ${(currentRemappingWork.files.originalFile as File[]).length}개 파일 선택됨` 
                             : '📄 원본 ECU 파일 선택 (최대 5개)'}
                         </span>
                         <div className="text-xs text-gray-500 mt-1">
@@ -3374,18 +3374,20 @@ export default function WorkPage() {
                       </label>
                     </div>
                     {/* 선택된 파일 목록 표시 */}
-                    {Array.isArray(currentRemappingWork.files.originalFile) && currentRemappingWork.files.originalFile.length > 0 && (
+                    {Array.isArray(currentRemappingWork.files.originalFile) && (currentRemappingWork.files.originalFile as File[]).length > 0 && (
                       <div className="mb-3 p-3 bg-gray-700 rounded-lg">
                         <div className="text-xs text-gray-400 mb-2">선택된 파일들:</div>
-                        {currentRemappingWork.files.originalFile.map((file, index) => (
+                        {(currentRemappingWork.files.originalFile as File[]).map((file, index) => (
                           <div key={index} className="text-sm text-gray-300 flex items-center justify-between">
                             <span>📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
                             <button
                               type="button"
                               onClick={() => {
-                                const newFiles = currentRemappingWork.files.originalFile as File[]
-                                const updatedFiles = newFiles.filter((_, i) => i !== index)
-                                handleFileChange('originalFile', updatedFiles.length > 0 ? updatedFiles : null)
+                                if (Array.isArray(currentRemappingWork.files.originalFile)) {
+                                  const newFiles = currentRemappingWork.files.originalFile as File[]
+                                  const updatedFiles = newFiles.filter((_, i) => i !== index)
+                                  handleFileChange('originalFile', updatedFiles.length > 0 ? updatedFiles : null)
+                                }
                               }}
                               className="text-red-400 hover:text-red-300 text-xs"
                             >
@@ -3559,7 +3561,7 @@ export default function WorkPage() {
                           </svg>
                           <span className="text-sm text-green-300">
                             {Array.isArray(currentRemappingWork.files.acuOriginalFile) 
-                              ? `📄 ${currentRemappingWork.files.acuOriginalFile.length}개 파일 선택됨` 
+                              ? `📄 ${(currentRemappingWork.files.acuOriginalFile as File[]).length}개 파일 선택됨` 
                               : '📄 ACU 원본 파일 선택 (최대 5개)'}
                           </span>
                           <div className="text-xs text-gray-500 mt-1">
@@ -3568,18 +3570,20 @@ export default function WorkPage() {
                         </label>
                       </div>
                       {/* 선택된 파일 목록 표시 */}
-                      {Array.isArray(currentRemappingWork.files.acuOriginalFile) && currentRemappingWork.files.acuOriginalFile.length > 0 && (
+                      {Array.isArray(currentRemappingWork.files.acuOriginalFile) && (currentRemappingWork.files.acuOriginalFile as File[]).length > 0 && (
                         <div className="mb-3 p-3 bg-gray-700 rounded-lg">
                           <div className="text-xs text-gray-400 mb-2">선택된 파일들:</div>
-                          {currentRemappingWork.files.acuOriginalFile.map((file, index) => (
+                          {(currentRemappingWork.files.acuOriginalFile as File[]).map((file, index) => (
                             <div key={index} className="text-sm text-gray-300 flex items-center justify-between">
                               <span>📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const newFiles = currentRemappingWork.files.acuOriginalFile as File[]
-                                  const updatedFiles = newFiles.filter((_, i) => i !== index)
-                                  handleFileChange('acuOriginalFile', updatedFiles.length > 0 ? updatedFiles : null)
+                                  if (Array.isArray(currentRemappingWork.files.acuOriginalFile)) {
+                                    const newFiles = currentRemappingWork.files.acuOriginalFile as File[]
+                                    const updatedFiles = newFiles.filter((_, i) => i !== index)
+                                    handleFileChange('acuOriginalFile', updatedFiles.length > 0 ? updatedFiles : null)
+                                  }
                                 }}
                                 className="text-red-400 hover:text-red-300 text-xs"
                               >
