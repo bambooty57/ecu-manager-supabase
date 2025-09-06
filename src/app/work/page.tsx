@@ -6,6 +6,7 @@ import { ECU_TOOL_CATEGORIES, ECU_TOOLS, ECU_TOOLS_FLAT, TUNING_WORKS, TUNING_CA
 import { getAllCustomers, CustomerData } from '@/lib/customers'
 import { getEquipmentByCustomerId, EquipmentData } from '@/lib/equipment'
 import { createWorkRecord, WorkRecordData } from '@/lib/work-records'
+import { uploadFileToStorage } from '@/lib/file-upload'
 import { 
   getEquipmentCategoryNames, 
   createEquipmentCategory,
@@ -1759,35 +1760,29 @@ export default function WorkPage() {
               console.log(`📤 업로드 옵션:`, uploadOptions)
               console.log(`📁 파일 크기: ${(fileInfo.file.size / 1024 / 1024).toFixed(2)}MB`)
               
-              // Supabase Storage에 업로드
-              const { data: uploadData, error: uploadError } = await supabase.storage
-                .from(bucketName)
-                .upload(storagePath, fileInfo.file, uploadOptions)
+              // uploadFileToStorage 함수 사용 (file_metadata 자동 저장)
+              const uploadResult = await uploadFileToStorage(
+                fileInfo.file,
+                workRecordId, // 작업 기록 ID 전달
+                fileId,
+                category
+              )
               
-              if (uploadError) {
-                console.error(`❌ 파일 업로드 실패: ${fileInfo.file.name}`, uploadError)
-                console.error(`❌ 오류 상세:`, {
-                  message: uploadError.message,
-                  error: uploadError
-                })
-                throw new Error(`파일 업로드 실패: ${uploadError.message}`)
+              if (!uploadResult.success) {
+                console.error(`❌ 파일 업로드 실패: ${fileInfo.file.name}`, uploadResult.error)
+                throw new Error(`파일 업로드 실패: ${uploadResult.error}`)
               }
               
-              // 공개 URL 생성
-              const { data: urlData } = supabase.storage
-                .from(bucketName)
-                .getPublicUrl(uploadData.path)
-              
               console.log(`✅ 파일 업로드 성공: ${fileInfo.file.name}`)
-              console.log(`📍 Storage 경로: ${uploadData.path}`)
-              console.log(`🔗 공개 URL: ${urlData.publicUrl}`)
-              console.log(`📦 저장된 버킷: ${bucketName}`)
+              console.log(`📍 Storage 경로: ${uploadResult.path}`)
+              console.log(`🔗 공개 URL: ${uploadResult.url}`)
+              console.log(`📦 저장된 버킷: ${uploadResult.bucket}`)
               
               // 업로드된 파일 정보 저장
               uploadedFiles[fileInfo.field] = {
-                url: urlData.publicUrl,
-                path: uploadData.path,
-                bucket: bucketName,
+                url: uploadResult.url,
+                path: uploadResult.path,
+                bucket: uploadResult.bucket,
                 name: fileInfo.file.name,
                 size: fileInfo.file.size,
                 type: fileInfo.file.type,
@@ -1886,6 +1881,172 @@ export default function WorkPage() {
         if (savedRecord) {
           workHistoryEntries.push(savedRecord)
           console.log(`✅ 작업 기록 ${index + 1} 저장 완료:`, savedRecord)
+          
+          // 작업 기록 생성 후 파일 업로드 처리
+          const workRecordId = savedRecord.id
+          console.log(`📁 작업 기록 ${workRecordId}의 파일 업로드 시작...`)
+          
+          // 파일 업로드 처리
+          const uploadedFiles: any = {}
+          const filesToUpload = []
+          
+          // 업로드할 파일 목록 생성
+          const fileFields = [
+            'originalFile', 'stage1File', 'stage2File', 'stage3File',
+            'acuOriginalFile', 'acuStage1File', 'acuStage2File', 'acuStage3File',
+            'mediaFile1', 'mediaFile2', 'mediaFile3', 'mediaFile4', 'mediaFile5'
+          ]
+          
+          for (const field of fileFields) {
+            const file = remappingWork.files[field as keyof typeof remappingWork.files] as File | File[]
+            if (file) {
+              if (Array.isArray(file)) {
+                // 다중 파일 처리 (originalFile, acuOriginalFile)
+                file.forEach((f, index) => {
+                  filesToUpload.push({
+                    file: f,
+                    field: `${field}_${index}`,
+                    category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
+                    description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
+                  })
+                })
+              } else {
+                // 단일 파일 처리
+                filesToUpload.push({
+                  file,
+                  field,
+                  category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
+                  description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
+                })
+              }
+            }
+          }
+          
+          // 미디어 파일 추가
+          if (remappingWork.media?.before) {
+            filesToUpload.push({
+              file: remappingWork.media.before,
+              field: 'mediaBefore',
+              category: 'media',
+              description: 'Before 이미지'
+            })
+          }
+          if (remappingWork.media?.after) {
+            filesToUpload.push({
+              file: remappingWork.media.after,
+              field: 'mediaAfter',
+              category: 'media',
+              description: 'After 이미지'
+            })
+          }
+          
+          console.log(`📁 업로드할 파일 개수: ${filesToUpload.length}`)
+          
+          // 파일들을 Supabase Storage에 업로드
+          if (filesToUpload.length > 0) {
+            console.log('🚀 파일 업로드 시작...')
+            
+            // 업로드 진행 상황 초기화
+            setUploadProgress({
+              isUploading: true,
+              currentFile: '',
+              totalFiles: filesToUpload.length,
+              currentIndex: 0,
+              progress: 0
+            })
+            
+            for (let i = 0; i < filesToUpload.length; i++) {
+              const fileInfo = filesToUpload[i]
+              
+              try {
+                // 업로드 진행 상황 업데이트
+                setUploadProgress(prev => ({
+                  ...prev,
+                  currentFile: fileInfo.file.name,
+                  currentIndex: i + 1,
+                  progress: Math.round(((i + 1) / filesToUpload.length) * 100)
+                }))
+                
+                // 파일 확장자 추출
+                const fileExtension = fileInfo.file.name.split('.').pop()?.toLowerCase() || ''
+                
+                // 파일 카테고리에 따른 버킷 결정
+                let bucketName = 'work-files'
+                let category = 'original'
+                
+                if (fileInfo.category === 'media') {
+                  bucketName = 'work-media'
+                  category = 'media'
+                } else if (fileInfo.category === 'acu') {
+                  bucketName = 'work-documents'
+                  category = 'acu-original'
+                } else {
+                  // ECU 파일의 경우 파일명에 따라 카테고리 결정
+                  if (fileInfo.field.includes('stage1')) {
+                    category = 'stage1'
+                  } else if (fileInfo.field.includes('stage2')) {
+                    category = 'stage2'
+                  } else if (fileInfo.field.includes('stage3')) {
+                    category = 'stage3'
+                  } else {
+                    category = 'original'
+                  }
+                }
+                
+                // 고유한 파일 ID 생성
+                const fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                
+                console.log(`📦 선택된 버킷: ${bucketName} (파일 타입: ${fileInfo.file.type})`)
+                
+                // uploadFileToStorage 함수 사용 (file_metadata 자동 저장)
+                const uploadResult = await uploadFileToStorage(
+                  fileInfo.file,
+                  workRecordId, // 작업 기록 ID 전달
+                  fileId,
+                  category
+                )
+                
+                if (!uploadResult.success) {
+                  console.error(`❌ 파일 업로드 실패: ${fileInfo.file.name}`, uploadResult.error)
+                  throw new Error(`파일 업로드 실패: ${uploadResult.error}`)
+                }
+                
+                console.log(`✅ 파일 업로드 성공: ${fileInfo.file.name}`)
+                console.log(`📍 Storage 경로: ${uploadResult.path}`)
+                console.log(`🔗 공개 URL: ${uploadResult.url}`)
+                console.log(`📦 저장된 버킷: ${uploadResult.bucket}`)
+                
+                // 업로드된 파일 정보 저장
+                uploadedFiles[fileInfo.field] = {
+                  url: uploadResult.url,
+                  path: uploadResult.path,
+                  bucket: uploadResult.bucket,
+                  name: fileInfo.file.name,
+                  size: fileInfo.file.size,
+                  type: fileInfo.file.type,
+                  category: category,
+                  description: fileInfo.description
+                }
+                
+              } catch (error) {
+                console.error(`❌ 파일 업로드 중 오류: ${fileInfo.file.name}`, error)
+                throw new Error(`파일 업로드 실패: ${fileInfo.file.name}`)
+              }
+            }
+            
+            // 업로드 완료
+            setUploadProgress({
+              isUploading: false,
+              currentFile: '',
+              totalFiles: 0,
+              currentIndex: 0,
+              progress: 0
+            })
+            
+            console.log('✅ 모든 파일 업로드 완료')
+          } else {
+            console.log('📁 업로드할 파일이 없습니다')
+          }
         } else {
           console.error(`❌ 작업 기록 ${index + 1} 저장 실패`)
           alert(`작업 기록 ${index + 1} 저장 중 오류가 발생했습니다.`)

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { migrateExistingFilesToMetadata } from '@/lib/file-upload'
 
 export default function SetupAdminPage() {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ export default function SetupAdminPage() {
     password: 'chs72197219!'
   })
   const [loading, setLoading] = useState(false)
+  const [migrationLoading, setMigrationLoading] = useState(false)
   const [message, setMessage] = useState('')
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
@@ -39,6 +41,27 @@ export default function SetupAdminPage() {
       ...prev,
       [e.target.name]: e.target.value
     }))
+  }
+
+  const handleMigrateFiles = async () => {
+    setMigrationLoading(true)
+    setMessage('')
+
+    try {
+      console.log('🔄 파일 메타데이터 마이그레이션 시작...')
+      const success = await migrateExistingFilesToMetadata()
+      
+      if (success) {
+        setMessage('✅ 파일 메타데이터 마이그레이션이 완료되었습니다!')
+      } else {
+        setMessage('❌ 파일 메타데이터 마이그레이션 중 일부 오류가 발생했습니다.')
+      }
+    } catch (error) {
+      console.error('❌ 마이그레이션 오류:', error)
+      setMessage('❌ 파일 메타데이터 마이그레이션 중 오류가 발생했습니다.')
+    } finally {
+      setMigrationLoading(false)
+    }
   }
 
   return (
@@ -109,13 +132,29 @@ export default function SetupAdminPage() {
           </form>
 
           <div className="mt-6 border-t border-gray-200 pt-6">
-            <div className="text-center">
-              <a
-                href="/login"
-                className="text-blue-600 hover:text-blue-500 text-sm"
-              >
-                로그인 페이지로 이동
-              </a>
+            <div className="space-y-4">
+              <div className="text-center">
+                <a
+                  href="/login"
+                  className="text-blue-600 hover:text-blue-500 text-sm"
+                >
+                  로그인 페이지로 이동
+                </a>
+              </div>
+              
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">파일 관리</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  기존 파일들의 메타데이터를 생성하여 정확한 파일 삭제가 가능하도록 합니다.
+                </p>
+                <button
+                  onClick={handleMigrateFiles}
+                  disabled={migrationLoading}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {migrationLoading ? '마이그레이션 중...' : '파일 메타데이터 마이그레이션'}
+                </button>
+              </div>
             </div>
           </div>
 
