@@ -12,6 +12,10 @@ export default function CustomersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   
+  // 전화번호 자동완성 관련 state
+  const [showPhoneDropdown, setShowPhoneDropdown] = useState(false)
+  const [filteredPhones, setFilteredPhones] = useState<string[]>([])
+  
   // 모달 상태 보호를 위한 ref
   const modalStateRef = useRef({ isFormOpen: false, isDetailModalOpen: false })
   
@@ -226,8 +230,37 @@ export default function CustomersPage() {
     if (name === 'phone') {
       const formatted = formatPhoneNumber(value)
       setFormData(prev => ({ ...prev, [name]: formatted }))
+      
+      // 전화번호 자동완성 필터링
+      if (formatted.length > 0) {
+        const uniquePhones = [...new Set(customers.map(c => c.phone))]
+        const filtered = uniquePhones.filter(phone => 
+          phone.includes(formatted.replace(/[^0-9]/g, ''))
+        )
+        setFilteredPhones(filtered)
+        setShowPhoneDropdown(filtered.length > 0)
+      } else {
+        setShowPhoneDropdown(false)
+        setFilteredPhones([])
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
+    }
+  }
+
+  // 전화번호 선택 처리
+  const handlePhoneSelect = (selectedPhone: string) => {
+    setFormData(prev => ({ ...prev, phone: selectedPhone }))
+    setShowPhoneDropdown(false)
+    setFilteredPhones([])
+  }
+
+  // 전화번호 입력란 포커스 처리
+  const handlePhoneFocus = () => {
+    if (customers.length > 0) {
+      const uniquePhones = [...new Set(customers.map(c => c.phone))]
+      setFilteredPhones(uniquePhones)
+      setShowPhoneDropdown(true)
     }
   }
 
@@ -1067,7 +1100,7 @@ export default function CustomersPage() {
                     />
                   </div>
 
-                  <div>
+                  <div className="relative">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       전화번호 *
                     </label>
@@ -1076,10 +1109,34 @@ export default function CustomersPage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
+                      onFocus={handlePhoneFocus}
+                      onBlur={() => {
+                        // 짧은 지연 후 드롭다운 숨기기 (클릭 이벤트 처리를 위해)
+                        setTimeout(() => setShowPhoneDropdown(false), 150)
+                      }}
                       required
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                       placeholder="전화번호를 입력하세요 (자동 포맷팅)"
+                      autoComplete="off"
                     />
+                    
+                    {/* 전화번호 자동완성 드롭다운 */}
+                    {showPhoneDropdown && filteredPhones.length > 0 && (
+                      <div className="absolute z-50 bottom-full mb-1 w-full bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
+                        <div className="px-4 py-2 bg-gray-600 text-sm text-gray-300 border-b border-gray-500">
+                          기존 전화번호 ({filteredPhones.length}개)
+                        </div>
+                        {filteredPhones.map((phone, index) => (
+                          <div
+                            key={index}
+                            onClick={() => handlePhoneSelect(phone)}
+                            className="px-4 py-3 hover:bg-gray-600 cursor-pointer border-b border-gray-600 last:border-b-0"
+                          >
+                            <div className="font-mono text-white">{phone}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div>
