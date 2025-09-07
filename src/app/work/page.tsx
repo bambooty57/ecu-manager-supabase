@@ -1648,7 +1648,7 @@ export default function WorkPage() {
                   file: f,
                   field: `${field}_${index}`,
                   category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
-                  description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
+                  description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string || ''
                 })
               })
             } else {
@@ -1657,7 +1657,7 @@ export default function WorkPage() {
                 file,
                 field,
                 category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
-                description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
+                description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string || ''
               })
             }
           }
@@ -1817,11 +1817,8 @@ export default function WorkPage() {
             ...(remappingWork.ecu?.toolCategory ? [remappingWork.ecu.toolCategory] : []),
             ...(remappingWork.acu?.toolCategory ? [remappingWork.acu.toolCategory] : [])
           ],
-          // 작업 설명
-          workDescription: [
-            ...(remappingWork.ecu?.workDetails ? [`ECU: ${remappingWork.ecu.workDetails}`] : []),
-            ...(remappingWork.acu?.workDetails ? [`ACU: ${remappingWork.acu.workDetails}`] : [])
-          ].join(', ') || undefined,
+          // 작업 설명 (공통 작업메모)
+          workDescription: remappingWork.notes || undefined,
           // 업로드된 파일 정보
           files: uploadedFiles,
           // 리매핑 작업 데이터
@@ -1880,7 +1877,7 @@ export default function WorkPage() {
                     file: f,
                     field: `${field}_${index}`,
                     category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
-                    description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
+                    description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string || ''
                   })
                 })
               } else {
@@ -1889,7 +1886,7 @@ export default function WorkPage() {
                   file,
                   field,
                   category: field.startsWith('acu') ? 'acu' : field.startsWith('media') ? 'media' : 'ecu',
-                  description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string
+                  description: remappingWork.files[`${field}Description` as keyof typeof remappingWork.files] as string || ''
                 })
               }
             }
@@ -1972,13 +1969,16 @@ export default function WorkPage() {
                 const fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
                 
                 console.log(`📦 파일 업로드 시작: ${fileInfo.file.name} (카테고리: ${category})`)
+                console.log(`📝 파일 설명: "${fileInfo.description}"`)
+                console.log(`📂 파일 필드: ${fileInfo.field}`)
                 
                 // uploadFileToStorage 함수 사용 (file_metadata 자동 저장)
                 const uploadResult = await uploadFileToStorage(
                   fileInfo.file,
                   workRecordId, // 작업 기록 ID 전달
                   fileId,
-                  category as 'original' | 'stage1' | 'stage2' | 'stage3' | 'acu-original' | 'acu-stage1' | 'acu-stage2' | 'acu-stage3' | 'media'
+                  category as 'original' | 'stage1' | 'stage2' | 'stage3' | 'acu-original' | 'acu-stage1' | 'acu-stage2' | 'acu-stage3' | 'media',
+                  fileInfo.description // 사용자가 입력한 파일 설명 전달
                 )
                 
                 if (!uploadResult.success) {

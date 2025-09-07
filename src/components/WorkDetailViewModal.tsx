@@ -70,7 +70,7 @@ const transformFileMetadata = (dbFile: any): FileMetadata => ({
   bucket_name: dbFile.bucket_name || 'default',
   storage_path: dbFile.storage_path || '',
   storage_url: dbFile.storage_url || '',
-  description: dbFile.category || undefined,
+  description: dbFile.description || undefined, // description 컬럼이 없으면 undefined
   created_at: dbFile.created_at,
   uploaded_at: dbFile.created_at
 });
@@ -395,6 +395,12 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
       console.log('로드된 파일:', files);
       const transformedFiles = files.map(transformFileMetadata);
       console.log('변환된 파일:', transformedFiles);
+      
+      // 디버그: description 필드 확인
+      transformedFiles.forEach(file => {
+        console.log(`파일: ${file.original_name}, 설명: "${file.description}", 카테고리: "${file.category}"`);
+      });
+      
       setFileMetadata(transformedFiles);
     } catch (error) {
       console.error('파일 메타데이터 로드 실패:', error);

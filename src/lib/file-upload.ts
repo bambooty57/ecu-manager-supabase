@@ -14,7 +14,8 @@ export const uploadFileToStorage = async (
   file: File,
   workRecordId: number,
   fileId: string,
-  category: 'original' | 'stage1' | 'stage2' | 'stage3' | 'acu-original' | 'acu-stage1' | 'acu-stage2' | 'acu-stage3' | 'media' = 'original'
+  category: 'original' | 'stage1' | 'stage2' | 'stage3' | 'acu-original' | 'acu-stage1' | 'acu-stage2' | 'acu-stage3' | 'media' = 'original',
+  description?: string
 ): Promise<FileUploadResult> => {
   try {
     console.log(`📤 파일 업로드 시작: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`)
@@ -79,6 +80,8 @@ export const uploadFileToStorage = async (
     
     // file_metadata 테이블에 파일 정보 저장
     try {
+      console.log(`📝 메타데이터 저장 - 파일명: ${file.name}, 카테고리: ${category}, 설명: "${description}"`)
+      
       const { error: metadataError } = await supabase
         .from('file_metadata')
         .insert({
@@ -91,6 +94,7 @@ export const uploadFileToStorage = async (
           bucket_name: bucketName,
           storage_path: data.path,
           storage_url: urlData.publicUrl,
+          description: description || null,
           is_migrated: true,
           migrated_at: new Date().toISOString()
         })
@@ -139,7 +143,8 @@ export const uploadMultipleFiles = async (
       fileInfo.file,
       workRecordId,
       fileInfo.fileId,
-      fileInfo.category
+      fileInfo.category,
+      fileInfo.description
     )
     
     results.push({

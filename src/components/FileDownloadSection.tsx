@@ -468,7 +468,7 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
                             <span>{formatDate(file.uploaded_at)}</span>
                           </div>
                           {/* 파일 설명을 별도로 표시 */}
-                          {file.description && (
+                          {file.description && file.description !== 'undefined' && file.description.trim() !== '' && (
                             <div className="mt-2 p-2 bg-blue-900/30 rounded border-l-4 border-blue-400">
                               <p className="text-blue-200 text-sm">
                                 <span className="font-medium">💬 설명:</span> {file.description}
