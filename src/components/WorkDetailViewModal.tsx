@@ -730,62 +730,6 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
               </div>
             )}
 
-            {/* 파일 설명 정보 */}
-            {workRecord?.remapping_works?.[0]?.files && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4">📁 파일 설명 정보</h3>
-                <div className="space-y-3">
-                  {Object.entries(workRecord.remapping_works[0].files).map(([key, value]) => {
-                    // 파일 설명 필드들 확인
-                    const descriptionFields = [
-                      'originalFileDescription',
-                      'stage1FileDescription', 
-                      'stage2FileDescription',
-                      'stage3FileDescription',
-                      'acuOriginalFileDescription',
-                      'acuStage1FileDescription',
-                      'acuStage2FileDescription',
-                      'acuStage3FileDescription',
-                      'mediaFile1Description',
-                      'mediaFile2Description',
-                      'mediaFile3Description',
-                      'mediaFile4Description',
-                      'mediaFile5Description'
-                    ];
-                    
-                    if (descriptionFields.includes(key) && value && typeof value === 'string' && value.trim()) {
-                      const fileTypeNames: { [key: string]: string } = {
-                        'originalFileDescription': '📄 원본 파일',
-                        'stage1FileDescription': '🚀 1차 튜닝 파일',
-                        'stage2FileDescription': '⚡ 2차 튜닝 파일',
-                        'stage3FileDescription': '🔥 3차 튜닝 파일',
-                        'acuOriginalFileDescription': '📄 ACU 원본 파일',
-                        'acuStage1FileDescription': '🚀 ACU 1차 튜닝 파일',
-                        'acuStage2FileDescription': '⚡ ACU 2차 튜닝 파일',
-                        'acuStage3FileDescription': '🔥 ACU 3차 튜닝 파일',
-                        'mediaFile1Description': '📷 미디어 파일 1',
-                        'mediaFile2Description': '📷 미디어 파일 2',
-                        'mediaFile3Description': '📷 미디어 파일 3',
-                        'mediaFile4Description': '📷 미디어 파일 4',
-                        'mediaFile5Description': '📷 미디어 파일 5'
-                      };
-                      
-                      return (
-                        <div key={key} className="border border-gray-200 rounded-lg p-3 bg-white">
-                          <h4 className="text-sm font-medium text-gray-700 mb-1">
-                            {fileTypeNames[key] || key}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            💬 {value}
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* 파일 다운로드 섹션 */}
             <div className="mt-6">

@@ -466,12 +466,15 @@ export const FileDownloadSection: React.FC<FileDownloadSectionProps> = ({
                           <div className="flex space-x-4 text-gray-400 text-sm">
                             <span>{formatFileSize(file.file_size)}</span>
                             <span>{formatDate(file.uploaded_at)}</span>
-                            {file.description && (
-                              <span className="truncate" title={file.description}>
-                                {file.description}
-                              </span>
-                            )}
                           </div>
+                          {/* 파일 설명을 별도로 표시 */}
+                          {file.description && (
+                            <div className="mt-2 p-2 bg-blue-900/30 rounded border-l-4 border-blue-400">
+                              <p className="text-blue-200 text-sm">
+                                <span className="font-medium">💬 설명:</span> {file.description}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex-shrink-0 ml-4 flex space-x-2">
