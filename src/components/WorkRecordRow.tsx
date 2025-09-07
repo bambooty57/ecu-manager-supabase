@@ -34,6 +34,10 @@ interface WorkRecord {
   acu_status?: string
   // remapping_works 기반 데이터
   remapping_works?: any[]
+  // 추가 필드들
+  work_description?: string
+  tools_used?: string[]
+  files?: any
 }
 
 interface WorkRecordRowProps {
@@ -250,6 +254,11 @@ const WorkRecordRow = React.memo(({ record, onEdit, onDelete }: WorkRecordRowPro
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {remappingInfo.ecuInfo.selectedWorks?.join(', ') || 'N/A'}
                 </p>
+                {remappingInfo.ecuInfo.workDetails && (
+                  <p className="text-xs text-blue-600 dark:text-blue-400 truncate" title={remappingInfo.ecuInfo.workDetails}>
+                    📝 {remappingInfo.ecuInfo.workDetails.length > 30 ? `${remappingInfo.ecuInfo.workDetails.substring(0, 30)}...` : remappingInfo.ecuInfo.workDetails}
+                  </p>
+                )}
               </div>
             )}
 
@@ -262,6 +271,11 @@ const WorkRecordRow = React.memo(({ record, onEdit, onDelete }: WorkRecordRowPro
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {remappingInfo.acuInfo.selectedWorks?.join(', ') || 'N/A'}
                 </p>
+                {remappingInfo.acuInfo.workDetails && (
+                  <p className="text-xs text-green-600 dark:text-green-400 truncate" title={remappingInfo.acuInfo.workDetails}>
+                    📝 {remappingInfo.acuInfo.workDetails.length > 30 ? `${remappingInfo.acuInfo.workDetails.substring(0, 30)}...` : remappingInfo.acuInfo.workDetails}
+                  </p>
+                )}
               </div>
             )}
 
@@ -423,17 +437,86 @@ const WorkRecordRow = React.memo(({ record, onEdit, onDelete }: WorkRecordRowPro
               </div>
             )}
 
+            {/* 공통 정보 */}
+            {remappingInfo.ecuInfo?.workDetails || remappingInfo.acuInfo?.workDetails || record.ecu_work_content || record.acu_work_content ? (
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">📝 작업 상세 정보</h4>
+                <div className="space-y-2 text-xs">
+                  {remappingInfo.ecuInfo?.workDetails && (
+                    <div>
+                      <span className="font-medium text-blue-600 dark:text-blue-400">ECU 작업 상세:</span>
+                      <p className="text-gray-700 dark:text-gray-300 mt-1 p-2 bg-blue-50 dark:bg-blue-900/30 rounded">
+                        {remappingInfo.ecuInfo.workDetails}
+                      </p>
+                    </div>
+                  )}
+                  {remappingInfo.acuInfo?.workDetails && (
+                    <div>
+                      <span className="font-medium text-green-600 dark:text-green-400">ACU 작업 상세:</span>
+                      <p className="text-gray-700 dark:text-gray-300 mt-1 p-2 bg-green-50 dark:bg-green-900/30 rounded">
+                        {remappingInfo.acuInfo.workDetails}
+                      </p>
+                    </div>
+                  )}
+                  {record.ecu_work_content && (
+                    <div>
+                      <span className="font-medium text-blue-600 dark:text-blue-400">ECU 작업 내용:</span>
+                      <p className="text-gray-700 dark:text-gray-300 mt-1 p-2 bg-blue-50 dark:bg-blue-900/30 rounded">
+                        {record.ecu_work_content}
+                      </p>
+                    </div>
+                  )}
+                  {record.acu_work_content && (
+                    <div>
+                      <span className="font-medium text-green-600 dark:text-green-400">ACU 작업 내용:</span>
+                      <p className="text-gray-700 dark:text-gray-300 mt-1 p-2 bg-green-50 dark:bg-green-900/30 rounded">
+                        {record.acu_work_content}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {/* 공통 메모 정보 */}
+            {remappingInfo.ecuInfo?.notes && (
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">📋 작업 메모</h4>
+                <div className="space-y-1 text-xs">
+                  <p className="text-gray-700 dark:text-gray-300 p-2 bg-gray-100 dark:bg-gray-600 rounded">
+                    {remappingInfo.ecuInfo.notes}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* 파일 정보 */}
             {remappingInfo.files && (
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">파일 정보</h4>
-                <div className="space-y-1 text-xs">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">📁 파일 정보</h4>
+                <div className="space-y-2 text-xs">
                   {Object.entries(remappingInfo.files).map(([key, value]) => {
                     if (value && typeof value === 'object' && Object.keys(value).length > 0) {
                       return (
-                        <p key={key}>
-                          <span className="font-medium">{key}:</span> 파일 첨부됨
-                        </p>
+                        <div key={key} className="border border-gray-200 dark:border-gray-600 rounded p-2">
+                          <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            {key === 'originalFile' ? '📄 원본 파일' :
+                             key === 'stage1File' ? '🚀 1차 튜닝 파일' :
+                             key === 'stage2File' ? '⚡ 2차 튜닝 파일' :
+                             key === 'stage3File' ? '🔥 3차 튜닝 파일' :
+                             key === 'acuOriginalFile' ? '📄 ACU 원본 파일' :
+                             key === 'acuStage1File' ? '🚀 ACU 1차 튜닝 파일' :
+                             key === 'acuStage2File' ? '⚡ ACU 2차 튜닝 파일' :
+                             key === 'acuStage3File' ? '🔥 ACU 3차 튜닝 파일' :
+                             key}: 파일 첨부됨
+                          </p>
+                          {/* 파일 설명 표시 */}
+                          {value.description && (
+                            <p className="text-gray-600 dark:text-gray-400 italic text-xs">
+                              💬 {value.description}
+                            </p>
+                          )}
+                        </div>
                       )
                     }
                     return null

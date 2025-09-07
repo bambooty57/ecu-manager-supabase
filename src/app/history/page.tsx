@@ -1782,6 +1782,11 @@ function HistoryPage() {
                                         <p className="text-sm text-gray-300">
                                           {ecuInfo.selectedWorks?.join(', ') || 'N/A'}
                                         </p>
+                                        {ecuInfo.workDetails && (
+                                          <p className="text-xs text-blue-400 truncate" title={ecuInfo.workDetails}>
+                                            📝 {ecuInfo.workDetails.length > 20 ? `${ecuInfo.workDetails.substring(0, 20)}...` : ecuInfo.workDetails}
+                                          </p>
+                                        )}
                                         <p className="text-sm font-bold text-blue-200">
                                           ₩{(ecuInfo.price || 0).toLocaleString()}
                                         </p>
@@ -1837,6 +1842,11 @@ function HistoryPage() {
                                         <p className="text-sm text-gray-300">
                                           {acuInfo.selectedWorks?.join(', ') || 'N/A'}
                                         </p>
+                                        {acuInfo.workDetails && (
+                                          <p className="text-xs text-green-400 truncate" title={acuInfo.workDetails}>
+                                            📝 {acuInfo.workDetails.length > 20 ? `${acuInfo.workDetails.substring(0, 20)}...` : acuInfo.workDetails}
+                                          </p>
+                                        )}
                                         <p className="text-sm font-bold text-green-200">
                                           ₩{(acuInfo.price || 0).toLocaleString()}
                                         </p>
