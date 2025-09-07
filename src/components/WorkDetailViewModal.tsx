@@ -560,12 +560,14 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                     {ecuInfo.status}
                   </span>
                 </div>
-                {/* ECU 작업내용 추가 */}
+                {/* ECU 작업 상세 정보 */}
                 {(ecuInfo.workDetails || workRecord?.ecu_work_content) && (
                   <div>
-                    <span className="text-sm font-medium text-gray-700">작업내용:</span>
-                    <div className="mt-1">
-                      {renderWorkContent(ecuInfo.workDetails || workRecord?.ecu_work_content || '')}
+                    <span className="text-sm font-medium text-gray-700">작업 상세:</span>
+                    <div className="mt-1 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                        {ecuInfo.workDetails || workRecord?.ecu_work_content || ''}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -601,12 +603,14 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                     {acuInfo.status}
                   </span>
                 </div>
-                {/* ACU 작업내용 추가 */}
+                {/* ACU 작업 상세 정보 */}
                 {(acuInfo.workDetails || workRecord?.acu_work_content) && (
                   <div>
-                    <span className="text-sm font-medium text-gray-700">작업내용:</span>
-                    <div className="mt-1">
-                      {renderWorkContent(acuInfo.workDetails || workRecord?.acu_work_content || '')}
+                    <span className="text-sm font-medium text-gray-700">작업 상세:</span>
+                    <div className="mt-1 p-2 bg-green-50 rounded border-l-4 border-green-400">
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                        {acuInfo.workDetails || workRecord?.acu_work_content || ''}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -618,8 +622,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
         {/* 공통 메모 정보 */}
         {workRecord?.remapping_works?.[0]?.notes && (
           <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-md font-semibold text-gray-700 mb-2">📝 작업 메모</h4>
-            <div className="bg-gray-100 p-3 rounded-lg">
+            <h4 className="text-md font-semibold text-gray-700 mb-2">📝 공통 작업 메모</h4>
+            <div className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400">
               <p className="text-sm text-gray-800 whitespace-pre-wrap">
                 {workRecord.remapping_works[0].notes}
               </p>
@@ -732,16 +736,38 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                 <h3 className="text-lg font-semibold mb-4">📁 파일 설명 정보</h3>
                 <div className="space-y-3">
                   {Object.entries(workRecord.remapping_works[0].files).map(([key, value]) => {
-                    if (value && typeof value === 'object' && (value as any).description) {
+                    // 파일 설명 필드들 확인
+                    const descriptionFields = [
+                      'originalFileDescription',
+                      'stage1FileDescription', 
+                      'stage2FileDescription',
+                      'stage3FileDescription',
+                      'acuOriginalFileDescription',
+                      'acuStage1FileDescription',
+                      'acuStage2FileDescription',
+                      'acuStage3FileDescription',
+                      'mediaFile1Description',
+                      'mediaFile2Description',
+                      'mediaFile3Description',
+                      'mediaFile4Description',
+                      'mediaFile5Description'
+                    ];
+                    
+                    if (descriptionFields.includes(key) && value && typeof value === 'string' && value.trim()) {
                       const fileTypeNames: { [key: string]: string } = {
-                        'originalFile': '📄 원본 파일',
-                        'stage1File': '🚀 1차 튜닝 파일',
-                        'stage2File': '⚡ 2차 튜닝 파일',
-                        'stage3File': '🔥 3차 튜닝 파일',
-                        'acuOriginalFile': '📄 ACU 원본 파일',
-                        'acuStage1File': '🚀 ACU 1차 튜닝 파일',
-                        'acuStage2File': '⚡ ACU 2차 튜닝 파일',
-                        'acuStage3File': '🔥 ACU 3차 튜닝 파일'
+                        'originalFileDescription': '📄 원본 파일',
+                        'stage1FileDescription': '🚀 1차 튜닝 파일',
+                        'stage2FileDescription': '⚡ 2차 튜닝 파일',
+                        'stage3FileDescription': '🔥 3차 튜닝 파일',
+                        'acuOriginalFileDescription': '📄 ACU 원본 파일',
+                        'acuStage1FileDescription': '🚀 ACU 1차 튜닝 파일',
+                        'acuStage2FileDescription': '⚡ ACU 2차 튜닝 파일',
+                        'acuStage3FileDescription': '🔥 ACU 3차 튜닝 파일',
+                        'mediaFile1Description': '📷 미디어 파일 1',
+                        'mediaFile2Description': '📷 미디어 파일 2',
+                        'mediaFile3Description': '📷 미디어 파일 3',
+                        'mediaFile4Description': '📷 미디어 파일 4',
+                        'mediaFile5Description': '📷 미디어 파일 5'
                       };
                       
                       return (
@@ -750,7 +776,7 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                             {fileTypeNames[key] || key}
                           </h4>
                           <p className="text-sm text-gray-600">
-                            💬 {(value as any).description}
+                            💬 {value}
                           </p>
                         </div>
                       );
