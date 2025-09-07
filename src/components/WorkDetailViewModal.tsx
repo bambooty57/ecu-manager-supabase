@@ -81,6 +81,7 @@ interface EcuAcuInfo {
   price: number;
   status: string;
   selectedWorks?: string[];
+  workDetails?: string;
 }
 
 interface WorkDetailViewModalProps {
@@ -439,7 +440,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
       model: workRecord.ecu_model || 'N/A',
       price: workRecord.ecu_price || 0,
       status: workRecord.ecu_status || 'N/A',
-      selectedWorks: []
+      selectedWorks: [],
+      workDetails: workRecord.ecu_work_content || ''
     };
 
     let acuData: EcuAcuInfo = {
@@ -447,7 +449,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
       model: workRecord.acu_model || 'N/A',
       price: workRecord.acu_price || 0,
       status: workRecord.acu_status || 'N/A',
-      selectedWorks: []
+      selectedWorks: [],
+      workDetails: workRecord.acu_work_content || ''
     };
 
     // remapping_works에서 정보 추출
@@ -461,7 +464,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
           model: firstWork.ecu.model || firstWork.ecu.type || ecuData.model,
           price: parseFloat(firstWork.ecu.price) || ecuData.price,
           status: firstWork.ecu.status || ecuData.status,
-          selectedWorks: firstWork.ecu.selectedWorks || []
+          selectedWorks: firstWork.ecu.selectedWorks || [],
+          workDetails: firstWork.ecu.workDetails || ecuData.workDetails
         };
       }
 
@@ -471,7 +475,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
           model: firstWork.acu.model || acuData.model,
           price: parseFloat(firstWork.acu.price) || acuData.price,
           status: firstWork.acu.status || acuData.status,
-          selectedWorks: firstWork.acu.selectedWorks || []
+          selectedWorks: firstWork.acu.selectedWorks || [],
+          workDetails: firstWork.acu.workDetails || acuData.workDetails
         };
       }
 
@@ -556,11 +561,11 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                   </span>
                 </div>
                 {/* ECU 작업내용 추가 */}
-                {workRecord?.ecu_work_content && (
+                {(ecuInfo.workDetails || workRecord?.ecu_work_content) && (
                   <div>
                     <span className="text-sm font-medium text-gray-700">작업내용:</span>
                     <div className="mt-1">
-                      {renderWorkContent(workRecord.ecu_work_content)}
+                      {renderWorkContent(ecuInfo.workDetails || workRecord?.ecu_work_content || '')}
                     </div>
                   </div>
                 )}
@@ -597,11 +602,11 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                   </span>
                 </div>
                 {/* ACU 작업내용 추가 */}
-                {workRecord?.acu_work_content && (
+                {(acuInfo.workDetails || workRecord?.acu_work_content) && (
                   <div>
                     <span className="text-sm font-medium text-gray-700">작업내용:</span>
                     <div className="mt-1">
-                      {renderWorkContent(workRecord.acu_work_content)}
+                      {renderWorkContent(acuInfo.workDetails || workRecord?.acu_work_content || '')}
                     </div>
                   </div>
                 )}
@@ -610,6 +615,18 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
           )}
         </div>
         
+        {/* 공통 메모 정보 */}
+        {workRecord?.remapping_works?.[0]?.notes && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-700 mb-2">📝 작업 메모</h4>
+            <div className="bg-gray-100 p-3 rounded-lg">
+              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                {workRecord.remapping_works[0].notes}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* 총 가격 */}
         {(ecuInfo || acuInfo) && (
           <div className="mt-4 pt-4 border-t border-gray-200">
@@ -705,6 +722,41 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                     <label className="block text-sm font-medium text-gray-700">작업 메모</label>
                     <p className="mt-1 text-sm text-gray-900">{workRecord.work_description}</p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* 파일 설명 정보 */}
+            {workRecord?.remapping_works?.[0]?.files && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">📁 파일 설명 정보</h3>
+                <div className="space-y-3">
+                  {Object.entries(workRecord.remapping_works[0].files).map(([key, value]) => {
+                    if (value && typeof value === 'object' && value.description) {
+                      const fileTypeNames: { [key: string]: string } = {
+                        'originalFile': '📄 원본 파일',
+                        'stage1File': '🚀 1차 튜닝 파일',
+                        'stage2File': '⚡ 2차 튜닝 파일',
+                        'stage3File': '🔥 3차 튜닝 파일',
+                        'acuOriginalFile': '📄 ACU 원본 파일',
+                        'acuStage1File': '🚀 ACU 1차 튜닝 파일',
+                        'acuStage2File': '⚡ ACU 2차 튜닝 파일',
+                        'acuStage3File': '🔥 ACU 3차 튜닝 파일'
+                      };
+                      
+                      return (
+                        <div key={key} className="border border-gray-200 rounded-lg p-3 bg-white">
+                          <h4 className="text-sm font-medium text-gray-700 mb-1">
+                            {fileTypeNames[key] || key}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            💬 {value.description}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
                 </div>
               </div>
             )}
