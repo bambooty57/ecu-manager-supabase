@@ -723,18 +723,6 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
             {/* ECU/ACU 정보 */}
             {renderEcuAcuInfo()}
 
-            {/* 공통정보 - 작업메모 */}
-            {workRecord?.work_description && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4">📝 공통정보 - 작업메모</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">작업 메모</label>
-                    <p className="mt-1 text-sm text-gray-900">{workRecord.work_description}</p>
-                  </div>
-                </div>
-              </div>
-            )}
 
 
             {/* 파일 다운로드 섹션 */}
