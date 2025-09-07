@@ -732,7 +732,7 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                 <h3 className="text-lg font-semibold mb-4">📁 파일 설명 정보</h3>
                 <div className="space-y-3">
                   {Object.entries(workRecord.remapping_works[0].files).map(([key, value]) => {
-                    if (value && typeof value === 'object' && value.description) {
+                    if (value && typeof value === 'object' && (value as any).description) {
                       const fileTypeNames: { [key: string]: string } = {
                         'originalFile': '📄 원본 파일',
                         'stage1File': '🚀 1차 튜닝 파일',
@@ -750,7 +750,7 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
                             {fileTypeNames[key] || key}
                           </h4>
                           <p className="text-sm text-gray-600">
-                            💬 {value.description}
+                            💬 {(value as any).description}
                           </p>
                         </div>
                       );
