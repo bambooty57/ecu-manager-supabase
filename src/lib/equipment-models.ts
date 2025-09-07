@@ -180,4 +180,26 @@ export const checkModelExists = async (manufacturer: string, model: string, type
     console.error('Failed to check model existence:', error)
     return false
   }
+}
+
+// 특정 제조사와 모델의 ID 찾기
+export const findEquipmentModelId = async (manufacturer: string, model: string): Promise<number | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('equipment_models')
+      .select('id')
+      .eq('manufacturer', manufacturer.trim())
+      .eq('model', model.trim())
+      .maybeSingle()
+
+    if (error) {
+      console.error('Error finding equipment model ID:', error)
+      throw error
+    }
+
+    return data?.id || null
+  } catch (error) {
+    console.error('Failed to find equipment model ID:', error)
+    return null
+  }
 } 

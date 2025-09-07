@@ -491,6 +491,50 @@ export default function EquipmentPage() {
     }
   };
 
+  // 모델 삭제 핸들러
+  const handleDeleteModel = async (manufacturer: string, modelToDelete: string) => {
+    if (!confirm(`모델 "${modelToDelete}"을(를) 삭제하시겠습니까?`)) {
+      return
+    }
+
+    try {
+      // Supabase에서 모델 삭제
+      const { deleteEquipmentModel, findEquipmentModelId } = await import('@/lib/equipment-models')
+      const modelId = await findEquipmentModelId(manufacturer, modelToDelete)
+      
+      if (modelId) {
+        const success = await deleteEquipmentModel(modelId)
+        if (success) {
+          // 로컬 상태 업데이트
+          setModelsByManufacturer(prev => {
+            const newModels = { ...prev }
+            if (newModels[manufacturer]) {
+              newModels[manufacturer] = newModels[manufacturer].filter(model => model !== modelToDelete)
+            }
+            return newModels
+          })
+          
+          // 현재 선택된 값이 삭제된 모델이면 초기화
+          if (formData.model === modelToDelete) {
+            setFormData(prev => ({ ...prev, model: '' }))
+          }
+          if (editFormData.model === modelToDelete) {
+            setEditFormData(prev => ({ ...prev, model: '' }))
+          }
+          
+          toast.success(`모델 "${modelToDelete}"이 삭제되었습니다.`)
+        } else {
+          toast.error('모델 삭제에 실패했습니다.')
+        }
+      } else {
+        toast.error('삭제할 모델을 찾을 수 없습니다.')
+      }
+    } catch (error) {
+      console.error('모델 삭제 실패:', error)
+      toast.error(`모델 삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     
@@ -1073,6 +1117,9 @@ export default function EquipmentPage() {
                         disabled={!editFormData.manufacturer}
                         required={true}
                         maxHeight="250px"
+                        onDelete={(modelToDelete) => handleDeleteModel(editFormData.manufacturer, modelToDelete)}
+                        deletableOptions={editFormData.manufacturer ? getAvailableModels(editFormData.manufacturer) : []}
+                        deleteButtonColor="text-red-400 hover:text-red-600"
                       />
                       {editFormData.manufacturer && (
                         <div className="mt-2 flex space-x-2">
@@ -1423,6 +1470,9 @@ export default function EquipmentPage() {
                       disabled={!formData.manufacturer}
                       required={true}
                       maxHeight="250px"
+                      onDelete={(modelToDelete) => handleDeleteModel(formData.manufacturer, modelToDelete)}
+                      deletableOptions={formData.manufacturer ? getAvailableModels(formData.manufacturer) : []}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
                     {formData.manufacturer && (
                       <div className="mt-2 flex space-x-2">
