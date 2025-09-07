@@ -8,6 +8,7 @@ import { getModelsByManufacturerObject, addEquipmentModel } from '@/lib/equipmen
 import Navigation from '@/components/Navigation'
 import AuthGuard from '@/components/AuthGuard'
 import CustomDropdown from '@/components/CustomDropdown'
+import { toast } from 'react-hot-toast'
 
 interface Equipment {
   id: number
@@ -79,21 +80,9 @@ export default function EquipmentPage() {
     return [...MANUFACTURERS]
   })
 
-  // ECU/ACU 타입 목록 상태 (동적으로 추가 가능)
-  const [ecuModels, setEcuModels] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('ecuModels')
-      return saved ? JSON.parse(saved) : [...ECU_MODELS]
-    }
-    return [...ECU_MODELS]
-  })
-  const [acuTypes, setAcuTypes] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('acuTypes')
-      return saved ? JSON.parse(saved) : [...ACU_TYPES]
-    }
-    return [...ACU_TYPES]
-  })
+  // ECU/ACU 타입 목록 상태 (Supabase에서 로드)
+  const [ecuModels, setEcuModels] = useState<string[]>([...ECU_MODELS])
+  const [acuTypes, setAcuTypes] = useState<string[]>([...ACU_TYPES])
   
   // 제조사별 모델 목록 상태 (데이터베이스에서 가져옴)
   const [modelsByManufacturer, setModelsByManufacturer] = useState<Record<string, string[]>>({})
@@ -105,6 +94,7 @@ export default function EquipmentPage() {
     loadCustomers()
     loadEquipments()
     loadModels()
+    loadEcuAcuModels()
   }, [])
 
   // 모델 목록 로드
@@ -134,6 +124,34 @@ export default function EquipmentPage() {
       console.log('📊 Combined models state updated:', combinedModels);
     } catch (error) {
       console.error('❌ Failed to load models:', error);
+    }
+  };
+
+  // ECU/ACU 모델 목록 로드 (Supabase에서)
+  const loadEcuAcuModels = async () => {
+    try {
+      console.log('🔄 Loading ECU/ACU models from Supabase...');
+      const { getEcuModelNames, getAcuModelNames } = await import('@/lib/ecu-acu-models');
+      
+      const [ecuModelNames, acuModelNames] = await Promise.all([
+        getEcuModelNames(),
+        getAcuModelNames()
+      ]);
+      
+      console.log('✅ ECU Models loaded from Supabase:', ecuModelNames);
+      console.log('✅ ACU Models loaded from Supabase:', acuModelNames);
+      
+      setEcuModels(ecuModelNames);
+      setAcuTypes(acuModelNames);
+      
+      // localStorage에도 저장 (캐싱용)
+      localStorage.setItem('ecuModels', JSON.stringify(ecuModelNames));
+      localStorage.setItem('acuTypes', JSON.stringify(acuModelNames));
+    } catch (error) {
+      console.error('❌ Error loading ECU/ACU models from Supabase:', error);
+      // Supabase 로드 실패 시 기본값 사용
+      setEcuModels([...ECU_MODELS]);
+      setAcuTypes([...ACU_TYPES]);
     }
   };
 
@@ -229,21 +247,121 @@ export default function EquipmentPage() {
     }
   }
 
-  // 새로운 ECU 타입을 목록에 추가
-  const addNewEcuType = (newType: string) => {
-    if (newType.trim() && !ecuModels.includes(newType.trim())) {
+  // 새로운 ECU 타입을 목록에 추가 (Supabase 저장 포함)
+  const addNewEcuType = async (newType: string) => {
+    if (!newType.trim() || ecuModels.includes(newType.trim())) {
+      return
+    }
+
+    try {
+      // Supabase에 ECU 모델 저장
+      const { createEcuModel } = await import('@/lib/ecu-acu-models')
+      await createEcuModel({
+        name: newType.trim(),
+        category: '사용자 추가',
+        series: 'Custom'
+      })
+
+      // 로컬 상태 업데이트
       const newList = [...ecuModels, newType.trim()]
       setEcuModels(newList)
       localStorage.setItem('ecuModels', JSON.stringify(newList))
+      
+      toast.success(`ECU 타입 "${newType.trim()}"이 성공적으로 추가되었습니다.`)
+    } catch (error) {
+      console.error('ECU 타입 추가 실패:', error)
+      toast.error(`ECU 타입 추가 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
     }
   }
 
-  // 새로운 ACU 타입을 목록에 추가
-  const addNewAcuType = (newType: string) => {
-    if (newType.trim() && !acuTypes.includes(newType.trim())) {
+  // 새로운 ACU 타입을 목록에 추가 (Supabase 저장 포함)
+  const addNewAcuType = async (newType: string) => {
+    if (!newType.trim() || acuTypes.includes(newType.trim())) {
+      return
+    }
+
+    try {
+      // Supabase에 ACU 모델 저장
+      const { createAcuModel } = await import('@/lib/ecu-acu-models')
+      await createAcuModel({
+        name: newType.trim(),
+        manufacturer: '사용자 추가',
+        series: 'Custom'
+      })
+
+      // 로컬 상태 업데이트
       const newList = [...acuTypes, newType.trim()]
       setAcuTypes(newList)
       localStorage.setItem('acuTypes', JSON.stringify(newList))
+      
+      toast.success(`ACU 타입 "${newType.trim()}"이 성공적으로 추가되었습니다.`)
+    } catch (error) {
+      console.error('ACU 타입 추가 실패:', error)
+      toast.error(`ACU 타입 추가 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+    }
+  }
+
+  // ECU 타입 삭제 핸들러
+  const handleDeleteEcuType = async (typeToDelete: string) => {
+    if (!confirm(`ECU 타입 "${typeToDelete}"을(를) 삭제하시겠습니까?`)) {
+      return
+    }
+
+    try {
+      // Supabase에서 ECU 모델 삭제
+      const { findEcuModelIdByName, deleteEcuModel } = await import('@/lib/ecu-acu-models')
+      const modelId = await findEcuModelIdByName(typeToDelete)
+      
+      if (modelId) {
+        await deleteEcuModel(modelId)
+      }
+
+      // 로컬 상태 업데이트
+      const newList = ecuModels.filter(type => type !== typeToDelete)
+      setEcuModels(newList)
+      localStorage.setItem('ecuModels', JSON.stringify(newList))
+      
+      // 현재 선택된 값이 삭제된 타입이면 초기화
+      if (formData.ecuType === typeToDelete) {
+        setFormData(prev => ({ ...prev, ecuType: '' }))
+      }
+      
+      toast.success(`ECU 타입 "${typeToDelete}"이 삭제되었습니다.`)
+    } catch (error) {
+      console.error('ECU 타입 삭제 실패:', error)
+      toast.error(`ECU 타입 삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+    }
+  }
+
+  // ACU 타입 삭제 핸들러
+  const handleDeleteAcuType = async (typeToDelete: string) => {
+    if (!confirm(`ACU 타입 "${typeToDelete}"을(를) 삭제하시겠습니까?`)) {
+      return
+    }
+
+    try {
+      // Supabase에서 ACU 모델 삭제
+      const { findAcuModelIdByName, deleteAcuModel } = await import('@/lib/ecu-acu-models')
+      const modelId = await findAcuModelIdByName(typeToDelete)
+      
+      if (modelId) {
+        await deleteAcuModel(modelId)
+      }
+
+      // 로컬 상태 업데이트
+      const newList = acuTypes.filter(type => type !== typeToDelete)
+      setAcuTypes(newList)
+      localStorage.setItem('acuTypes', JSON.stringify(newList))
+      
+      // 현재 선택된 값이 삭제된 타입이면 초기화
+      if (formData.acuType === typeToDelete) {
+        setFormData(prev => ({ ...prev, acuType: '' }))
+      }
+      
+      toast.success(`ACU 타입 "${typeToDelete}"이 삭제되었습니다.`)
+    } catch (error) {
+      console.error('ACU 타입 삭제 실패:', error)
+      toast.error(`ACU 타입 삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
     }
   }
 
@@ -1366,6 +1484,9 @@ export default function EquipmentPage() {
                       options={ecuModels.map(type => ({ value: type, label: type }))}
                       placeholder="선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteEcuType}
+                      deletableOptions={ecuModels.filter(type => type !== '직접입력' && type !== '기타')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
                     <div className="mt-2 flex space-x-2">
                       <input
@@ -1378,9 +1499,9 @@ export default function EquipmentPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={async () => {
                           if (formData.customEcuType.trim()) {
-                            addNewEcuType(formData.customEcuType.trim())
+                            await addNewEcuType(formData.customEcuType.trim())
                             setFormData(prev => ({ 
                               ...prev, 
                               ecuType: formData.customEcuType.trim(),
@@ -1407,6 +1528,9 @@ export default function EquipmentPage() {
                       options={acuTypes.map(type => ({ value: type, label: type }))}
                       placeholder="선택하세요"
                       maxHeight="250px"
+                      onDelete={handleDeleteAcuType}
+                      deletableOptions={acuTypes.filter(type => type !== '직접입력' && type !== '기타')}
+                      deleteButtonColor="text-red-400 hover:text-red-600"
                     />
                     <div className="mt-2 flex space-x-2">
                       <input
@@ -1419,9 +1543,9 @@ export default function EquipmentPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={async () => {
                           if (formData.customAcuType.trim()) {
-                            addNewAcuType(formData.customAcuType.trim())
+                            await addNewAcuType(formData.customAcuType.trim())
                             setFormData(prev => ({ 
                               ...prev, 
                               acuType: formData.customAcuType.trim(),
@@ -1478,4 +1602,5 @@ export default function EquipmentPage() {
       </div>
     </AuthGuard>
   )
+} 
 } 
