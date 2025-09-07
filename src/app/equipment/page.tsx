@@ -1603,4 +1603,3 @@ export default function EquipmentPage() {
     </AuthGuard>
   )
 } 
-} 
