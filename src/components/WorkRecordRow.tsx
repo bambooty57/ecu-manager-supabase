@@ -3,6 +3,12 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { getStatusColor } from '../lib/work-records'
 
+// 파일 정보 타입 정의
+interface FileInfo {
+  description?: string
+  [key: string]: any
+}
+
 interface WorkRecord {
   id: string
   work_date: string
@@ -37,7 +43,7 @@ interface WorkRecord {
   // 추가 필드들
   work_description?: string
   tools_used?: string[]
-  files?: any
+  files?: Record<string, FileInfo>
 }
 
 interface WorkRecordRowProps {
@@ -511,9 +517,9 @@ const WorkRecordRow = React.memo(({ record, onEdit, onDelete }: WorkRecordRowPro
                              key}: 파일 첨부됨
                           </p>
                           {/* 파일 설명 표시 */}
-                          {value.description && (
+                          {(value as FileInfo).description && (
                             <p className="text-gray-600 dark:text-gray-400 italic text-xs">
-                              💬 {value.description}
+                              💬 {(value as FileInfo).description}
                             </p>
                           )}
                         </div>
