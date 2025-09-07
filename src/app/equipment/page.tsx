@@ -817,6 +817,7 @@ export default function EquipmentPage() {
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">사용시간</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">ECU 타입</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">ACU 타입</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">메모</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">등록일</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">작업</th>
                 </tr>
@@ -847,6 +848,20 @@ export default function EquipmentPage() {
                       <span className="px-3 py-2 text-sm font-medium bg-green-600 text-green-100 rounded-full">
                         {equipment.acuType}
                       </span>
+                    </td>
+                    <td className="px-6 py-5 max-w-xs">
+                      <div className="text-sm text-gray-300" title={equipment.notes || '메모 없음'}>
+                        {equipment.notes ? (
+                          <div className="flex items-start space-x-2">
+                            <span className="text-yellow-400 text-xs">📝</span>
+                            <span className="text-gray-300 text-xs leading-relaxed">
+                              {equipment.notes.length > 30 ? `${equipment.notes.substring(0, 30)}...` : equipment.notes}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 italic text-xs">메모 없음</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-5 whitespace-nowrap text-base text-gray-400">
                       {equipment.registrationDate}
