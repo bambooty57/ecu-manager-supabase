@@ -35,9 +35,12 @@ interface WorkRecord {
   ecu_maker?: string;
   ecu_model?: string;
   ecu_price?: number;
+  ecu_connection_method?: string | null;
   acu_manufacturer?: string;
   acu_model?: string;
   acu_price?: number;
+  acu_connection_method?: string | null;
+  connection_method?: string | null;
   totalPrice?: number;
   remapping_works?: any[];
 }
@@ -449,7 +452,7 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
       status: workRecord.ecu_status || 'N/A',
       selectedWorks: [],
       workDetails: workRecord.ecu_work_content || '',
-      connectionMethod: workRecord.connection_method || undefined
+      connectionMethod: workRecord.ecu_connection_method || workRecord.connection_method || undefined
     };
 
     let acuData: EcuAcuInfo = {
@@ -459,7 +462,7 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
       status: workRecord.acu_status || 'N/A',
       selectedWorks: [],
       workDetails: workRecord.acu_work_content || '',
-      connectionMethod: workRecord.connection_method || undefined
+      connectionMethod: workRecord.acu_connection_method || workRecord.connection_method || undefined
     };
 
     // remapping_works에서 정보 추출
