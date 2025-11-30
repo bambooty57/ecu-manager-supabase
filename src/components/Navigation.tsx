@@ -51,7 +51,7 @@ export default function Navigation() {
                 <h1 className="text-4xl font-bold text-slate-800 tracking-tight">Track-Force</h1>
               </Link>
             </div>
-            <div className="hidden md:ml-16 md:flex md:space-x-6">
+            <div className="hidden md:ml-20 md:flex md:space-x-10">
               {navigation.map((item) => (
                 <Link
                   key={item.name}

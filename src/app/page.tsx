@@ -84,21 +84,21 @@ export default function Home() {
               {/* 헤더 섹션 */}
               <div className="text-center mb-12">
                 <div className="mb-10 flex justify-center">
-                  <div className="relative w-full max-w-7xl h-[600px] md:h-[700px] lg:h-[800px] rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-200 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 z-10"></div>
-                    <Image
-                      src="/track-force-hero.png"
-                      alt="Track-Force Power Tuning"
-                      fill
-                      className="object-cover scale-105 hover:scale-100 transition-transform duration-700 ease-in-out"
-                      priority
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1280px"
-                      onError={(e) => {
-                        // 이미지 로드 실패 시 숨김 처리
-                        e.currentTarget.style.display = 'none'
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent z-20"></div>
+                  <div className="relative w-full max-w-7xl h-[600px] md:h-[700px] lg:h-[800px] rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-200 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center p-6 md:p-8 lg:p-10">
+                    <div className="relative w-full h-full">
+                      <Image
+                        src="/track-force-hero.png"
+                        alt="Track-Force Power Tuning"
+                        fill
+                        className="object-contain"
+                        priority
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1280px"
+                        onError={(e) => {
+                          // 이미지 로드 실패 시 숨김 처리
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
                 <h1 className="text-7xl md:text-8xl font-bold text-slate-800 mb-6 tracking-tight drop-shadow-lg">
