@@ -37,11 +37,14 @@ export default function Navigation() {
             <div className="flex-shrink-0 flex items-center space-x-4">
               <Link href="/" className="flex items-center space-x-4 hover:opacity-80 transition-opacity duration-200">
                 <div className="relative w-20 h-20 flex-shrink-0">
-                  {logoError ? (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg text-white text-2xl font-bold">
+                  {/* Fallback UI - 에러 상태일 때만 표시 */}
+                  {logoError && (
+                    <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg text-white text-2xl font-bold z-10">
                       TF
                     </div>
-                  ) : (
+                  )}
+                  {/* Image 컴포넌트 - 항상 렌더링하여 복구 가능하게 함 */}
+                  <div className={`relative w-full h-full ${logoError ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                     <Image
                       src="/track-force-logo.png"
                       alt="Track-Force Logo"
@@ -51,7 +54,7 @@ export default function Navigation() {
                       onError={() => setLogoError(true)}
                       onLoad={() => setLogoError(false)}
                     />
-                  )}
+                  </div>
                 </div>
                 <h1 className="text-4xl font-bold text-slate-800 tracking-tight">Track-Force</h1>
               </Link>

@@ -136,25 +136,26 @@ export default function Home() {
               <div className="text-center mb-6 sm:mb-8 md:mb-12">
                 <div className="flex justify-center">
                   <div className="relative w-full max-w-5xl h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px] xl:h-[600px] rounded-xl sm:rounded-2xl md:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl border-2 sm:border-4 border-slate-200 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-                    {heroImageError ? (
-                      <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                    {/* Fallback UI - 에러 상태일 때만 표시 */}
+                    {heroImageError && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center h-full text-center p-8 z-10">
                         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-slate-700 mb-4">Track-Force</h1>
                         <p className="text-xl sm:text-2xl text-slate-600">Power Tuning System</p>
                       </div>
-                    ) : (
-                      <div className="relative w-full h-full">
-                        <Image
-                          src="/track-force-hero.png"
-                          alt="Track-Force Power Tuning"
-                          fill
-                          className="object-contain"
-                          priority
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1280px"
-                          onError={() => setHeroImageError(true)}
-                          onLoad={() => setHeroImageError(false)}
-                        />
-                      </div>
                     )}
+                    {/* Image 컴포넌트 - 항상 렌더링하여 복구 가능하게 함 */}
+                    <div className={`relative w-full h-full ${heroImageError ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                      <Image
+                        src="/track-force-hero.png"
+                        alt="Track-Force Power Tuning"
+                        fill
+                        className="object-contain"
+                        priority
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1280px"
+                        onError={() => setHeroImageError(true)}
+                        onLoad={() => setHeroImageError(false)}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
