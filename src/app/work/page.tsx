@@ -2364,11 +2364,16 @@ export default function WorkPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="space-y-6">
         {/* 페이지 헤더 */}
-        <div>
-          <h1 className="text-3xl font-bold text-white">작업 등록</h1>
-          <p className="mt-2 text-gray-400">
-            새로운 ECU 튜닝 작업을 등록하고 관리합니다.
-          </p>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
+          <div className="animate-slideIn">
+            <h1 className="text-5xl font-bold text-slate-800 flex items-center">
+              <span className="text-6xl mr-4">⚙️</span>
+              작업 등록
+            </h1>
+            <p className="mt-3 text-xl text-slate-600">
+              새로운 ECU 튜닝 작업을 등록하고 관리합니다.
+            </p>
+          </div>
         </div>
 
       {/* 🚀 실시간 성능 모니터링 */}
@@ -2500,8 +2505,8 @@ export default function WorkPage() {
 
       {/* 작업 등록 폼 */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
-        <h2 className="text-3xl font-bold text-slate-800 mb-8 flex items-center">
-          <span className="text-4xl mr-3">⚙️</span>
+        <h2 className="text-4xl font-bold text-slate-800 mb-8 flex items-center">
+          <span className="text-5xl mr-4">📝</span>
           새 작업 등록
         </h2>
         
@@ -2520,7 +2525,8 @@ export default function WorkPage() {
           {/* 고객 및 장비 정보 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="relative" ref={dropdownRef}>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-lg font-bold text-slate-700 mb-3">
+                <span className="text-2xl mr-2">👤</span>
                 고객 선택 *
               </label>
               <input
@@ -2586,7 +2592,8 @@ export default function WorkPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-lg font-bold text-slate-700 mb-3">
+                <span className="text-2xl mr-2">🚜</span>
                 장비 선택 *
               </label>
               <CustomDropdown
@@ -2612,7 +2619,8 @@ export default function WorkPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-lg font-bold text-slate-700 mb-3">
+                <span className="text-2xl mr-2">📅</span>
                 작업 날짜 *
               </label>
               <input
@@ -2626,7 +2634,8 @@ export default function WorkPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-lg font-bold text-slate-700 mb-3">
+                <span className="text-2xl mr-2">💰</span>
                 전체 작업 금액 (자동 계산)
               </label>
               <div className="w-full bg-gray-800 border-gray-600 text-gray-300 rounded-md px-3 py-3 text-center border-2 border-dashed">
@@ -2653,7 +2662,10 @@ export default function WorkPage() {
           {/* 등록된 Remapping 작업 목록 */}
           {remappingWorks.length > 0 && (
             <div className="border-t border-gray-600 pt-6">
-              <h3 className="text-lg font-medium text-white mb-4">등록된 Remapping 작업 ({remappingWorks.length}개)</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center">
+                <span className="text-3xl mr-3">📋</span>
+                등록된 Remapping 작업 ({remappingWorks.length}개)
+              </h3>
               <div className="space-y-4">
                 {remappingWorks.map((work, index) => (
                   <div key={work.id} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
@@ -2667,7 +2679,7 @@ export default function WorkPage() {
                             
                             {/* 1. 제조사-모델명 (파란색 박스) */}
                                                           <div className="bg-blue-900/30 border border-blue-600 rounded-lg p-3">
-                                <div className="text-sm font-medium text-blue-300">
+                                <div className="text-lg font-bold text-blue-300">
                                 {work.ecu.maker && work.ecu.type ? (
                                   `${work.ecu.maker} - ${work.ecu.type}`
                                 ) : work.ecu.maker ? (
@@ -2687,11 +2699,11 @@ export default function WorkPage() {
                             
                             {/* 2. 작업내용 */}
                             <div className="bg-blue-900/30 border border-blue-600 rounded-lg p-3">
-                              <div className="text-xs font-medium text-blue-300 mb-2">작업내용</div>
+                              <div className="text-base font-bold text-blue-300 mb-3">작업내용</div>
                               <div className="flex flex-wrap gap-1">
                                 {work.ecu.selectedWorks && work.ecu.selectedWorks.length > 0 ? (
                                   work.ecu.selectedWorks.map((workName, idx) => (
-                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-800 text-blue-200">
+                                    <span key={idx} className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-blue-800 text-blue-200">
                                       {workName}
                                     </span>
                                   ))
@@ -2708,8 +2720,8 @@ export default function WorkPage() {
                             
                             {/* 3. 연결방법 */}
                             <div className="bg-blue-900/30 border border-blue-600 rounded-lg p-3">
-                              <div className="text-xs font-medium text-blue-300 mb-1">연결방법</div>
-                              <div className="text-sm text-blue-200">
+                              <div className="text-base font-bold text-blue-300 mb-2">연결방법</div>
+                              <div className="text-base text-blue-200">
                                 {work.ecu.connectionMethod || <span className="text-blue-400 italic">연결방법 미설정</span>}
                               </div>
                             </div>
@@ -2728,7 +2740,7 @@ export default function WorkPage() {
                             
                             {/* 1. 제조사-모델명 (초록색 박스) */}
                             <div className="bg-green-900/30 border border-green-600 rounded-lg p-3">
-                              <div className="text-sm font-medium text-green-200">
+                              <div className="text-lg font-bold text-green-200">
                                 {work.acu.manufacturer && work.acu.model ? (
                                   `${work.acu.manufacturer} - ${work.acu.model}`
                                 ) : work.acu.manufacturer ? (
@@ -2748,11 +2760,11 @@ export default function WorkPage() {
                             
                             {/* 2. 작업내용 */}
                             <div className="bg-green-900/30 border border-green-600 rounded-lg p-3">
-                              <div className="text-xs font-medium text-green-300 mb-2">작업내용</div>
+                              <div className="text-base font-bold text-green-300 mb-3">작업내용</div>
                               <div className="flex flex-wrap gap-1">
                                 {work.acu.selectedWorks && work.acu.selectedWorks.length > 0 ? (
                                   work.acu.selectedWorks.map((workName, idx) => (
-                                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-800 text-green-200">
+                                    <span key={idx} className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-green-800 text-green-200">
                                       {workName}
                                     </span>
                                   ))
@@ -2769,8 +2781,8 @@ export default function WorkPage() {
                             
                             {/* 3. 연결방법 */}
                             <div className="bg-green-900/30 border border-green-600 rounded-lg p-3">
-                              <div className="text-xs font-medium text-green-300 mb-1">연결방법</div>
-                              <div className="text-sm text-green-200">
+                              <div className="text-base font-bold text-green-300 mb-2">연결방법</div>
+                              <div className="text-base text-green-200">
                                 {work.acu.connectionMethod || <span className="text-green-400 italic">연결방법 미설정</span>}
                               </div>
                             </div>
@@ -2795,16 +2807,16 @@ export default function WorkPage() {
                           <span className="font-medium text-gray-300">첨부 파일:</span>
                           <div className="flex flex-wrap gap-2 mt-1">
                             {/* ECU 파일들 */}
-                            {work.files.originalFile && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900 text-blue-200">🔧 ECU원본</span>}
-                            {work.files.stage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-800 text-blue-200">🔧 ECU Stage1</span>}
-                            {work.files.stage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-700 text-blue-200">🔧 ECU Stage2</span>}
-                            {work.files.stage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-600 text-blue-200">🔧 ECU Stage3</span>}
+                            {work.files.originalFile && <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-blue-900 text-blue-200">🔧 ECU원본</span>}
+                            {work.files.stage1File && <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-blue-800 text-blue-200">🔧 ECU Stage1</span>}
+                            {work.files.stage2File && <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-blue-700 text-blue-200">🔧 ECU Stage2</span>}
+                            {work.files.stage3File && <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-blue-600 text-blue-200">🔧 ECU Stage3</span>}
                             
                             {/* ACU 파일들 */}
-                            {work.files.acuOriginalFile && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 text-green-200">⚙️ ACU원본</span>}
-                            {work.files.acuStage1File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-800 text-green-200">⚙️ ACU Stage1</span>}
-                            {work.files.acuStage2File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-700 text-green-200">⚙️ ACU Stage2</span>}
-                            {work.files.acuStage3File && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-600 text-green-200">⚙️ ACU Stage3</span>}
+                            {work.files.acuOriginalFile && <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-green-900 text-green-200">⚙️ ACU원본</span>}
+                            {work.files.acuStage1File && <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-green-800 text-green-200">⚙️ ACU Stage1</span>}
+                            {work.files.acuStage2File && <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-green-700 text-green-200">⚙️ ACU Stage2</span>}
+                            {work.files.acuStage3File && <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-green-600 text-green-200">⚙️ ACU Stage3</span>}
                             
                             {/* 미디어 파일들 표시 */}
                             {(() => {
@@ -2812,7 +2824,7 @@ export default function WorkPage() {
                                 const fileKey = `mediaFile${i}` as keyof typeof work.files
                                 return work.files[fileKey]
                               }).length
-                              return mediaCount > 0 && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-900 text-purple-200">📷 미디어({mediaCount})</span>
+                              return mediaCount > 0 && <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold bg-purple-900 text-purple-200">📷 미디어({mediaCount})</span>
                             })()}
                           </div>
                           
@@ -2839,14 +2851,14 @@ export default function WorkPage() {
                         <button
                           type="button"
                           onClick={() => handleEditRemappingWork(work)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-xl font-medium text-base transition-all duration-300 hover:shadow-lg hover:scale-105"
                         >
                           편집
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteRemappingWork(work.id)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-xl font-medium text-base transition-all duration-300 hover:shadow-lg hover:scale-105"
                         >
                           삭제
                         </button>
@@ -2861,7 +2873,8 @@ export default function WorkPage() {
           {/* Remapping 작업 추가/편집 */}
           <div className="border-t border-gray-700 pt-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-white">
+              <h3 className="text-2xl font-bold text-slate-800 flex items-center">
+                <span className="text-3xl mr-3">{isEditingRemapping ? '✏️' : '➕'}</span>
                 {isEditingRemapping ? 'Remapping 편집' : 'Remapping 추가'}
               </h3>
               {isEditingRemapping && (

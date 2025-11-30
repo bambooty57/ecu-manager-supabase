@@ -1392,7 +1392,10 @@ function HistoryPage() {
 
               {/* 필터 섹션 */}
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
-                <h2 className="text-2xl font-semibold text-slate-800 mb-6">🔍 필터 및 검색</h2>
+                <h2 className="text-3xl font-bold text-slate-800 mb-8 flex items-center">
+                  <span className="text-4xl mr-3">🔍</span>
+                  필터 및 검색
+                </h2>
                 
                 {/* 검색 입력 */}
                 <div className="mb-4">
@@ -1467,7 +1470,10 @@ function HistoryPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* 날짜 필터 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">시작일</label>
+                    <label className="block text-lg font-bold text-slate-700 mb-3">
+                      <span className="text-2xl mr-2">📅</span>
+                      시작일
+                    </label>
                     <input
                       type="date"
                       value={filters.dateFrom}
@@ -1477,7 +1483,10 @@ function HistoryPage() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">종료일</label>
+                    <label className="block text-lg font-bold text-slate-700 mb-3">
+                      <span className="text-2xl mr-2">📅</span>
+                      종료일
+                    </label>
                     <input
                       type="date"
                       value={filters.dateTo}
@@ -1488,7 +1497,10 @@ function HistoryPage() {
 
                   {/* 고객 필터 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">고객</label>
+                    <label className="block text-lg font-bold text-slate-700 mb-3">
+                      <span className="text-2xl mr-2">👤</span>
+                      고객
+                    </label>
                     <select
                       value={filters.customer}
                       onChange={(e) => setFilters(prev => ({ ...prev, customer: e.target.value }))}
@@ -1505,7 +1517,10 @@ function HistoryPage() {
 
                   {/* 상태 필터 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">상태</label>
+                    <label className="block text-lg font-bold text-slate-700 mb-3">
+                      <span className="text-2xl mr-2">📊</span>
+                      상태
+                    </label>
                     <select
                       value={filters.status}
                       onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
@@ -1547,7 +1562,10 @@ function HistoryPage() {
               <div className="bg-gray-800 rounded-xl p-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <h2 className="text-xl font-semibold text-white">📊 작업 이력 테이블</h2>
+                    <h2 className="text-3xl font-bold text-slate-800 flex items-center">
+                      <span className="text-4xl mr-3">📊</span>
+                      작업 이력 테이블
+                    </h2>
                     <span className="text-gray-400 text-sm">
                       총 {pagination.totalItems}개 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
                       {pagination.totalPages > 1 && ` (${pagination.currentPage}/${pagination.totalPages} 페이지)`}
@@ -1575,22 +1593,23 @@ function HistoryPage() {
                 {/* 작업 기록 테이블 */}
                 <div className="mb-6">
                   {renderLoadingSkeleton() || (
-                    <div className="overflow-x-auto shadow-2xl rounded-xl border-2 border-gray-600 bg-gray-900">
+                    <div className="overflow-x-auto shadow-2xl rounded-2xl border border-white/20 bg-white/90 backdrop-blur-sm">
                       <table 
-                        className="min-w-full bg-gray-900 table-modern"
+                        className="min-w-full table-modern"
                         role="grid" 
                         aria-label="작업 이력 테이블"
                       >
                         <thead>
-                          <tr className="bg-gradient-to-r from-gray-800 to-gray-700 border-b-2 border-gray-600" role="row">
+                          <tr className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200" role="row">
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-blue-900 transition-colors"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors"
                               onClick={() => handleSort('work_date')}
                               role="columnheader"
                               aria-sort={sortField === 'work_date' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
-                              <div className="flex items-center space-x-1">
-                                <span>📅 작업일</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">📅</span>
+                                <span>작업일</span>
                                 {sortField === 'work_date' && (
                                   <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
@@ -1599,13 +1618,14 @@ function HistoryPage() {
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-blue-900 transition-colors"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors"
                               onClick={() => handleSort('customer_name')}
                               role="columnheader"
                               aria-sort={sortField === 'customer_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
-                              <div className="flex items-center space-x-1">
-                                <span>👤 고객명</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">👤</span>
+                                <span>고객명</span>
                                 {sortField === 'customer_name' && (
                                   <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
@@ -1614,13 +1634,14 @@ function HistoryPage() {
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-blue-900 transition-colors"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors"
                               onClick={() => handleSort('equipment_model')}
                               role="columnheader"
                               aria-sort={sortField === 'equipment_model' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
-                              <div className="flex items-center space-x-1">
-                                <span>🚜 장비 정보</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">🚜</span>
+                                <span>장비 정보</span>
                                 {sortField === 'equipment_model' && (
                                   <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
@@ -1632,13 +1653,19 @@ function HistoryPage() {
                               className="py-3 px-4 text-left text-white font-bold hidden md:table-cell"
                               role="columnheader"
                             >
-                              🔧 ECU 정보
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">🔧</span>
+                                <span>ECU 정보</span>
+                              </div>
                             </th>
                             <th 
                               className="py-3 px-4 text-left text-white font-bold hidden md:table-cell"
                               role="columnheader"
                             >
-                              ⚙️ ACU 정보
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">⚙️</span>
+                                <span>ACU 정보</span>
+                              </div>
                             </th>
                             <th 
                               className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-blue-900 transition-colors hidden sm:table-cell"
@@ -1646,8 +1673,9 @@ function HistoryPage() {
                               role="columnheader"
                               aria-sort={sortField === 'price' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
-                              <div className="flex items-center space-x-1">
-                                <span>💰 전체 금액</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">💰</span>
+                                <span>전체 금액</span>
                                 {sortField === 'price' && (
                                   <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
@@ -1659,7 +1687,10 @@ function HistoryPage() {
                               className="py-3 px-4 text-left text-white font-bold"
                               role="columnheader"
                             >
-                              ⚡ 작업
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">⚡</span>
+                                <span>작업</span>
+                              </div>
                             </th>
                           </tr>
                         </thead>
@@ -1751,24 +1782,36 @@ function HistoryPage() {
                                   {/* 작업일 */}
                                   <td className="py-3 px-4" role="cell">
                                     <div>
-                                      <p className="text-base font-semibold text-white">
-                                        {new Date(record.work_date).toLocaleDateString('ko-KR')}
-                                      </p>
+                                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                                        <p className="text-xl font-bold text-slate-800">
+                                          {new Date(record.work_date).toLocaleDateString('ko-KR')}
+                                        </p>
+                                      </div>
                                     </div>
                                   </td>
                                   
                                   {/* 고객명 */}
                                   <td className="py-3 px-4" role="cell">
                                     <div>
-                                      <p className="text-base font-semibold text-white">{customerName}</p>
+                                      <div className="flex items-center">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg mr-4 shadow-lg">
+                                          {customerName.charAt(0)}
+                                        </div>
+                                        <div>
+                                          <p className="text-xl font-bold text-slate-800">{customerName}</p>
+                                          <p className="text-base text-slate-500">고객</p>
+                                        </div>
+                                      </div>
                                     </div>
                                   </td>
                                   
                                   {/* 장비 정보 */}
                                   <td className="py-3 px-4" role="cell">
                                     <div>
-                                      <p className="text-base font-semibold text-white">{equipmentManufacturer} {equipmentModel}</p>
-                                      <p className="text-sm text-gray-300">{equipmentType}</p>
+                                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                                        <p className="text-xl font-bold text-slate-800">{equipmentManufacturer} {equipmentModel}</p>
+                                        <p className="text-base text-slate-500">{equipmentType}</p>
+                                      </div>
                                     </div>
                                   </td>
                                   
@@ -1776,7 +1819,7 @@ function HistoryPage() {
                                   <td className="py-3 px-4 hidden md:table-cell" role="cell">
                                     {ecuInfo && ecuInfo.maker ? (
                                       <div>
-                                        <p className="text-base font-semibold text-blue-300">
+                                        <p className="text-xl font-bold text-blue-600">
                                           {ecuInfo.maker} {ecuInfo.type}
                                         </p>
                                         <p className="text-sm text-gray-300">
@@ -1787,7 +1830,7 @@ function HistoryPage() {
                                             📝 {ecuInfo.workDetails.length > 20 ? `${ecuInfo.workDetails.substring(0, 20)}...` : ecuInfo.workDetails}
                                           </p>
                                         )}
-                                        <p className="text-sm font-bold text-blue-200">
+                                        <p className="text-lg font-bold text-blue-600">
                                           ₩{(ecuInfo.price || 0).toLocaleString()}
                                         </p>
                                         <div className="flex items-center gap-2 mt-1">
@@ -1836,7 +1879,7 @@ function HistoryPage() {
                                   <td className="py-3 px-4 hidden md:table-cell" role="cell">
                                     {acuInfo && acuInfo.manufacturer ? (
                                       <div>
-                                        <p className="text-base font-semibold text-green-300">
+                                        <p className="text-xl font-bold text-green-600">
                                           {acuInfo.manufacturer} {acuInfo.model}
                                         </p>
                                         <p className="text-sm text-gray-300">
@@ -1847,7 +1890,7 @@ function HistoryPage() {
                                             📝 {acuInfo.workDetails.length > 20 ? `${acuInfo.workDetails.substring(0, 20)}...` : acuInfo.workDetails}
                                           </p>
                                         )}
-                                        <p className="text-sm font-bold text-green-200">
+                                        <p className="text-lg font-bold text-green-600">
                                           ₩{(acuInfo.price || 0).toLocaleString()}
                                         </p>
                                         <div className="flex items-center gap-2 mt-1">

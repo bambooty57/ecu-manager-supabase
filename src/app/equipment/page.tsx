@@ -848,92 +848,165 @@ export default function EquipmentPage() {
 
       {/* 장비 목록 */}
       {isLoadingEquipments ? (
-        <div className="bg-gray-800 rounded-lg shadow p-12">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-white/20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-300">장비 데이터를 불러오는 중...</p>
+            <div className="relative">
+              <div className="w-16 h-16 mx-auto mb-4">
+                <div className="absolute inset-0 border-4 border-blue-200 rounded-full animate-pulse"></div>
+                <div className="absolute inset-0 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
+              </div>
+            </div>
+            <p className="text-2xl text-slate-600 font-medium">장비 데이터를 불러오는 중...</p>
+            <p className="text-base text-slate-500 mt-3">잠시만 기다려주세요</p>
           </div>
         </div>
       ) : viewMode === 'table' ? (
-        <div className="bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/20">
           <div className="px-6 py-4 border-b border-gray-700">
             <h2 className="text-lg font-medium text-white">장비 목록</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-700">
-              <thead className="bg-gray-700">
+              <thead className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">고객명</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">장비 정보</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">제조사/모델</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">사용시간</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">ECU 타입</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">ACU 타입</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">메모</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">등록일</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">작업</th>
+                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">👤</span>
+                      고객명
+                    </div>
+                  </th>
+                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">🚜</span>
+                      장비 정보
+                    </div>
+                  </th>
+                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">🏭</span>
+                      제조사/모델
+                    </div>
+                  </th>
+                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">⏰</span>
+                      사용시간
+                    </div>
+                  </th>
+                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">🔧</span>
+                      ECU 타입
+                    </div>
+                  </th>
+                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">⚙️</span>
+                      ACU 타입
+                    </div>
+                  </th>
+                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">📝</span>
+                      메모
+                    </div>
+                  </th>
+                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">📅</span>
+                      등록일
+                    </div>
+                  </th>
+                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">🔨</span>
+                      작업
+                    </div>
+                  </th>
                 </tr>
               </thead>
-              <tbody className="bg-gray-800 divide-y divide-gray-700">
+              <tbody className="bg-white/70 backdrop-blur-sm">
                 {filteredEquipments.map((equipment) => (
-                  <tr key={equipment.id} className="hover:bg-gray-700">
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <div className="text-base font-medium text-white">{equipment.customerName}</div>
+                  <tr key={equipment.id} className="border-b border-slate-100 hover:bg-blue-50/50 transition-all duration-300 animate-slideInUp group">
+                    <td className="px-8 py-6 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg mr-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                          {equipment.customerName.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="text-xl font-bold text-slate-800">{equipment.customerName}</div>
+                          <div className="text-base text-slate-500">고객</div>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <div className="text-base text-white">{equipment.equipmentType}</div>
-                      <div className="text-sm text-gray-400">기대번호: {equipment.serialNumber}</div>
+                    <td className="px-8 py-6 whitespace-nowrap">
+                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                        <div className="text-xl font-bold text-slate-800">{equipment.equipmentType}</div>
+                        <div className="text-base text-slate-500">기대번호: {equipment.serialNumber}</div>
+                      </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <div className="text-base text-white">{equipment.manufacturer}</div>
-                      <div className="text-sm text-gray-400">{equipment.model}</div>
+                    <td className="px-8 py-6 whitespace-nowrap">
+                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                        <div className="text-xl font-bold text-slate-800">{equipment.manufacturer}</div>
+                        <div className="text-base text-slate-500">{equipment.model}</div>
+                      </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <div className="text-base text-white">{equipment.usageHours.toLocaleString()}시간</div>
+                    <td className="px-8 py-6 whitespace-nowrap">
+                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                        <div className="text-xl font-bold text-slate-800">{equipment.usageHours.toLocaleString()}시간</div>
+                      </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <span className="px-3 py-2 text-sm font-medium bg-blue-600 text-blue-100 rounded-full">
+                    <td className="px-8 py-6 whitespace-nowrap">
+                      <span className="px-4 py-3 text-base font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-lg">
                         {equipment.ecuType}
                       </span>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <span className="px-3 py-2 text-sm font-medium bg-green-600 text-green-100 rounded-full">
+                    <td className="px-8 py-6 whitespace-nowrap">
+                      <span className="px-4 py-3 text-base font-bold bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-lg">
                         {equipment.acuType}
                       </span>
                     </td>
-                    <td className="px-6 py-5 max-w-xs">
-                      <div className="text-sm text-gray-300" title={equipment.notes || '메모 없음'}>
+                    <td className="px-8 py-6 max-w-xs">
+                      <div className="text-base text-slate-700" title={equipment.notes || '메모 없음'}>
                         {equipment.notes ? (
                           <div className="flex items-start space-x-2">
-                            <span className="text-yellow-400 text-xs">📝</span>
-                            <span className="text-gray-300 text-xs leading-relaxed">
+                            <span className="text-yellow-500 text-lg">📝</span>
+                            <span className="text-slate-700 text-base leading-relaxed">
                               {equipment.notes.length > 30 ? `${equipment.notes.substring(0, 30)}...` : equipment.notes}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-gray-500 italic text-xs">메모 없음</span>
+                          <span className="text-slate-400 italic text-base">메모 없음</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap text-base text-gray-400">
-                      {equipment.registrationDate}
+                    <td className="px-8 py-6 whitespace-nowrap">
+                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                        <div className="text-base font-medium text-slate-700">{equipment.registrationDate}</div>
+                      </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => handleViewDetail(equipment)}
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-3 py-2 rounded transition-all duration-200 cursor-pointer text-sm"
-                      >
-                        상세보기
-                      </button>
-                      <button
-                        onClick={() => handleDelete(equipment.id)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-900 p-2 rounded transition-all duration-200 cursor-pointer"
-                        title="삭제"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                    <td className="px-8 py-6 whitespace-nowrap">
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => handleViewDetail(equipment)}
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-5 py-3 rounded-xl font-medium text-base transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center space-x-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>상세보기</span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(equipment.id)}
+                          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white p-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
+                          title="삭제"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -941,27 +1014,57 @@ export default function EquipmentPage() {
             </table>
           </div>
           {filteredEquipments.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-              등록된 장비가 없습니다.
+            <div className="text-center py-16">
+              <div className="text-8xl mb-6 animate-bounce">🚜</div>
+              <h3 className="text-3xl font-bold text-slate-700 mb-4">등록된 장비가 없습니다</h3>
+              <p className="text-xl text-slate-500 mb-8">새로운 장비를 등록하여 시작해보세요!</p>
+              <button
+                onClick={() => setIsFormOpen(true)}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-10 py-4 rounded-2xl font-bold text-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center space-x-3 mx-auto"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>첫 장비 등록하기</span>
+              </button>
             </div>
           )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredEquipments.map((equipment) => (
-            <div key={equipment.id} className="bg-gray-800 rounded-lg shadow p-6 hover:shadow-md hover:bg-gray-700 transition-all">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-semibold text-white">{equipment.customerName}</h3>
-                <div className="flex space-x-2">
+            <div key={equipment.id} className="group bg-white/90 backdrop-blur-sm border border-white/20 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 animate-slideInUp relative overflow-hidden">
+              {/* 배경 그라데이션 효과 */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative flex justify-between items-start mb-6">
+                <div className="flex items-center">
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl mr-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-6">
+                      {equipment.customerName.charAt(0)}
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors duration-300">{equipment.customerName}</h3>
+                    <p className="text-base text-slate-500 font-medium">고객</p>
+                  </div>
+                </div>
+                {/* 액션 버튼 */}
+                <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
                   <button
                     onClick={() => handleViewDetail(equipment)}
-                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-2 py-1 rounded transition-all duration-200 cursor-pointer text-sm"
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-2 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-110"
+                    title="상세보기"
                   >
-                    상세보기
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => handleDelete(equipment.id)}
-                    className="text-red-400 hover:text-red-300 hover:bg-red-900 p-1 rounded transition-all duration-200 cursor-pointer"
+                    className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white p-2 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-110"
                     title="삭제"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -970,32 +1073,107 @@ export default function EquipmentPage() {
                   </button>
                 </div>
               </div>
-              <div className="space-y-2 text-sm text-gray-300">
-                <div><span className="font-medium text-white">장비:</span> {equipment.equipmentType}</div>
-                <div><span className="font-medium text-white">제조사:</span> {equipment.manufacturer}</div>
-                <div><span className="font-medium text-white">모델:</span> {equipment.model}</div>
-                <div><span className="font-medium text-white">기대번호:</span> {equipment.serialNumber}</div>
-                <div><span className="font-medium text-white">사용시간:</span> {equipment.usageHours.toLocaleString()}시간</div>
-                <div><span className="font-medium text-white">ECU:</span> 
-                  <span className="ml-2 px-2 py-1 text-xs bg-blue-600 text-blue-100 rounded-full">
-                    {equipment.ecuType}
-                  </span>
+              {/* 카드 내용 */}
+              <div className="relative space-y-4">
+                {/* 장비 정보 */}
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-blue-300 transition-colors duration-300">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mr-3">
+                      <span className="text-white text-lg">🚜</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">장비 정보</p>
+                      <p className="text-xl font-bold text-slate-800">{equipment.equipmentType}</p>
+                      <p className="text-base text-slate-600">기대번호: {equipment.serialNumber}</p>
+                    </div>
+                  </div>
                 </div>
-                <div><span className="font-medium text-white">ACU:</span> 
-                  <span className="ml-2 px-2 py-1 text-xs bg-green-600 text-green-100 rounded-full">
-                    {equipment.acuType}
-                  </span>
+
+                {/* 제조사/모델 */}
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-blue-300 transition-colors duration-300">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-purple-500 rounded-xl flex items-center justify-center mr-3">
+                      <span className="text-white text-lg">🏭</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">제조사/모델</p>
+                      <p className="text-xl font-bold text-slate-800">{equipment.manufacturer}</p>
+                      <p className="text-base text-slate-600">{equipment.model}</p>
+                    </div>
+                  </div>
                 </div>
-                <div><span className="font-medium text-white">등록일:</span> {equipment.registrationDate}</div>
+
+                {/* 사용시간 */}
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-blue-300 transition-colors duration-300">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center mr-3">
+                      <span className="text-white text-lg">⏰</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">사용시간</p>
+                      <p className="text-xl font-bold text-slate-800">{equipment.usageHours.toLocaleString()}시간</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ECU/ACU */}
+                <div className="flex space-x-2">
+                  <div className="flex-1">
+                    <span className="px-4 py-3 text-base font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-lg block text-center">
+                      ECU: {equipment.ecuType}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <span className="px-4 py-3 text-base font-bold bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-lg block text-center">
+                      ACU: {equipment.acuType}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 등록일 */}
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-blue-300 transition-colors duration-300">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl flex items-center justify-center mr-3">
+                      <span className="text-white text-lg">📅</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">등록일</p>
+                      <p className="text-xl font-bold text-slate-800">{equipment.registrationDate}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 메모 */}
                 {equipment.notes && (
-                  <div><span className="font-medium text-white">메모:</span> {equipment.notes}</div>
+                  <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+                    <div className="flex items-start">
+                      <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center mr-3 mt-1">
+                        <span className="text-white text-lg">📝</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">메모</p>
+                        <p className="text-base text-slate-700 leading-relaxed">{equipment.notes}</p>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
           ))}
           {filteredEquipments.length === 0 && (
-            <div className="col-span-full text-center py-12 text-gray-400">
-              등록된 장비가 없습니다.
+            <div className="col-span-full text-center py-16">
+              <div className="text-8xl mb-6 animate-bounce">🚜</div>
+              <h3 className="text-3xl font-bold text-slate-700 mb-4">등록된 장비가 없습니다</h3>
+              <p className="text-xl text-slate-500 mb-8">새로운 장비를 등록하여 비즈니스를 시작해보세요!</p>
+              <button
+                onClick={() => setIsFormOpen(true)}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-10 py-4 rounded-2xl font-bold text-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center space-x-3 mx-auto"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>첫 장비 등록하기</span>
+              </button>
             </div>
           )}
         </div>
