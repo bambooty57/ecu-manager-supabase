@@ -749,24 +749,6 @@ export default function WorkPage() {
     const initializeApp = async () => {
       console.log('🚀 작업등록 페이지 초기화 시작...')
       
-      // 클라이언트 사이드 렌더링 설정
-      setIsClient(true)
-      
-      // 메모리 사용량 및 페이지 로드 시간 업데이트
-      if (typeof window !== 'undefined') {
-        // 메모리 사용량
-        if ((performance as any).memory) {
-          const memoryMB = ((performance as any).memory.usedJSHeapSize / 1024 / 1024).toFixed(1)
-          setMemoryUsage(`${memoryMB}MB`)
-        }
-        
-        // 페이지 로드 시간
-        if (performance.timing) {
-          const loadTime = (performance.timing.loadEventEnd - performance.timing.navigationStart).toFixed(0)
-          setPageLoadTime(`${loadTime}ms`)
-        }
-      }
-      
       try {
         // 1단계: 로컬스토리지 정리 (한 번만 실행)
         if (typeof window !== 'undefined') {
@@ -2351,10 +2333,6 @@ export default function WorkPage() {
     progress: 0
   })
   
-  // 클라이언트 사이드 렌더링 상태
-  const [isClient, setIsClient] = useState(false)
-  const [memoryUsage, setMemoryUsage] = useState<string>('N/A')
-  const [pageLoadTime, setPageLoadTime] = useState<string>('N/A')
 
   return (
     <AuthGuard>
@@ -2376,101 +2354,6 @@ export default function WorkPage() {
           </div>
         </div>
 
-      {/* 🚀 실시간 성능 모니터링 */}
-      <div className="mb-4 p-4 bg-white/90 backdrop-blur-sm border border-white/20 rounded-2xl shadow-xl">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2 text-sm text-green-400">
-            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span>
-              ⚡ 성능 최적화 + 실시간 동기화 활성화: 이미지 자동 압축, 캐시 시스템, 데이터 실시간 반영이 적용되었습니다.
-            </span>
-          </div>
-          
-          {/* 수동 새로고침 버튼 */}
-          <button
-            type="button"
-            onClick={async () => {
-              console.log('🔄 수동 데이터 새로고침 시작...')
-              
-              // 전체 캐시 강제 삭제
-              console.log('🗑️ 전체 캐시 강제 삭제 중...')
-              await cacheManager.flush()
-              
-              // 상태 초기화
-              console.log('🔄 상태 초기화 중...')
-              setConnectionMethods([])
-              setEcuMakers([])
-              setAcuManufacturers([])
-              setWorkStatus([])
-              setEcuModels([])
-              setAcuModels([])
-              
-              // 데이터 강제 새로고침
-              await Promise.all([
-                loadAllDropdownData(true), // 강제 캐시 무효화
-                loadEquipmentCategories(),
-                loadCustomers()
-              ])
-              
-              console.log('✅ 수동 데이터 새로고침 완료')
-              alert('✅ 모든 데이터가 강제 새로고침되었습니다!\n캐시도 완전히 삭제되었습니다.')
-            }}
-            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
-            title="드롭다운 데이터를 즉시 새로고침합니다"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>새로고침</span>
-          </button>
-
-          {/* 완전한 페이지 새로고침 버튼 */}
-          <button
-            type="button"
-            onClick={() => {
-              console.log('🔄 완전한 페이지 새로고침 실행...')
-              window.location.reload()
-            }}
-            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-medium rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
-            title="페이지 전체를 새로고침합니다 (확실한 방법)"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>새로고침</span>
-          </button>
-        </div>
-        
-        {/* 실시간 성능 메트릭 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-          <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
-            <div className="text-slate-600 font-medium">메모리 사용량</div>
-            <div className="text-green-600 font-mono text-lg font-bold">
-              {isClient ? memoryUsage : 'N/A'}
-            </div>
-          </div>
-          <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
-            <div className="text-slate-600 font-medium">페이지 로드 시간</div>
-            <div className="text-blue-600 font-mono text-lg font-bold">
-              {isClient ? pageLoadTime : 'N/A'}
-            </div>
-          </div>
-          <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
-            <div className="text-slate-600 font-medium">캐시 상태</div>
-            <div className="text-yellow-600 font-mono text-lg font-bold">
-              {cacheManager ? '활성화' : '비활성화'}
-            </div>
-          </div>
-          <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
-            <div className="text-slate-600 font-medium">이미지 최적화</div>
-            <div className="text-purple-600 font-mono text-lg font-bold">
-              WebP 지원
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* 파일 업로드 진행 상황 */}
       {uploadProgress.isUploading && (
