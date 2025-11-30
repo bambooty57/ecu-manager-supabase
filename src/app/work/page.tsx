@@ -2408,8 +2408,8 @@ export default function WorkPage() {
           {/* 고객 및 장비 정보 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="relative" ref={dropdownRef}>
-              <label className="block text-lg font-bold text-slate-700 mb-3">
-                <span className="text-2xl mr-2">👤</span>
+              <label className="block text-2xl font-bold text-purple-700 mb-4 flex items-center">
+                <span className="text-4xl mr-3">👤</span>
                 고객 선택 *
               </label>
               <input
@@ -2422,7 +2422,7 @@ export default function WorkPage() {
                   setFilteredCustomers(customers)
                   setShowCustomerDropdown(true)
                 }}
-                className="w-full bg-white border-slate-300 text-slate-800 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 px-4 py-4 text-lg font-medium"
+                className="w-full bg-purple-50 border-2 border-purple-300 text-slate-800 rounded-2xl shadow-md focus:ring-purple-500 focus:border-purple-500 placeholder-purple-400 px-5 py-5 text-xl font-semibold transition-all duration-300 hover:border-purple-400"
                 placeholder="고객을 선택하거나 검색하세요..."
                 required
                 autoComplete="off"
@@ -2432,15 +2432,15 @@ export default function WorkPage() {
               
               {/* 고객 자동완성 드롭다운 */}
               {showCustomerDropdown && (
-                <div className="absolute z-10 bottom-full mb-1 w-full bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-10 bottom-full mb-2 w-full bg-white border-2 border-purple-300 rounded-2xl shadow-2xl max-h-60 overflow-auto">
                   {isLoadingCustomers ? (
-                    <div className="px-4 py-3 text-gray-400 text-center">
+                    <div className="px-5 py-4 text-purple-600 text-center text-lg font-medium">
                       고객 데이터 로딩 중...
                     </div>
                   ) : filteredCustomers.length > 0 ? (
                     <>
                       {formData.customerName.trim() === '' && (
-                        <div className="px-4 py-2 bg-gray-600 text-sm text-gray-300 border-b border-gray-500">
+                        <div className="px-5 py-3 bg-purple-100 text-lg font-bold text-purple-800 border-b-2 border-purple-300">
                           전체 고객 목록 ({filteredCustomers.length}명)
                         </div>
                       )}
@@ -2448,16 +2448,16 @@ export default function WorkPage() {
                         <div
                           key={customer.id}
                           onClick={() => handleCustomerSelect(customer)}
-                          className="px-4 py-3 hover:bg-gray-600 cursor-pointer border-b border-gray-600 last:border-b-0"
+                          className="px-5 py-4 hover:bg-purple-50 cursor-pointer border-b border-purple-100 last:border-b-0 transition-colors duration-200"
                         >
-                                                      <div className="font-medium text-white">{customer.name}</div>
-                            <div className="text-sm text-gray-300">{customer.phone}</div>
-                            <div className="text-xs text-gray-400">{customer.roadAddress}</div>
+                          <div className="font-bold text-lg text-slate-800">{customer.name}</div>
+                          <div className="text-base text-slate-600 mt-1">{customer.phone}</div>
+                          <div className="text-sm text-slate-500 mt-1">{customer.roadAddress}</div>
                         </div>
                       ))}
                     </>
                   ) : (
-                    <div className="px-4 py-3 text-gray-400 text-center">
+                    <div className="px-5 py-4 text-purple-600 text-center text-lg font-medium">
                       {formData.customerName.trim() === '' ? '고객 데이터를 불러오지 못했습니다.' : '검색 결과가 없습니다.'}
                     </div>
                   )}
@@ -2466,17 +2466,18 @@ export default function WorkPage() {
 
 
               {formData.customerId && (
-                <div className="mt-2 p-3 bg-blue-900/20 border border-blue-700 rounded-md">
-                  <p className="text-sm text-blue-300">
-                    📍 {customers.find(c => c.id.toString() === formData.customerId)?.roadAddress}
+                <div className="mt-3 p-4 bg-purple-100 border-2 border-purple-300 rounded-xl shadow-sm">
+                  <p className="text-lg font-semibold text-purple-800 flex items-center">
+                    <span className="text-2xl mr-2">📍</span>
+                    {customers.find(c => c.id.toString() === formData.customerId)?.roadAddress}
                   </p>
                 </div>
               )}
             </div>
             
             <div>
-              <label className="block text-lg font-bold text-slate-700 mb-3">
-                <span className="text-2xl mr-2">🚜</span>
+              <label className="block text-2xl font-bold text-green-700 mb-4 flex items-center">
+                <span className="text-4xl mr-3">🚜</span>
                 장비 선택 *
               </label>
               <CustomDropdown
@@ -2491,19 +2492,21 @@ export default function WorkPage() {
                 disabled={!formData.customerId}
                 required={true}
                 maxHeight="250px"
+                colorTheme="green"
               />
               {formData.equipmentId && (
-                <div className="mt-2 p-3 bg-green-900/20 border border-green-700 rounded-md">
-                  <p className="text-sm text-green-300">
-                    🚜 {availableEquipment.find(e => e.id.toString() === formData.equipmentId)?.serialNumber}
+                <div className="mt-3 p-4 bg-green-100 border-2 border-green-300 rounded-xl shadow-sm">
+                  <p className="text-lg font-semibold text-green-800 flex items-center">
+                    <span className="text-2xl mr-2">🚜</span>
+                    기대번호: {availableEquipment.find(e => e.id.toString() === formData.equipmentId)?.serialNumber}
                   </p>
                 </div>
               )}
             </div>
             
             <div>
-              <label className="block text-lg font-bold text-slate-700 mb-3">
-                <span className="text-2xl mr-2">📅</span>
+              <label className="block text-2xl font-bold text-blue-700 mb-4 flex items-center">
+                <span className="text-4xl mr-3">📅</span>
                 작업 날짜 *
               </label>
               <input
@@ -2511,32 +2514,34 @@ export default function WorkPage() {
                 name="workDate"
                 value={formData.workDate}
                 onChange={handleInputChange}
-                className="w-full bg-white border-slate-300 text-slate-800 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 px-4 py-4 text-lg font-medium"
+                className="w-full bg-blue-50 border-2 border-blue-300 text-slate-800 rounded-2xl shadow-md focus:ring-blue-500 focus:border-blue-500 px-5 py-5 text-xl font-semibold transition-all duration-300 hover:border-blue-400"
                 required
               />
             </div>
             
             <div>
-              <label className="block text-lg font-bold text-slate-700 mb-3">
-                <span className="text-2xl mr-2">💰</span>
+              <label className="block text-2xl font-bold text-amber-700 mb-4 flex items-center">
+                <span className="text-4xl mr-3">💰</span>
                 전체 작업 금액 (자동 계산)
               </label>
-              <div className="w-full bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 text-green-800 rounded-xl px-4 py-4 text-center border-dashed shadow-inner">
-                {(() => {
-                  // 기존 등록된 작업들의 금액 합계
-                  const existingEcuTotal = remappingWorks.reduce((sum, work) => sum + (parseFloat(work.ecu.price) || 0), 0)
-                  const existingAcuTotal = remappingWorks.reduce((sum, work) => sum + (parseFloat(work.acu.price) || 0), 0)
-                  
-                  // 현재 입력 중인 작업의 금액
-                  const currentEcuPrice = parseFloat(currentRemappingWork.ecu.price) || 0
-                  const currentAcuPrice = parseFloat(currentRemappingWork.acu.price) || 0
-                  
-                  // 전체 합계
-                  const total = existingEcuTotal + existingAcuTotal + currentEcuPrice + currentAcuPrice
-                  return total > 0 ? `💰 ${Math.floor(total / 10000)}만원` : '💰 0만원'
-                })()}
+              <div className="w-full bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-3 border-amber-300 text-amber-900 rounded-2xl px-6 py-6 text-center border-dashed shadow-lg">
+                <div className="text-4xl font-bold">
+                  {(() => {
+                    // 기존 등록된 작업들의 금액 합계
+                    const existingEcuTotal = remappingWorks.reduce((sum, work) => sum + (parseFloat(work.ecu.price) || 0), 0)
+                    const existingAcuTotal = remappingWorks.reduce((sum, work) => sum + (parseFloat(work.acu.price) || 0), 0)
+                    
+                    // 현재 입력 중인 작업의 금액
+                    const currentEcuPrice = parseFloat(currentRemappingWork.ecu.price) || 0
+                    const currentAcuPrice = parseFloat(currentRemappingWork.acu.price) || 0
+                    
+                    // 전체 합계
+                    const total = existingEcuTotal + existingAcuTotal + currentEcuPrice + currentAcuPrice
+                    return total > 0 ? `💰 ${Math.floor(total / 10000)}만원` : '💰 0만원'
+                  })()}
+                </div>
               </div>
-              <div className="mt-2 text-base text-green-600 text-center font-medium">
+              <div className="mt-3 text-xl text-amber-700 text-center font-bold">
                 ECU 금액 + ACU 금액의 합계
               </div>
             </div>

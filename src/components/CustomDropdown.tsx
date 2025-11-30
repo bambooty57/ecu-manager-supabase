@@ -21,6 +21,8 @@ interface CustomDropdownProps {
   onDelete?: (value: string) => void
   deletableOptions?: string[]  // 삭제 가능한 옵션들의 값 배열
   deleteButtonColor?: string
+  // 색상 테마 (선택사항)
+  colorTheme?: 'default' | 'green' | 'purple' | 'blue'
 }
 
 export default function CustomDropdown({
@@ -35,7 +37,8 @@ export default function CustomDropdown({
   required = false,
   onDelete,
   deletableOptions = [],
-  deleteButtonColor = "text-red-400 hover:text-red-600"
+  deleteButtonColor = "text-red-400 hover:text-red-600",
+  colorTheme = 'default'
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -82,6 +85,54 @@ export default function CustomDropdown({
     }
   }
 
+  // 색상 테마에 따른 스타일 클래스
+  const getThemeClasses = () => {
+    switch (colorTheme) {
+      case 'green':
+        return {
+          button: disabled 
+            ? 'bg-green-50 border-2 border-green-200 text-slate-800 opacity-50 cursor-not-allowed' 
+            : 'bg-green-50 border-2 border-green-300 text-slate-800 hover:border-green-400 cursor-pointer',
+          dropdown: 'bg-white border-2 border-green-300',
+          search: 'bg-green-50 border border-green-200 text-slate-800',
+          option: 'hover:bg-green-50 text-slate-800',
+          selected: 'bg-green-100 text-green-800'
+        }
+      case 'purple':
+        return {
+          button: disabled 
+            ? 'bg-purple-50 border-2 border-purple-200 text-slate-800 opacity-50 cursor-not-allowed' 
+            : 'bg-purple-50 border-2 border-purple-300 text-slate-800 hover:border-purple-400 cursor-pointer',
+          dropdown: 'bg-white border-2 border-purple-300',
+          search: 'bg-purple-50 border border-purple-200 text-slate-800',
+          option: 'hover:bg-purple-50 text-slate-800',
+          selected: 'bg-purple-100 text-purple-800'
+        }
+      case 'blue':
+        return {
+          button: disabled 
+            ? 'bg-blue-50 border-2 border-blue-200 text-slate-800 opacity-50 cursor-not-allowed' 
+            : 'bg-blue-50 border-2 border-blue-300 text-slate-800 hover:border-blue-400 cursor-pointer',
+          dropdown: 'bg-white border-2 border-blue-300',
+          search: 'bg-blue-50 border border-blue-200 text-slate-800',
+          option: 'hover:bg-blue-50 text-slate-800',
+          selected: 'bg-blue-100 text-blue-800'
+        }
+      default:
+        return {
+          button: disabled 
+            ? 'bg-gray-700 border border-gray-600 text-white opacity-50 cursor-not-allowed' 
+            : 'bg-gray-700 border border-gray-600 text-white hover:bg-gray-600 cursor-pointer',
+          dropdown: 'bg-gray-700 border border-gray-600',
+          search: 'bg-gray-600 border border-gray-500 text-white',
+          option: 'hover:bg-gray-600 text-gray-300',
+          selected: 'bg-blue-600 text-white'
+        }
+    }
+  }
+
+  const themeClasses = getThemeClasses()
+
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>
       {/* 선택된 값 표시 버튼 */}
@@ -89,12 +140,10 @@ export default function CustomDropdown({
         type="button"
         onClick={toggleDropdown}
         disabled={disabled}
-        className={`w-full bg-gray-700 border border-gray-600 text-white rounded-md px-3 py-3 text-left shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-600 cursor-pointer'
-        }`}
+        className={`w-full rounded-2xl px-5 py-5 text-left shadow-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xl font-semibold transition-all duration-300 ${themeClasses.button}`}
       >
         <div className="flex justify-between items-center">
-          <span className={selectedOption ? 'text-white' : 'text-gray-400'}>
+          <span className={selectedOption ? (colorTheme === 'default' ? 'text-white' : 'text-slate-800') : (colorTheme === 'default' ? 'text-gray-400' : 'text-slate-500')}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           <svg
@@ -110,17 +159,17 @@ export default function CustomDropdown({
 
       {/* 드롭다운 옵션들 */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg">
+        <div className={`absolute z-50 w-full mt-2 rounded-2xl shadow-2xl ${themeClasses.dropdown}`}>
           {/* 검색 입력 */}
           {options.length > 5 && (
-            <div className="p-2 border-b border-gray-600">
+            <div className={`p-3 border-b-2 ${colorTheme === 'default' ? 'border-gray-600' : 'border-slate-200'}`}>
               <input
                 ref={inputRef}
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="검색..."
-                className="w-full bg-gray-600 border border-gray-500 text-white rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full rounded-xl px-3 py-2 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${themeClasses.search}`}
               />
             </div>
           )}
@@ -136,14 +185,14 @@ export default function CustomDropdown({
                 return (
                   <div
                     key={`${option.value}-${index}`}
-                    className={`w-full flex items-center hover:bg-gray-600 focus-within:bg-gray-600 ${
-                      option.value === value ? 'bg-blue-600 text-white' : 'text-gray-300'
+                    className={`w-full flex items-center transition-colors duration-200 ${
+                      option.value === value ? themeClasses.selected : themeClasses.option
                     }`}
                   >
                     <button
                       type="button"
                       onClick={() => handleOptionClick(option.value)}
-                      className="flex-1 text-left px-3 py-2 focus:outline-none"
+                      className="flex-1 text-left px-5 py-4 focus:outline-none text-lg font-medium"
                     >
                       {option.label}
                     </button>
@@ -166,7 +215,7 @@ export default function CustomDropdown({
                 )
               })
             ) : (
-              <div className="px-3 py-2 text-gray-400 text-sm">검색 결과가 없습니다</div>
+              <div className={`px-5 py-4 text-center text-lg font-medium ${colorTheme === 'default' ? 'text-gray-400' : 'text-slate-500'}`}>검색 결과가 없습니다</div>
             )}
           </div>
         </div>
