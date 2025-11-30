@@ -1077,7 +1077,7 @@ function HistoryPage() {
         ecuType = firstWork.ecuType || firstWork.ecuTypeCustom || ecuType;
       }
       if (!ecuConnectionMethod || ecuConnectionMethod === 'N/A') {
-        ecuConnectionMethod = firstWork.ecu?.connectionMethod || firstWork.ecu?.connectionMethodCustom || firstWork.connectionMethod || ecuConnectionMethod;
+        ecuConnectionMethod = firstWork.ecu?.connectionMethod || firstWork.ecu?.connectionMethodCustom || ecuConnectionMethod;
       }
       
       // ECU 카테고리 추출
@@ -1105,7 +1105,7 @@ function HistoryPage() {
         acuModel = firstWork.acuModel || firstWork.acuModelCustom || acuModel;
       }
       if (!acuConnectionMethod || acuConnectionMethod === 'N/A') {
-        acuConnectionMethod = firstWork.acu?.connectionMethod || firstWork.acu?.connectionMethodCustom || firstWork.connectionMethod || acuConnectionMethod;
+        acuConnectionMethod = firstWork.acu?.connectionMethod || firstWork.acu?.connectionMethodCustom || acuConnectionMethod;
       }
       
       // ACU 도구 정보 구성 (ACU는 일반적으로 FLEX 사용)
@@ -1311,33 +1311,32 @@ function HistoryPage() {
             },
           }}
         />
-        <main className="pt-20 sm:pt-24 pb-8 sm:pb-12 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-          <div className="max-w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-            <div className="space-y-4 sm:space-y-6 md:space-y-8">
+        <main className="pt-24 pb-12 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="space-y-8">
               {/* 다크 모드 토글 */}
               <DarkModeToggle />
               
               {/* 홈으로 돌아가기 버튼 */}
-              <div className="mb-4 sm:mb-6">
+              <div className="mb-6">
                 <button
                   onClick={() => window.history.back()}
-                  className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-white/90 backdrop-blur-sm border-2 border-slate-300 text-slate-700 rounded-lg sm:rounded-xl hover:bg-blue-50 hover:border-blue-400 transition-all duration-300 font-bold text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg"
+                  className="flex items-center space-x-2 px-4 py-2 bg-white/90 backdrop-blur-sm border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-blue-50 hover:border-blue-400 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg"
                 >
-                  <span className="text-xl sm:text-2xl">←</span>
-                  <span className="hidden sm:inline">홈으로 돌아가기</span>
-                  <span className="sm:hidden">홈</span>
+                  <span className="text-2xl">←</span>
+                  <span>홈으로 돌아가기</span>
                 </button>
               </div>
 
               {/* 페이지 제목 */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl border border-white/20">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
                 <div className="flex justify-between items-center">
                   <div className="animate-slideIn">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800 flex items-center">
-                      <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mr-2 sm:mr-3 md:mr-4">📋</span>
-                      <span className="break-words">작업 이력</span>
+                    <h1 className="text-5xl font-bold text-slate-800 flex items-center">
+                      <span className="text-6xl mr-4">📋</span>
+                      작업 이력
                     </h1>
-                    <p className="mt-2 sm:mt-3 text-base sm:text-lg md:text-xl text-slate-600">등록된 모든 작업 기록을 확인하고 관리할 수 있습니다.</p>
+                    <p className="mt-3 text-xl text-slate-600">등록된 모든 작업 기록을 확인하고 관리할 수 있습니다.</p>
                   </div>
                 </div>
               </div>
@@ -1355,15 +1354,15 @@ function HistoryPage() {
               )}
 
               {/* 필터 섹션 */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl border-2 border-slate-200">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 mb-4 sm:mb-6 md:mb-8 flex items-center">
-                  <span className="text-2xl sm:text-3xl md:text-4xl mr-2 sm:mr-2.5 md:mr-3">🔍</span>
-                  <span className="break-words">필터 및 검색</span>
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-2 border-slate-200">
+                <h2 className="text-3xl font-bold text-slate-800 mb-8 flex items-center">
+                  <span className="text-4xl mr-3">🔍</span>
+                  필터 및 검색
                 </h2>
                 
                 {/* 검색 입력 */}
-                <div className="mb-4 sm:mb-5 md:mb-6">
-                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <div className="mb-6">
+                  <div className="flex space-x-3">
                     <div className="flex-1 relative">
                       <input
                         type="text"
@@ -1375,12 +1374,12 @@ function HistoryPage() {
                             handleSearch(searchQuery)
                           }
                         }}
-                        className="w-full px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-4 bg-white border-2 border-slate-300 text-slate-800 rounded-lg sm:rounded-xl md:rounded-2xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 text-sm sm:text-base md:text-lg font-medium placeholder:text-slate-400"
+                        className="w-full px-5 py-4 bg-white border-2 border-slate-300 text-slate-800 rounded-2xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 text-lg font-medium placeholder:text-slate-400"
                       />
                       {searchQuery && (
                         <button
                           onClick={clearSearch}
-                          className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-red-500 text-lg sm:text-xl font-bold hover:scale-125 transition-all duration-200"
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-red-500 text-xl font-bold hover:scale-125 transition-all duration-200"
                         >
                           ✕
                         </button>
@@ -1389,7 +1388,7 @@ function HistoryPage() {
                     <button
                       onClick={() => handleSearch(searchQuery)}
                       disabled={isSearching}
-                      className="px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 md:py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg sm:rounded-xl md:rounded-2xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base md:text-lg font-bold shadow-lg hover:shadow-xl hover:scale-105 w-full sm:w-auto"
+                      className="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-bold shadow-lg hover:shadow-xl hover:scale-105"
                     >
                       {isSearching ? '검색 중...' : '🔍 검색'}
                     </button>
@@ -1431,44 +1430,44 @@ function HistoryPage() {
                 </div>
 
                 {/* 필터 옵션들 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* 날짜 필터 */}
                   <div>
-                    <label className="block text-sm sm:text-base md:text-lg font-bold text-slate-700 mb-2 sm:mb-3">
-                      <span className="text-xl sm:text-2xl mr-1 sm:mr-2">📅</span>
+                    <label className="block text-lg font-bold text-slate-700 mb-3">
+                      <span className="text-2xl mr-2">📅</span>
                       시작일
                     </label>
                     <input
                       type="date"
                       value={filters.dateFrom}
                       onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-lg sm:rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-sm sm:text-base md:text-lg font-medium"
+                      className="w-full px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm sm:text-base md:text-lg font-bold text-slate-700 mb-2 sm:mb-3">
-                      <span className="text-xl sm:text-2xl mr-1 sm:mr-2">📅</span>
+                    <label className="block text-lg font-bold text-slate-700 mb-3">
+                      <span className="text-2xl mr-2">📅</span>
                       종료일
                     </label>
                     <input
                       type="date"
                       value={filters.dateTo}
                       onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-lg sm:rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-sm sm:text-base md:text-lg font-medium"
+                      className="w-full px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     />
                   </div>
 
                   {/* 고객 필터 */}
                   <div>
-                    <label className="block text-sm sm:text-base md:text-lg font-bold text-slate-700 mb-2 sm:mb-3">
-                      <span className="text-xl sm:text-2xl mr-1 sm:mr-2">👤</span>
+                    <label className="block text-lg font-bold text-slate-700 mb-3">
+                      <span className="text-2xl mr-2">👤</span>
                       고객
                     </label>
                     <select
                       value={filters.customer}
                       onChange={(e) => setFilters(prev => ({ ...prev, customer: e.target.value }))}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-lg sm:rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-sm sm:text-base md:text-lg font-medium"
+                      className="w-full px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     >
                       <option value="">전체 고객</option>
                       {customers.map(customer => (
@@ -1481,14 +1480,14 @@ function HistoryPage() {
 
                   {/* 상태 필터 */}
                   <div>
-                    <label className="block text-sm sm:text-base md:text-lg font-bold text-slate-700 mb-2 sm:mb-3">
-                      <span className="text-xl sm:text-2xl mr-1 sm:mr-2">📊</span>
+                    <label className="block text-lg font-bold text-slate-700 mb-3">
+                      <span className="text-2xl mr-2">📊</span>
                       상태
                     </label>
                     <select
                       value={filters.status}
                       onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-lg sm:rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-sm sm:text-base md:text-lg font-medium"
+                      className="w-full px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     >
                       <option value="">전체 상태</option>
                       {WORK_STATUS.map(status => (
@@ -1501,7 +1500,7 @@ function HistoryPage() {
                 </div>
 
                 {/* 필터 초기화 버튼 */}
-                <div className="mt-4 sm:mt-5 md:mt-6">
+                <div className="mt-6">
                   <button
                     onClick={() => setFilters({
                       dateFrom: '',
@@ -1515,7 +1514,7 @@ function HistoryPage() {
                       tuningWork: '',
                       status: ''
                     })}
-                    className="px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg sm:rounded-xl md:rounded-2xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 text-sm sm:text-base md:text-lg font-bold shadow-lg hover:shadow-xl hover:scale-105 w-full sm:w-auto"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 text-lg font-bold shadow-lg hover:shadow-xl hover:scale-105"
                   >
                     🔄 필터 초기화
                   </button>
@@ -1523,26 +1522,26 @@ function HistoryPage() {
               </div>
 
               {/* 테이블 컨트롤 */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl border-2 border-slate-200">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-5 md:mb-6 space-y-3 sm:space-y-0">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 md:space-x-4">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 flex items-center">
-                      <span className="text-2xl sm:text-3xl md:text-4xl mr-2 sm:mr-2.5 md:mr-3">📊</span>
-                      <span className="break-words">작업 이력 테이블</span>
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-2 border-slate-200">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                    <h2 className="text-3xl font-bold text-slate-800 flex items-center">
+                      <span className="text-4xl mr-3">📊</span>
+                      작업 이력 테이블
                     </h2>
-                    <span className="text-slate-600 text-sm sm:text-base md:text-lg font-semibold">
+                    <span className="text-slate-600 text-lg font-semibold">
                       총 {pagination.totalItems}개 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
-                      {pagination.totalPages > 1 && <span className="hidden sm:inline"> ({pagination.currentPage}/{pagination.totalPages} 페이지)</span>}
+                      {pagination.totalPages > 1 && ` (${pagination.currentPage}/${pagination.totalPages} 페이지)`}
                     </span>
                   </div>
 
                   {/* 페이지 크기 선택 */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 md:space-x-3 w-full sm:w-auto">
-                    <span className="text-slate-700 text-sm sm:text-base md:text-lg font-bold">페이지당 항목:</span>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-slate-700 text-lg font-bold">페이지당 항목:</span>
                     <select
                       value={pagination.itemsPerPage}
                       onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                      className="px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-lg sm:rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-sm sm:text-base md:text-lg font-medium w-full sm:w-auto"
+                      className="px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     >
                       <option value={2}>2개</option>
                       <option value={5}>5개</option>
@@ -1566,96 +1565,94 @@ function HistoryPage() {
                         <thead>
                           <tr className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200" role="row">
                             <th 
-                              className="py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors"
                               onClick={() => handleSort('work_date')}
                               role="columnheader"
                               aria-sort={sortField === 'work_date' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                <span className="text-xl sm:text-2xl md:text-3xl">📅</span>
-                                <span className="hidden sm:inline">작업일</span>
-                                <span className="sm:hidden">일</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">📅</span>
+                                <span>작업일</span>
                                 {sortField === 'work_date' && (
-                                  <span aria-hidden="true" className="text-yellow-300 text-sm sm:text-base">
+                                  <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
                                   </span>
                                 )}
                               </div>
                             </th>
                             <th 
-                              className="py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors"
                               onClick={() => handleSort('customer_name')}
                               role="columnheader"
                               aria-sort={sortField === 'customer_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                <span className="text-xl sm:text-2xl md:text-3xl">👤</span>
-                                <span className="hidden sm:inline">고객명</span>
-                                <span className="sm:hidden">고객</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">👤</span>
+                                <span>고객명</span>
                                 {sortField === 'customer_name' && (
-                                  <span aria-hidden="true" className="text-yellow-300 text-sm sm:text-base">
+                                  <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
                                   </span>
                                 )}
                               </div>
                             </th>
                             <th 
-                              className="py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors hidden sm:table-cell"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors"
                               onClick={() => handleSort('equipment_model')}
                               role="columnheader"
                               aria-sort={sortField === 'equipment_model' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                <span className="text-xl sm:text-2xl md:text-3xl">🚜</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">🚜</span>
                                 <span>장비 정보</span>
                                 {sortField === 'equipment_model' && (
-                                  <span aria-hidden="true" className="text-yellow-300 text-sm sm:text-base">
+                                  <span aria-hidden="true" className="text-yellow-300">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
                                   </span>
                                 )}
                               </div>
                             </th>
                             <th 
-                              className="py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 hidden md:table-cell"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 hidden md:table-cell"
                               role="columnheader"
                             >
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                <span className="text-xl sm:text-2xl md:text-3xl">🔧</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">🔧</span>
                                 <span>ECU 정보</span>
                               </div>
                             </th>
                             <th 
-                              className="py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 hidden md:table-cell"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 hidden md:table-cell"
                               role="columnheader"
                             >
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                <span className="text-xl sm:text-2xl md:text-3xl">⚙️</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">⚙️</span>
                                 <span>ACU 정보</span>
                               </div>
                             </th>
                             <th 
-                              className="py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors hidden lg:table-cell"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors hidden sm:table-cell"
                               onClick={() => handleSort('price')}
                               role="columnheader"
                               aria-sort={sortField === 'price' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                             >
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                <span className="text-xl sm:text-2xl md:text-3xl">💰</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">💰</span>
                                 <span>전체 금액</span>
                                 {sortField === 'price' && (
-                                  <span aria-hidden="true" className="text-yellow-500 text-sm sm:text-base">
+                                  <span aria-hidden="true" className="text-yellow-500">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
                                   </span>
                                 )}
                               </div>
                             </th>
                             <th 
-                              className="py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700"
                               role="columnheader"
                             >
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                <span className="text-xl sm:text-2xl md:text-3xl">⚡</span>
-                                <span className="hidden sm:inline">작업</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-3xl">⚡</span>
+                                <span>작업</span>
                               </div>
                             </th>
                           </tr>
@@ -1701,13 +1698,13 @@ function HistoryPage() {
                             ))
                           ) : filteredRecords.length === 0 ? (
                             <tr role="row">
-                              <td colSpan={8} className="py-8 sm:py-12 md:py-16 text-center" role="cell">
-                                <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                                  <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-4 sm:mb-5 md:mb-6">📋</div>
-                                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700">
+                              <td colSpan={8} className="py-16 text-center" role="cell">
+                                <div className="flex flex-col items-center space-y-4">
+                                  <div className="text-8xl mb-6">📋</div>
+                                  <p className="text-2xl font-bold text-slate-700">
                                     {workRecords.length === 0 ? '작업 이력이 없습니다.' : '검색 결과가 없습니다.'}
                                   </p>
-                                  <p className="text-base sm:text-lg md:text-xl text-slate-500 font-medium">
+                                  <p className="text-xl text-slate-500 font-medium">
                                     {workRecords.length === 0 ? '새로운 작업을 등록해보세요.' : '다른 검색어를 시도해보세요.'}
                                   </p>
                                 </div>
@@ -1742,14 +1739,14 @@ function HistoryPage() {
                               return (
                                 <tr 
                                   key={record.id} 
-                                  className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-100/30 hover:shadow-md transition-all duration-200 border-b-2 border-slate-200`} 
+                                  className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-50 transition-colors border-b-2 border-slate-200`} 
                                   role="row"
                                 >
                                   {/* 작업일 */}
-                                  <td className="py-2 sm:py-3 px-2 sm:px-3 md:px-4" role="cell">
+                                  <td className="py-3 px-4" role="cell">
                                     <div>
-                                      <div className="bg-slate-100 rounded-lg sm:rounded-xl px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 inline-block">
-                                        <p className="text-sm sm:text-base md:text-xl font-bold text-slate-800">
+                                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                                        <p className="text-xl font-bold text-slate-800">
                                           {new Date(record.work_date).toLocaleDateString('ko-KR')}
                                         </p>
                                       </div>
@@ -1757,62 +1754,57 @@ function HistoryPage() {
                                   </td>
                                   
                                   {/* 고객명 */}
-                                  <td className="py-2 sm:py-3 px-2 sm:px-3 md:px-4" role="cell">
+                                  <td className="py-3 px-4" role="cell">
                                     <div>
                                       <div className="flex items-center">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-bold text-sm sm:text-base md:text-lg mr-2 sm:mr-3 md:mr-4 shadow-lg">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg mr-4 shadow-lg">
                                           {customerName.charAt(0)}
                                         </div>
-                                        <div className="min-w-0 flex-1">
-                                          <p className="text-sm sm:text-base md:text-xl font-bold text-slate-800 truncate">{customerName}</p>
-                                          <p className="text-xs sm:text-sm md:text-base text-slate-500 hidden sm:block">고객</p>
+                                        <div>
+                                          <p className="text-xl font-bold text-slate-800">{customerName}</p>
+                                          <p className="text-base text-slate-500">고객</p>
                                         </div>
                                       </div>
                                     </div>
                                   </td>
                                   
                                   {/* 장비 정보 */}
-                                  <td className="py-2 sm:py-3 px-2 sm:px-3 md:px-4 hidden sm:table-cell" role="cell">
+                                  <td className="py-3 px-4" role="cell">
                                     <div>
-                                      <div className="bg-slate-100 rounded-lg sm:rounded-xl px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 inline-block">
-                                        <p className="text-sm sm:text-base md:text-xl font-bold text-slate-800 break-words">{equipmentManufacturer} {equipmentModel}</p>
-                                        <p className="text-xs sm:text-sm md:text-base text-slate-500">{equipmentType}</p>
+                                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                                        <p className="text-xl font-bold text-slate-800">{equipmentManufacturer} {equipmentModel}</p>
+                                        <p className="text-base text-slate-500">{equipmentType}</p>
                                       </div>
                                     </div>
                                   </td>
                                   
                                   {/* ECU 정보 */}
-                                  <td className="py-2 sm:py-3 px-2 sm:px-3 md:px-4 hidden md:table-cell" role="cell">
+                                  <td className="py-3 px-4 hidden md:table-cell" role="cell">
                                     {ecuInfo && ecuInfo.maker ? (
                                       <div>
-                                        <p className="text-sm sm:text-base md:text-xl font-bold text-blue-600 break-words">
+                                        <p className="text-xl font-bold text-blue-600">
                                           {ecuInfo.maker} {ecuInfo.type}
                                         </p>
-                                        <p className="text-xs sm:text-sm md:text-base text-slate-600 font-medium break-words">
+                                        <p className="text-base text-slate-600 font-medium">
                                           {ecuInfo.selectedWorks?.join(', ') || 'N/A'}
                                         </p>
-                                        {(ecuInfo.connectionMethod || ecuInfo.connectionMethodCustom) && (
-                                          <p className="text-xs sm:text-sm text-purple-600 font-medium break-words">
-                                            🔌 연결: {ecuInfo.connectionMethod || ecuInfo.connectionMethodCustom}
-                                          </p>
-                                        )}
                                         {ecuInfo.workDetails && (
-                                          <p className="text-xs sm:text-sm text-blue-600 truncate font-medium" title={ecuInfo.workDetails}>
+                                          <p className="text-sm text-blue-600 truncate font-medium" title={ecuInfo.workDetails}>
                                             📝 {ecuInfo.workDetails.length > 20 ? `${ecuInfo.workDetails.substring(0, 20)}...` : ecuInfo.workDetails}
                                           </p>
                                         )}
-                                        <p className="text-sm sm:text-base md:text-xl font-bold text-blue-700">
+                                        <p className="text-xl font-bold text-blue-700">
                                           ₩{(ecuInfo.price || 0).toLocaleString()}
                                         </p>
-                                        <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
-                                          <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full ${
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
                                             ecuStatus === '완료' ? 'bg-green-500 border-green-400' :
                                             ecuStatus === '진행중' ? 'bg-blue-500 border-blue-400' :
                                             ecuStatus === '실패' ? 'bg-red-500 border-red-400' :
                                             ecuStatus === 'AS' ? 'bg-gray-600 border-gray-500' :
                                             'bg-gray-400 border-gray-300'
                                           } border-2 shadow-md`}>
-                                            <span className="text-xs sm:text-sm font-bold">
+                                            <span className="text-sm font-bold">
                                               {ecuStatus === '완료' ? '✅' :
                                                ecuStatus === '진행중' ? '⏳' :
                                                ecuStatus === '실패' ? '❌' :
@@ -1820,7 +1812,7 @@ function HistoryPage() {
                                                '➖'}
                                             </span>
                                           </div>
-                                          <span className={`text-xs sm:text-sm md:text-base font-bold ${
+                                          <span className={`text-base font-bold ${
                                             ecuStatus === 'AS' ? 'text-slate-700' :
                                             ecuStatus === 'N/A' ? 'text-slate-500' :
                                             'text-slate-700'
@@ -1831,14 +1823,14 @@ function HistoryPage() {
                                       </div>
                                     ) : (
                                       <div>
-                                        <p className="text-xs sm:text-sm md:text-base text-slate-400 font-medium">N/A</p>
-                                        <p className="text-xs sm:text-sm text-slate-500">N/A</p>
-                                        <p className="text-sm sm:text-base md:text-lg font-bold text-blue-400">₩0</p>
-                                        <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
-                                          <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-gray-400 border-gray-300 border-2 shadow-md">
-                                            <span className="text-xs sm:text-sm font-bold">➖</span>
+                                        <p className="text-base text-slate-400 font-medium">N/A</p>
+                                        <p className="text-sm text-slate-500">N/A</p>
+                                        <p className="text-lg font-bold text-blue-400">₩0</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-400 border-gray-300 border-2 shadow-md">
+                                            <span className="text-sm font-bold">➖</span>
                                           </div>
-                                          <span className="text-xs sm:text-sm md:text-base font-bold text-slate-500">
+                                          <span className="text-base font-bold text-slate-500">
                                             N/A
                                           </span>
                                         </div>
@@ -1847,37 +1839,32 @@ function HistoryPage() {
                                   </td>
                                   
                                   {/* ACU 정보 */}
-                                  <td className="py-2 sm:py-3 px-2 sm:px-3 md:px-4 hidden md:table-cell" role="cell">
+                                  <td className="py-3 px-4 hidden md:table-cell" role="cell">
                                     {acuInfo && acuInfo.manufacturer ? (
                                       <div>
-                                        <p className="text-sm sm:text-base md:text-xl font-bold text-green-600 break-words">
+                                        <p className="text-xl font-bold text-green-600">
                                           {acuInfo.manufacturer} {acuInfo.model}
                                         </p>
-                                        <p className="text-xs sm:text-sm md:text-base text-slate-600 font-medium break-words">
+                                        <p className="text-base text-slate-600 font-medium">
                                           {acuInfo.selectedWorks?.join(', ') || 'N/A'}
                                         </p>
-                                        {(acuInfo.connectionMethod || acuInfo.connectionMethodCustom) && (
-                                          <p className="text-xs sm:text-sm text-purple-600 font-medium break-words">
-                                            🔌 연결: {acuInfo.connectionMethod || acuInfo.connectionMethodCustom}
-                                          </p>
-                                        )}
                                         {acuInfo.workDetails && (
-                                          <p className="text-xs sm:text-sm text-green-600 truncate font-medium" title={acuInfo.workDetails}>
+                                          <p className="text-sm text-green-600 truncate font-medium" title={acuInfo.workDetails}>
                                             📝 {acuInfo.workDetails.length > 20 ? `${acuInfo.workDetails.substring(0, 20)}...` : acuInfo.workDetails}
                                           </p>
                                         )}
-                                        <p className="text-sm sm:text-base md:text-xl font-bold text-green-700">
+                                        <p className="text-xl font-bold text-green-700">
                                           ₩{(acuInfo.price || 0).toLocaleString()}
                                         </p>
-                                        <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
-                                          <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full ${
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
                                             acuStatus === '완료' ? 'bg-green-500 border-green-400' :
                                             acuStatus === '진행중' ? 'bg-blue-500 border-blue-400' :
                                             acuStatus === '실패' ? 'bg-red-500 border-red-400' :
                                             acuStatus === 'AS' ? 'bg-gray-600 border-gray-500' :
                                             'bg-gray-400 border-gray-300'
                                           } border-2 shadow-md`}>
-                                            <span className="text-xs sm:text-sm font-bold">
+                                            <span className="text-sm font-bold">
                                               {acuStatus === '완료' ? '✅' :
                                                acuStatus === '진행중' ? '⏳' :
                                                acuStatus === '실패' ? '❌' :
@@ -1885,7 +1872,7 @@ function HistoryPage() {
                                                '➖'}
                                             </span>
                                           </div>
-                                          <span className={`text-xs sm:text-sm md:text-base font-bold ${
+                                          <span className={`text-base font-bold ${
                                             acuStatus === 'AS' ? 'text-slate-700' :
                                             acuStatus === 'N/A' ? 'text-slate-500' :
                                             'text-slate-700'
@@ -1896,14 +1883,14 @@ function HistoryPage() {
                                       </div>
                                     ) : (
                                       <div>
-                                        <p className="text-xs sm:text-sm md:text-base text-slate-400 font-medium">N/A</p>
-                                        <p className="text-xs sm:text-sm text-slate-500">N/A</p>
-                                        <p className="text-sm sm:text-base md:text-lg font-bold text-green-400">₩0</p>
-                                        <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
-                                          <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-gray-400 border-gray-300 border-2 shadow-md">
-                                            <span className="text-xs sm:text-sm font-bold">➖</span>
+                                        <p className="text-base text-slate-400 font-medium">N/A</p>
+                                        <p className="text-sm text-slate-500">N/A</p>
+                                        <p className="text-lg font-bold text-green-400">₩0</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-400 border-gray-300 border-2 shadow-md">
+                                            <span className="text-sm font-bold">➖</span>
                                           </div>
-                                          <span className="text-xs sm:text-sm md:text-base font-bold text-slate-500">
+                                          <span className="text-base font-bold text-slate-500">
                                             N/A
                                           </span>
                                         </div>
@@ -1912,40 +1899,39 @@ function HistoryPage() {
                                   </td>
                                   
                                   {/* 전체 금액 */}
-                                  <td className="py-2 sm:py-3 px-2 sm:px-3 md:px-4 hidden lg:table-cell" role="cell">
-                                    <div className="bg-amber-50 border-2 border-amber-300 rounded-lg sm:rounded-xl px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 inline-block">
-                                      <p className="text-base sm:text-lg md:text-2xl font-bold text-amber-800">
+                                  <td className="py-3 px-4 hidden sm:table-cell" role="cell">
+                                    <div className="bg-amber-50 border-2 border-amber-300 rounded-xl px-4 py-2 inline-block">
+                                      <p className="text-2xl font-bold text-amber-800">
                                         ₩{totalPrice.toLocaleString()}
                                       </p>
                                     </div>
                                   </td>
                                   
                                   {/* 작업 */}
-                                  <td className="py-2 sm:py-3 px-2 sm:px-3 md:px-4" role="cell">
-                                    <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
+                                  <td className="py-3 px-4" role="cell">
+                                    <div className="flex items-center space-x-3">
                                       <button
                                         onClick={() => handleViewDetail(record)}
-                                        className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg sm:rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 cursor-pointer text-xs sm:text-sm md:text-base font-bold shadow-md hover:shadow-lg hover:scale-105"
+                                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 cursor-pointer text-base font-bold shadow-md hover:shadow-lg hover:scale-105"
                                         title="상세보기"
                                       >
-                                        <span className="hidden sm:inline">👁️ 상세보기</span>
-                                        <span className="sm:hidden">👁️</span>
+                                        👁️ 상세보기
                                       </button>
                                       <button
                                         onClick={() => handleEdit(record)}
-                                        className="p-1.5 sm:p-2 md:p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg sm:rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
+                                        className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
                                         title="수정"
                                       >
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                       </button>
                                       <button
                                         onClick={() => showDeleteConfirm(record)}
-                                        className="p-1.5 sm:p-2 md:p-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg sm:rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
+                                        className="p-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
                                         title="삭제"
                                       >
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
                                       </button>
@@ -1963,25 +1949,25 @@ function HistoryPage() {
 
                 {/* 고급 페이지네이션 */}
                 {pagination.totalPages > 1 && (
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 mb-4 sm:mb-5 md:mb-6 border-2 border-slate-200 shadow-xl">
-                    <div className="flex flex-col lg:flex-row items-center justify-between space-y-3 sm:space-y-4 lg:space-y-0">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-6 border-2 border-slate-200 shadow-xl">
+                    <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0">
                       {/* 페이지 정보 */}
-                      <div className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-3 md:space-x-4 text-center sm:text-left">
-                        <span className="text-slate-700 text-sm sm:text-base md:text-lg font-bold">
+                      <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <span className="text-slate-700 text-lg font-bold">
                           총 {pagination.totalItems}개 항목 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
                         </span>
-                        <span className="text-slate-600 text-sm sm:text-base md:text-lg font-semibold">
+                        <span className="text-slate-600 text-lg font-semibold">
                           페이지 {pagination.currentPage} / {pagination.totalPages}
                         </span>
                       </div>
 
                       {/* 페이지네이션 컨트롤 */}
-                      <div className="flex items-center space-x-1 sm:space-x-2">
+                      <div className="flex items-center space-x-2">
                         {/* 첫 페이지 버튼 */}
                         <button
                           onClick={handleFirstPage}
                           disabled={pagination.currentPage === 1}
-                          className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-lg sm:rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
                           title="첫 페이지"
                           aria-label="첫 페이지로 이동"
                         >
@@ -1992,7 +1978,7 @@ function HistoryPage() {
                         <button
                           onClick={handlePreviousPage}
                           disabled={pagination.currentPage === 1}
-                          className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-lg sm:rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
                           title="이전 페이지"
                           aria-label="이전 페이지로 이동"
                         >
@@ -2004,7 +1990,7 @@ function HistoryPage() {
                           <button
                             key={page}
                             onClick={() => handlePageChange(page)}
-                            className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg ${
+                            className={`px-4 py-2 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-lg shadow-md hover:shadow-lg ${
                               pagination.currentPage === page
                                 ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 scale-105'
                                 : 'bg-white border-2 border-slate-300 text-slate-700 hover:bg-blue-50 hover:border-blue-400 hover:scale-105'
@@ -2020,7 +2006,7 @@ function HistoryPage() {
                         <button
                           onClick={handleNextPage}
                           disabled={pagination.currentPage === pagination.totalPages}
-                          className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-lg sm:rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
                           title="다음 페이지"
                           aria-label="다음 페이지로 이동"
                         >
@@ -2031,7 +2017,7 @@ function HistoryPage() {
                         <button
                           onClick={handleLastPage}
                           disabled={pagination.currentPage === pagination.totalPages}
-                          className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-lg sm:rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
                           title="마지막 페이지"
                           aria-label="마지막 페이지로 이동"
                         >
@@ -2040,12 +2026,12 @@ function HistoryPage() {
                       </div>
 
                       {/* 페이지당 항목 수 선택 */}
-                      <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 md:space-x-3 w-full sm:w-auto">
-                        <span className="text-slate-700 text-sm sm:text-base md:text-lg font-bold">페이지당:</span>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-slate-700 text-lg font-bold">페이지당:</span>
                         <select
                           value={pagination.itemsPerPage}
                           onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white border-2 border-slate-300 text-slate-800 rounded-lg sm:rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-sm sm:text-base md:text-lg font-medium w-full sm:w-auto"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                         >
                           <option value={2}>2개</option>
                           <option value={5}>5개</option>
@@ -2083,31 +2069,31 @@ function HistoryPage() {
 
           {/* 삭제 확인 모달 */}
           {showDeleteConfirmModal && recordToDelete && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 max-w-md w-full mx-4 border-2 border-slate-300 shadow-2xl">
-                <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 border-2 border-slate-300 shadow-2xl">
+                <div className="flex items-center mb-6">
                   <div className="flex-shrink-0">
-                    <svg className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                     </svg>
                   </div>
-                  <div className="ml-3 sm:ml-4">
-                    <h3 className="text-xl sm:text-2xl font-bold text-slate-800">
+                  <div className="ml-4">
+                    <h3 className="text-2xl font-bold text-slate-800">
                       작업 기록 삭제
                     </h3>
                   </div>
                 </div>
                 
-                <div className="mb-6 sm:mb-7 md:mb-8">
-                  <p className="text-sm sm:text-base md:text-lg text-slate-700 mb-4 sm:mb-5 md:mb-6 font-medium">
+                <div className="mb-8">
+                  <p className="text-lg text-slate-700 mb-6 font-medium">
                     다음 작업 기록을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
                   </p>
-                  <div className="bg-red-50 border-2 border-red-200 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5">
-                    <div className="text-sm sm:text-base">
-                      <div className="font-bold text-slate-800 mb-1.5 sm:mb-2 break-words">
+                  <div className="bg-red-50 border-2 border-red-200 rounded-xl p-5">
+                    <div className="text-base">
+                      <div className="font-bold text-slate-800 mb-2">
                         고객: {recordToDelete.customer?.name || recordToDelete.customer_name || '알 수 없음'}
                       </div>
-                      <div className="text-slate-600 font-medium mb-1.5 sm:mb-2">
+                      <div className="text-slate-600 font-medium mb-2">
                         작업일: {new Date(recordToDelete.work_date).toLocaleDateString()}
                       </div>
                       <div className="text-slate-600 font-medium">
@@ -2117,21 +2103,21 @@ function HistoryPage() {
                   </div>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 md:space-x-4">
+                <div className="flex justify-end space-x-4">
                   <button
                     onClick={() => setShowDeleteConfirmModal(false)}
-                    className="px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-slate-200 text-slate-700 rounded-lg sm:rounded-xl hover:bg-slate-300 transition-all duration-300 font-bold text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg w-full sm:w-auto"
+                    className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg"
                   >
                     취소
                   </button>
                   <button
                     onClick={handleDeleteRecord}
                     disabled={isDeleting}
-                    className="px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg sm:rounded-xl hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center font-bold text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg w-full sm:w-auto"
+                    className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center font-bold text-lg shadow-md hover:shadow-lg"
                   >
                     {isDeleting ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
