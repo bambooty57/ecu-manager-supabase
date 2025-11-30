@@ -3325,47 +3325,56 @@ export default function WorkPage() {
                 </h4>
                 
                 {/* 작업 메모 */}
-                <div className="mb-6">
-                  <label className="block text-xl font-bold text-slate-800 mb-3">
+                <div className="mb-8">
+                  <label className="block text-2xl font-bold text-slate-800 mb-4 flex items-center">
+                    <span className="text-3xl mr-3">📝</span>
                     작업 메모
                   </label>
                   <textarea
                     value={currentRemappingWork.notes}
                     onChange={(e) => handleRemappingWorkInputChange('general', 'notes', e.target.value)}
-                    rows={4}
-                    className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-2xl shadow-md focus:ring-slate-500 focus:border-slate-500 px-5 py-4 text-lg font-medium transition-all duration-300 hover:border-slate-400"
+                    rows={5}
+                    className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-2xl shadow-md focus:ring-slate-500 focus:border-slate-500 px-6 py-5 text-xl font-medium transition-all duration-300 hover:border-slate-400 placeholder:text-slate-400"
                     placeholder="이 Remapping 작업에 대한 간단한 메모를 입력하세요..."
                   />
                 </div>
 
                 {/* 튜닝 작업 선택 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-5">
+                  <label className="block text-2xl font-bold text-slate-800 mb-6 flex items-center">
+                    <span className="text-3xl mr-3">⚙️</span>
                     튜닝 작업 선택 (다중 선택 가능)
                   </label>
                   
                   {/* 선택된 작업 요약 */}
                   {(currentRemappingWork.ecu.selectedWorks.length > 0 || currentRemappingWork.acu.selectedWorks.length > 0) && (
-                    <div className="mb-6 p-4 bg-gray-700 rounded-lg border border-gray-600">
-                      <div className="text-sm font-medium text-white mb-3">
-                        선택된 작업 (ECU: {currentRemappingWork.ecu.selectedWorks.length}개, ACU: {currentRemappingWork.acu.selectedWorks.length}개):
+                    <div className="mb-8 p-6 bg-gradient-to-r from-slate-100 to-slate-50 rounded-2xl border-2 border-slate-300 shadow-lg">
+                      <div className="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                        <span className="text-2xl mr-2">✅</span>
+                        선택된 작업 (ECU: {currentRemappingWork.ecu.selectedWorks.length}개, ACU: {currentRemappingWork.acu.selectedWorks.length}개)
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <div className="text-xs font-medium text-blue-300 mb-2">🔧 ECU 작업:</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
+                          <div className="text-lg font-bold text-blue-800 mb-3 flex items-center">
+                            <span className="text-2xl mr-2">🔧</span>
+                            ECU 작업
+                          </div>
                           <div className="flex flex-wrap gap-2">
                             {currentRemappingWork.ecu.selectedWorks.map((work, index) => (
-                              <span key={index} className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-900 text-blue-200">
+                              <span key={index} className="inline-flex items-center px-4 py-2 rounded-xl text-base font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md">
                                 {work}
                               </span>
                             ))}
                           </div>
                         </div>
-                        <div>
-                          <div className="text-xs font-medium text-green-300 mb-2">⚙️ ACU 작업:</div>
+                        <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
+                          <div className="text-lg font-bold text-green-800 mb-3 flex items-center">
+                            <span className="text-2xl mr-2">⚙️</span>
+                            ACU 작업
+                          </div>
                           <div className="flex flex-wrap gap-2">
                             {currentRemappingWork.acu.selectedWorks.map((work, index) => (
-                              <span key={index} className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-900 text-green-200">
+                              <span key={index} className="inline-flex items-center px-4 py-2 rounded-xl text-base font-bold bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md">
                                 {work}
                               </span>
                             ))}
@@ -3376,19 +3385,20 @@ export default function WorkPage() {
                   )}
                   
                   {/* 카테고리별 작업 선택 */}
-                  <div className="space-y-5">
+                  <div className="space-y-6">
                     {TUNING_CATEGORIES.map((category) => {
                       const categoryWorks = TUNING_WORKS_BY_CATEGORY[category as keyof typeof TUNING_WORKS_BY_CATEGORY] || []
                       const selectedInCategory = workSelections[category] || []
                       const isAllSelected = categoryWorks.length > 0 && categoryWorks.every(work => selectedInCategory.includes(work))
                       const isPartialSelected = selectedInCategory.length > 0 && !isAllSelected
-                      const borderColor = category === 'ECU/튜닝' ? 'border-blue-600' : 'border-green-600'
-                      const bgColor = category === 'ECU/튜닝' ? 'bg-blue-900/30' : 'bg-green-900/30'
-                      const textColor = category === 'ECU/튜닝' ? 'text-blue-300' : 'text-green-300'
+                      const borderColor = category === 'ECU/튜닝' ? 'border-blue-300' : 'border-green-300'
+                      const bgColor = category === 'ECU/튜닝' ? 'bg-blue-50' : 'bg-green-50'
+                      const textColor = category === 'ECU/튜닝' ? 'text-blue-800' : 'text-green-800'
+                      const checkboxColor = category === 'ECU/튜닝' ? 'text-blue-600 focus:ring-blue-500' : 'text-green-600 focus:ring-green-500'
                       
                       return (
-                        <div key={category} className={`border ${borderColor} ${bgColor} rounded-lg p-5`}>
-                          <div className="flex items-center justify-between mb-4">
+                        <div key={category} className={`border-2 ${borderColor} ${bgColor} rounded-2xl p-6 shadow-lg`}>
+                          <div className="flex items-center justify-between mb-5">
                             <div className="flex items-center">
                               <input
                                 type="checkbox"
@@ -3398,28 +3408,29 @@ export default function WorkPage() {
                                   if (el) el.indeterminate = isPartialSelected
                                 }}
                                 onChange={() => handleCategoryToggle(category)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className={`h-6 w-6 ${checkboxColor} border-2 border-slate-400 rounded-lg focus:ring-2 focus:ring-offset-2 cursor-pointer transition-all duration-200`}
                               />
-                              <label htmlFor={`category-${category}`} className={`ml-2 text-sm font-medium ${textColor}`}>
-                                {category === 'ECU/튜닝' ? '🔧 ' : '⚙️ '}{category}
+                              <label htmlFor={`category-${category}`} className={`ml-3 text-xl font-bold ${textColor} cursor-pointer flex items-center`}>
+                                <span className="text-3xl mr-2">{category === 'ECU/튜닝' ? '🔧' : '⚙️'}</span>
+                                {category}
                               </label>
                             </div>
-                            <span className="text-xs text-gray-400">
+                            <span className={`text-lg font-bold ${textColor} bg-white/80 px-4 py-2 rounded-xl border-2 ${borderColor}`}>
                               {selectedInCategory.length}/{categoryWorks.length} 선택됨
                             </span>
                           </div>
                           
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 ml-6">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ml-9">
                             {categoryWorks.map((work) => {
                               return (
-                                <label key={work} className="flex items-center">
+                                <label key={work} className="flex items-center cursor-pointer group hover:bg-white/50 rounded-xl p-2 transition-all duration-200">
                                   <input
                                     type="checkbox"
                                     checked={selectedInCategory.includes(work)}
                                     onChange={() => handleWorkSelection(category, work)}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    className={`h-5 w-5 ${checkboxColor} border-2 border-slate-400 rounded-lg focus:ring-2 focus:ring-offset-2 cursor-pointer transition-all duration-200`}
                                   />
-                                  <span className="ml-2 text-sm text-gray-300">{work}</span>
+                                  <span className={`ml-3 text-base font-semibold ${textColor} group-hover:scale-105 transition-transform duration-200`}>{work}</span>
                                 </label>
                               )
                             })}
