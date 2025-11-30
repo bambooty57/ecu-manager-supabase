@@ -2778,11 +2778,14 @@ export default function WorkPage() {
             
             <div className="space-y-6">
               {/* ECU 섹션 */}
-              <div className="bg-blue-900/30 border border-blue-600 rounded-lg p-6">
-                <h4 className="text-lg font-medium text-blue-300 mb-4">🔧 ECU 정보</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-blue-50 border-2 border-blue-300 rounded-2xl p-8 shadow-lg">
+                <h4 className="text-3xl font-bold text-blue-800 mb-6 flex items-center">
+                  <span className="text-4xl mr-3">🔧</span>
+                  ECU 정보
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-blue-800 mb-3">
                       ECU 장비 카테고리
                     </label>
                     <CustomDropdown
@@ -2794,16 +2797,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteEcuCategory}
                       deletableOptions={ecuCategories.filter(category => category !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="blue"
                     />
                     
                     {/* 직접입력 선택 시 새 카테고리 추가 필드 */}
                     {currentRemappingWork.ecu.toolCategory === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.ecu.toolCategoryCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('ecu', 'toolCategoryCustom', e.target.value)}
-                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="flex-1 bg-blue-50 border-2 border-blue-300 rounded-xl shadow-md focus:ring-blue-500 focus:border-blue-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 ECU 카테고리를 입력하세요"
                         />
                         <button
@@ -2816,7 +2820,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('ecu', 'toolCategoryCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="카테고리 목록에 추가하고 선택"
                         >
                           추가
@@ -2826,7 +2830,7 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-blue-800 mb-3">
                       연결 방법
                     </label>
                     <CustomDropdown
@@ -2838,16 +2842,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteConnectionMethod}
                       deletableOptions={connectionMethods.filter(method => method !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="blue"
                     />
                     
                     {/* 직접입력 선택 시 새 연결방법 추가 필드 */}
                     {currentRemappingWork.ecu.connectionMethod === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.ecu.connectionMethodCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('ecu', 'connectionMethodCustom', e.target.value)}
-                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="flex-1 bg-blue-50 border-2 border-blue-300 rounded-xl shadow-md focus:ring-blue-500 focus:border-blue-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 연결방법을 입력하세요"
                         />
                         <button
@@ -2860,7 +2865,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('ecu', 'connectionMethodCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="연결방법 목록에 추가하고 선택"
                         >
                           추가
@@ -2870,7 +2875,7 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-blue-800 mb-3">
                       ECU 제조사
                     </label>
                     <CustomDropdown
@@ -2882,16 +2887,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteEcuMaker}
                       deletableOptions={ecuMakers.filter(maker => maker !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="blue"
                     />
                     
                     {/* 직접입력 선택 시 새 제조사 추가 필드 */}
                     {currentRemappingWork.ecu.maker === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.ecu.makerCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('ecu', 'makerCustom', e.target.value)}
-                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="flex-1 bg-blue-50 border-2 border-blue-300 rounded-xl shadow-md focus:ring-blue-500 focus:border-blue-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 ECU 제조사를 입력하세요"
                         />
                         <button
@@ -2904,7 +2910,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('ecu', 'makerCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="ECU 제조사 목록에 추가하고 선택"
                         >
                           추가
@@ -2914,8 +2920,8 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-300">
+                    <div className="flex justify-between items-center mb-3">
+                      <label className="block text-xl font-bold text-blue-800">
                         ECU 모델
                       </label>
                     </div>
@@ -2928,16 +2934,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteEcuModel}
                       deletableOptions={ecuModels.filter(model => model !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="blue"
                     />
                     
                     {/* 직접입력 선택 시 새 모델 추가 필드 */}
                     {currentRemappingWork.ecu.type === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.ecu.typeCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('ecu', 'typeCustom', e.target.value)}
-                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="flex-1 bg-blue-50 border-2 border-blue-300 rounded-xl shadow-md focus:ring-blue-500 focus:border-blue-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 ECU 모델을 입력하세요"
                         />
                         <button
@@ -2950,7 +2957,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('ecu', 'typeCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="ECU 모델 목록에 추가하고 선택"
                         >
                           추가
@@ -2960,7 +2967,7 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-blue-800 mb-3">
                       ECU 작업 상태
                     </label>
                     <CustomDropdown
@@ -2972,16 +2979,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteWorkStatus}
                       deletableOptions={workStatus.filter(status => status !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="blue"
                     />
                     
                     {/* 직접입력 선택 시 새 상태 추가 필드 */}
                     {currentRemappingWork.ecu.status === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.ecu.statusCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('ecu', 'statusCustom', e.target.value)}
-                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="flex-1 bg-blue-50 border-2 border-blue-300 rounded-xl shadow-md focus:ring-blue-500 focus:border-blue-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 작업 상태를 입력하세요"
                         />
                         <button
@@ -2994,7 +3002,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('ecu', 'statusCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="작업 상태 목록에 추가하고 선택"
                         >
                           추가
@@ -3004,7 +3012,7 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-blue-800 mb-3">
                       ECU 작업 금액 (만원)
                     </label>
                     <input
@@ -3014,36 +3022,39 @@ export default function WorkPage() {
                         const inputValue = e.target.value.replace(/[^\d]/g, '')
                         handleRemappingWorkInputChange('ecu', 'price', inputValue)
                       }}
-                      className="w-full h-12 bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-white px-3 py-3 text-center"
+                      className="w-full h-14 bg-blue-50 border-2 border-blue-300 rounded-2xl shadow-md focus:ring-blue-500 focus:border-blue-500 text-slate-800 px-5 py-4 text-center text-xl font-semibold transition-all duration-300 hover:border-blue-400"
                       placeholder="35(만원)"
                     />
-                    <div className="mt-1 text-xs text-gray-400 text-center">
+                    <div className="mt-2 text-base text-blue-700 text-center font-medium">
                       만원 단위 (예: 35 → 35만원)
                     </div>
                   </div>
                 </div>
 
                 {/* ECU 작업 상세 정보 */}
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                <div className="mt-6">
+                  <label className="block text-xl font-bold text-blue-800 mb-3">
                     ECU 작업 상세 정보
                   </label>
                   <textarea
                     value={currentRemappingWork.ecu.workDetails}
                     onChange={(e) => handleRemappingWorkInputChange('ecu', 'workDetails', e.target.value)}
-                    rows={3}
-                    className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    rows={4}
+                    className="w-full bg-blue-50 border-2 border-blue-300 text-slate-800 rounded-2xl shadow-md focus:ring-blue-500 focus:border-blue-500 px-5 py-4 text-lg font-medium transition-all duration-300 hover:border-blue-400"
                     placeholder="ECU 작업 내용, 특이사항, 주의사항 등을 상세히 입력하세요..."
                   />
                 </div>
               </div>
 
               {/* ACU 섹션 */}
-              <div className="bg-green-900/30 border border-green-600 rounded-lg p-6">
-                <h4 className="text-lg font-medium text-green-300 mb-4">⚙️ ACU 정보</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-green-50 border-2 border-green-300 rounded-2xl p-8 shadow-lg">
+                <h4 className="text-3xl font-bold text-green-800 mb-6 flex items-center">
+                  <span className="text-4xl mr-3">⚙️</span>
+                  ACU 정보
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-green-800 mb-3">
                       ACU 장비 카테고리
                     </label>
                     <CustomDropdown
@@ -3055,16 +3066,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteEcuCategory}
                       deletableOptions={ecuCategories.filter(category => category !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="green"
                     />
                     
                     {/* 직접입력 선택 시 새 카테고리 추가 필드 */}
                     {currentRemappingWork.acu.toolCategory === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.acu.toolCategoryCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('acu', 'toolCategoryCustom', e.target.value)}
-                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          className="flex-1 bg-green-50 border-2 border-green-300 rounded-xl shadow-md focus:ring-green-500 focus:border-green-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 ACU 카테고리를 입력하세요"
                         />
                         <button
@@ -3077,7 +3089,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('acu', 'toolCategoryCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="카테고리 목록에 추가하고 선택"
                         >
                           추가
@@ -3087,7 +3099,7 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-green-800 mb-3">
                       연결 방법
                     </label>
                     <CustomDropdown
@@ -3099,16 +3111,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteConnectionMethod}
                       deletableOptions={connectionMethods.filter(method => method !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="green"
                     />
                     
                     {/* 직접입력 선택 시 새 연결방법 추가 필드 */}
                     {currentRemappingWork.acu.connectionMethod === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.acu.connectionMethodCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('acu', 'connectionMethodCustom', e.target.value)}
-                          className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          className="flex-1 bg-green-50 border-2 border-green-300 rounded-xl shadow-md focus:ring-green-500 focus:border-green-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 연결방법을 입력하세요"
                         />
                         <button
@@ -3121,7 +3134,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('acu', 'connectionMethodCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="연결방법 목록에 추가하고 선택"
                         >
                           추가
@@ -3131,7 +3144,7 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-green-800 mb-3">
                       ACU 제조사
                     </label>
                     <CustomDropdown
@@ -3143,16 +3156,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteAcuManufacturer}
                       deletableOptions={acuManufacturers.filter(manufacturer => manufacturer !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="green"
                     />
                     
                     {/* 직접입력 선택 시 새 제조사 추가 필드 */}
                     {currentRemappingWork.acu.manufacturer === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.acu.manufacturerCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('acu', 'manufacturerCustom', e.target.value)}
-                          className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          className="flex-1 bg-green-50 border-2 border-green-300 rounded-xl shadow-md focus:ring-green-500 focus:border-green-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 ACU 제조사를 입력하세요"
                         />
                         <button
@@ -3165,7 +3179,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('acu', 'manufacturerCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="ACU 제조사 목록에 추가하고 선택"
                         >
                           추가
@@ -3175,8 +3189,8 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-300">
+                    <div className="flex justify-between items-center mb-3">
+                      <label className="block text-xl font-bold text-green-800">
                         ACU 모델
                       </label>
 
@@ -3190,16 +3204,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteAcuModel}
                       deletableOptions={acuModels.filter(model => model !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="green"
                     />
                     
                     {/* 직접입력 선택 시 새 모델 추가 필드 */}
                     {currentRemappingWork.acu.model === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.acu.modelCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('acu', 'modelCustom', e.target.value)}
-                          className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          className="flex-1 bg-green-50 border-2 border-green-300 rounded-xl shadow-md focus:ring-green-500 focus:border-green-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 ACU 모델을 입력하세요"
                         />
                         <button
@@ -3212,7 +3227,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('acu', 'modelCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="ACU 모델 목록에 추가하고 선택"
                         >
                           추가
@@ -3223,7 +3238,7 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-green-800 mb-3">
                       ACU 작업 상태
                     </label>
                     <CustomDropdown
@@ -3235,16 +3250,17 @@ export default function WorkPage() {
                       onDelete={handleDeleteWorkStatus}
                       deletableOptions={workStatus.filter(status => status !== '직접입력')}
                       deleteButtonColor="text-red-400 hover:text-red-600"
+                      colorTheme="green"
                     />
                     
                     {/* 직접입력 선택 시 새 상태 추가 필드 */}
                     {currentRemappingWork.acu.status === '직접입력' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-3 flex space-x-3">
                         <input
                           type="text"
                           value={currentRemappingWork.acu.statusCustom || ''}
                           onChange={(e) => handleRemappingWorkInputChange('acu', 'statusCustom', e.target.value)}
-                          className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          className="flex-1 bg-green-50 border-2 border-green-300 rounded-xl shadow-md focus:ring-green-500 focus:border-green-500 px-4 py-3 text-lg font-medium text-slate-800"
                           placeholder="새로운 작업 상태를 입력하세요"
                         />
                         <button
@@ -3257,7 +3273,7 @@ export default function WorkPage() {
                               handleRemappingWorkInputChange('acu', 'statusCustom', '')
                             }
                           }}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm whitespace-nowrap"
+                          className="px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105 text-base font-semibold whitespace-nowrap"
                           title="작업 상태 목록에 추가하고 선택"
                         >
                           추가
@@ -3267,7 +3283,7 @@ export default function WorkPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-xl font-bold text-green-800 mb-3">
                       ACU 작업 금액 (만원)
                     </label>
                     <input
@@ -3277,44 +3293,47 @@ export default function WorkPage() {
                         const inputValue = e.target.value.replace(/[^\d]/g, '')
                         handleRemappingWorkInputChange('acu', 'price', inputValue)
                       }}
-                      className="w-full h-12 bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-white px-3 py-3 text-center"
+                      className="w-full h-14 bg-green-50 border-2 border-green-300 rounded-2xl shadow-md focus:ring-green-500 focus:border-green-500 text-slate-800 px-5 py-4 text-center text-xl font-semibold transition-all duration-300 hover:border-green-400"
                       placeholder="25(만원)"
                     />
-                    <div className="mt-1 text-xs text-gray-400 text-center">
+                    <div className="mt-2 text-base text-green-700 text-center font-medium">
                       만원 단위 (예: 25 → 25만원)
                     </div>
                   </div>
                 </div>
 
                 {/* ACU 작업 상세 정보 */}
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                <div className="mt-6">
+                  <label className="block text-xl font-bold text-green-800 mb-3">
                     ACU 작업 상세 정보
                   </label>
                   <textarea
                     value={currentRemappingWork.acu.workDetails}
                     onChange={(e) => handleRemappingWorkInputChange('acu', 'workDetails', e.target.value)}
-                    rows={3}
-                    className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    rows={4}
+                    className="w-full bg-green-50 border-2 border-green-300 text-slate-800 rounded-2xl shadow-md focus:ring-green-500 focus:border-green-500 px-5 py-4 text-lg font-medium transition-all duration-300 hover:border-green-400"
                     placeholder="ACU 작업 내용, 특이사항, 주의사항 등을 상세히 입력하세요..."
                   />
                 </div>
               </div>
 
               {/* 공통 정보 섹션 */}
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-8">
-                <h4 className="text-lg font-medium text-white mb-6">📝 공통 정보</h4>
+              <div className="bg-slate-50 border-2 border-slate-300 rounded-2xl p-8 shadow-lg">
+                <h4 className="text-3xl font-bold text-slate-800 mb-6 flex items-center">
+                  <span className="text-4xl mr-3">📝</span>
+                  공통 정보
+                </h4>
                 
                 {/* 작업 메모 */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-300 mb-3">
+                  <label className="block text-xl font-bold text-slate-800 mb-3">
                     작업 메모
                   </label>
                   <textarea
                     value={currentRemappingWork.notes}
                     onChange={(e) => handleRemappingWorkInputChange('general', 'notes', e.target.value)}
-                    rows={3}
-                    className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 p-3"
+                    rows={4}
+                    className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-2xl shadow-md focus:ring-slate-500 focus:border-slate-500 px-5 py-4 text-lg font-medium transition-all duration-300 hover:border-slate-400"
                     placeholder="이 Remapping 작업에 대한 간단한 메모를 입력하세요..."
                   />
                 </div>
@@ -3970,9 +3989,9 @@ export default function WorkPage() {
                 <button
                   type="button"
                   onClick={handleAddRemappingWork}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-xl transition-all duration-300 hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {isEditingRemapping ? 'Remapping 수정' : 'Remapping 추가'}
+                  {isEditingRemapping ? '✏️ Remapping 수정' : '➕ Remapping 추가'}
                 </button>
               </div>
             </div>
