@@ -82,26 +82,32 @@ export default function Home() {
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
             <div className="space-y-10">
               {/* 헤더 섹션 */}
-              <div className="text-center">
-                <div className="mb-8 flex justify-center">
-                  <div className="relative w-full max-w-4xl h-96 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="text-center mb-12">
+                <div className="mb-10 flex justify-center">
+                  <div className="relative w-full max-w-7xl h-[600px] md:h-[700px] lg:h-[800px] rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-200 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 z-10"></div>
                     <Image
                       src="/track-force-hero.png"
                       alt="Track-Force Power Tuning"
                       fill
-                      className="object-contain"
+                      className="object-cover scale-105 hover:scale-100 transition-transform duration-700 ease-in-out"
                       priority
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1280px"
                       onError={(e) => {
                         // 이미지 로드 실패 시 숨김 처리
                         e.currentTarget.style.display = 'none'
                       }}
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent z-20"></div>
                   </div>
                 </div>
-                <h1 className="text-6xl font-bold text-slate-700 mb-6 tracking-tight">
+                <h1 className="text-7xl md:text-8xl font-bold text-slate-800 mb-6 tracking-tight drop-shadow-lg">
                   Track-Force
                 </h1>
-                <p className="text-2xl text-slate-600 font-medium">
+                <p className="text-3xl md:text-4xl text-slate-700 font-bold mb-2">
+                  Power Tuning
+                </p>
+                <p className="text-xl md:text-2xl text-slate-600 font-medium">
                   농기계 및 건설기계 ECU 전문 튜닝 관리 시스템
                 </p>
               </div>
