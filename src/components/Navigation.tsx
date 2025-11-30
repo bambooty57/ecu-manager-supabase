@@ -37,8 +37,8 @@ export default function Navigation() {
               <Link href="/" className="flex items-center space-x-4 hover:opacity-80 transition-opacity duration-200">
                 <div className="relative w-20 h-20 flex-shrink-0">
                   <Image
-                    src="/tracforce-logo.png"
-                    alt="TracForce Logo"
+                    src="/track-force-logo.png"
+                    alt="Track-Force Logo"
                     fill
                     className="object-contain"
                     priority
@@ -48,7 +48,7 @@ export default function Navigation() {
                     }}
                   />
                 </div>
-                <h1 className="text-4xl font-bold text-slate-800 tracking-tight">TracForce</h1>
+                <h1 className="text-4xl font-bold text-slate-800 tracking-tight">Track-Force</h1>
               </Link>
             </div>
             <div className="hidden md:ml-16 md:flex md:space-x-6">

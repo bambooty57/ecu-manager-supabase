@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getAllCustomers } from '@/lib/customers'
 import { getAllEquipment } from '@/lib/equipment'
 import { getAllWorkRecords } from '@/lib/work-records'
@@ -82,8 +83,23 @@ export default function Home() {
             <div className="space-y-10">
               {/* 헤더 섹션 */}
               <div className="text-center">
+                <div className="mb-8 flex justify-center">
+                  <div className="relative w-full max-w-4xl h-96 rounded-3xl overflow-hidden shadow-2xl">
+                    <Image
+                      src="/track-force-hero.png"
+                      alt="Track-Force Power Tuning"
+                      fill
+                      className="object-contain"
+                      priority
+                      onError={(e) => {
+                        // 이미지 로드 실패 시 숨김 처리
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  </div>
+                </div>
                 <h1 className="text-6xl font-bold text-slate-700 mb-6 tracking-tight">
-                  Tuning Box
+                  Track-Force
                 </h1>
                 <p className="text-2xl text-slate-600 font-medium">
                   농기계 및 건설기계 ECU 전문 튜닝 관리 시스템
