@@ -3443,16 +3443,19 @@ export default function WorkPage() {
               </div>
 
               {/* 파일 첨부 섹션 */}
-              <div className="mt-10 border-t border-gray-700 pt-8">
-                <h4 className="text-lg font-medium text-white mb-6">📁 파일 첨부</h4>
+              <div className="mt-12 border-t-2 border-slate-300 pt-10">
+                <h4 className="text-3xl font-bold text-slate-800 mb-8 flex items-center">
+                  <span className="text-4xl mr-3">📁</span>
+                  파일 첨부
+                </h4>
                 <div className="space-y-8">
                   {/* 원본 ECU 파일 */}
-                  <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 shadow-lg">
-                    <label className="block text-lg font-bold text-blue-800 mb-4 flex items-center">
-                      <span className="text-2xl mr-3">📁</span>
+                  <div className="bg-blue-50 border-2 border-blue-300 rounded-2xl p-8 shadow-lg">
+                    <label className="block text-2xl font-bold text-blue-800 mb-5 flex items-center">
+                      <span className="text-4xl mr-3">📁</span>
                       원본 ECU 폴더 (최대 5개 파일)
                     </label>
-                    <div className="flex items-center space-x-3 mb-3">
+                    <div className="flex items-center space-x-3 mb-4">
                       <input
                         type="file"
                         id="original-file"
@@ -3470,28 +3473,28 @@ export default function WorkPage() {
                       />
                       <label
                         htmlFor="original-file"
-                        className="flex items-center justify-center px-6 py-3 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-gray-700 transition-colors"
+                        className="flex flex-col items-center justify-center px-8 py-6 border-2 border-dashed border-blue-400 rounded-2xl cursor-pointer hover:border-blue-500 hover:bg-blue-100 transition-all duration-300 w-full group"
                       >
-                        <svg className="w-6 h-6 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-10 h-10 text-blue-500 mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <span className="text-sm text-gray-300">
+                        <span className="text-lg font-bold text-blue-800 mb-2">
                           {Array.isArray(currentRemappingWork.files.originalFile) 
                             ? `📄 ${(currentRemappingWork.files.originalFile as File[]).length}개 파일 선택됨` 
                             : '📄 원본 ECU 파일 선택 (최대 5개)'}
                         </span>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-base text-blue-600 font-medium">
                           모든 파일 형식 지원 (ZIP 포함)
                         </div>
                       </label>
                     </div>
                     {/* 선택된 파일 목록 표시 */}
                     {Array.isArray(currentRemappingWork.files.originalFile) && (currentRemappingWork.files.originalFile as File[]).length > 0 && (
-                      <div className="mb-3 p-3 bg-gray-700 rounded-lg">
-                        <div className="text-xs text-gray-400 mb-2">선택된 파일들:</div>
+                      <div className="mb-4 p-5 bg-white rounded-xl border-2 border-blue-200 shadow-md">
+                        <div className="text-lg font-bold text-blue-800 mb-3">선택된 파일들:</div>
                         {(currentRemappingWork.files.originalFile as File[]).map((file, index) => (
-                          <div key={index} className="text-sm text-gray-300 flex items-center justify-between">
-                            <span>📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                          <div key={index} className="text-base text-slate-700 flex items-center justify-between bg-blue-50 rounded-lg p-3 mb-2">
+                            <span className="font-medium">📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
                             <button
                               type="button"
                               onClick={() => {
@@ -3501,7 +3504,7 @@ export default function WorkPage() {
                                   handleFileChange('originalFile', updatedFiles.length > 0 ? updatedFiles : null)
                                 }
                               }}
-                              className="text-red-400 hover:text-red-300 text-xs"
+                              className="text-red-500 hover:text-red-700 text-xl font-bold hover:scale-125 transition-transform duration-200"
                             >
                               ✕
                             </button>
@@ -3514,7 +3517,7 @@ export default function WorkPage() {
                       value={currentRemappingWork.files.originalFileDescription || ''}
                       onChange={(e) => handleFileDescriptionChange('originalFileDescription', e.target.value)}
                       placeholder="폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
-                      className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-3"
+                      className="w-full bg-white border-2 border-blue-300 text-slate-800 rounded-2xl shadow-md focus:ring-blue-500 focus:border-blue-500 px-5 py-4 text-lg font-medium placeholder:text-slate-400"
                     />
 
                   </div>
@@ -3522,11 +3525,12 @@ export default function WorkPage() {
                   {/* Stage 파일들 */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* 1차 튜닝 */}
-                    <div className="border border-green-600 rounded-lg p-5 bg-green-900/30">
-                      <label className="block text-sm font-medium text-green-300 mb-3">
-                        📈 엔진 ECU 1차 튜닝
+                    <div className="border-2 border-green-300 rounded-2xl p-6 bg-green-50 shadow-lg">
+                      <label className="block text-xl font-bold text-green-800 mb-4 flex items-center">
+                        <span className="text-3xl mr-2">📈</span>
+                        엔진 ECU 1차 튜닝
                       </label>
-                      <div className="flex items-center space-x-3 mb-3">
+                      <div className="flex items-center space-x-3 mb-4">
                         <input
                           type="file"
                           id="stage1-file"
@@ -3539,14 +3543,14 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="stage1-file"
-                          className="flex items-center justify-center px-4 py-3 border-2 border-dashed border-green-600 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-900/50 transition-colors text-sm w-full"
+                          className="flex flex-col items-center justify-center px-4 py-5 border-2 border-dashed border-green-400 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-100 transition-all duration-300 w-full group"
                         >
-                          <span className="text-green-300">
+                          <span className="text-base font-bold text-green-800 mb-1">
                             {currentRemappingWork.files.stage1File 
                               ? `📄 ${(currentRemappingWork.files.stage1File as File).name} (${((currentRemappingWork.files.stage1File as File).size / 1024).toFixed(1)} KB)` 
-                              : '📄 엔진 ECU 1차 튜닝 파일 선택'}
+                              : '📄 파일 선택'}
                           </span>
-                          <div className="text-xs text-green-500 mt-1">
+                          <div className="text-sm text-green-600 font-medium">
                             모든 파일 형식 지원
                           </div>
                         </label>
@@ -3556,16 +3560,17 @@ export default function WorkPage() {
                         value={currentRemappingWork.files.stage1FileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('stage1FileDescription', e.target.value)}
                         placeholder="엔진 ECU 1차 튜닝 설명을 입력하세요"
-                        className="w-full bg-gray-700 border-green-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm p-3 h-12"
+                        className="w-full bg-white border-2 border-green-300 text-slate-800 rounded-xl shadow-md focus:ring-green-500 focus:border-green-500 text-lg font-medium px-4 py-3 placeholder:text-slate-400"
                       />
                     </div>
 
                     {/* 2차 튜닝 */}
-                    <div className="border border-yellow-600 rounded-lg p-5 bg-yellow-900/30">
-                      <label className="block text-sm font-medium text-yellow-300 mb-3">
-                        🚀 엔진 ECU 2차 튜닝
+                    <div className="border-2 border-amber-300 rounded-2xl p-6 bg-amber-50 shadow-lg">
+                      <label className="block text-xl font-bold text-amber-800 mb-4 flex items-center">
+                        <span className="text-3xl mr-2">🚀</span>
+                        엔진 ECU 2차 튜닝
                       </label>
-                      <div className="flex items-center space-x-3 mb-3">
+                      <div className="flex items-center space-x-3 mb-4">
                         <input
                           type="file"
                           id="stage2-file"
@@ -3578,14 +3583,14 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="stage2-file"
-                          className="flex items-center justify-center px-4 py-3 border-2 border-dashed border-yellow-600 rounded-lg cursor-pointer hover:border-yellow-500 hover:bg-yellow-900/50 transition-colors text-sm w-full"
+                          className="flex flex-col items-center justify-center px-4 py-5 border-2 border-dashed border-amber-400 rounded-xl cursor-pointer hover:border-amber-500 hover:bg-amber-100 transition-all duration-300 w-full group"
                         >
-                          <span className="text-yellow-300">
+                          <span className="text-base font-bold text-amber-800 mb-1">
                             {currentRemappingWork.files.stage2File 
                               ? `📄 ${(currentRemappingWork.files.stage2File as File).name} (${((currentRemappingWork.files.stage2File as File).size / 1024).toFixed(1)} KB)` 
-                              : '📄 엔진 ECU 2차 튜닝 파일 선택'}
+                              : '📄 파일 선택'}
                           </span>
-                          <div className="text-xs text-yellow-500 mt-1">
+                          <div className="text-sm text-amber-600 font-medium">
                             모든 파일 형식 지원
                           </div>
                         </label>
@@ -3595,16 +3600,17 @@ export default function WorkPage() {
                         value={currentRemappingWork.files.stage2FileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('stage2FileDescription', e.target.value)}
                         placeholder="엔진 ECU 2차 튜닝 설명을 입력하세요"
-                        className="w-full bg-gray-700 border-yellow-600 text-white rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-sm p-3 h-12"
+                        className="w-full bg-white border-2 border-amber-300 text-slate-800 rounded-xl shadow-md focus:ring-amber-500 focus:border-amber-500 text-lg font-medium px-4 py-3 placeholder:text-slate-400"
                       />
                     </div>
 
                     {/* 3차 튜닝 */}
-                    <div className="border border-red-600 rounded-lg p-5 bg-red-900/30">
-                      <label className="block text-sm font-medium text-red-300 mb-3">
-                        🔥 엔진 ECU 3차 튜닝
+                    <div className="border-2 border-red-300 rounded-2xl p-6 bg-red-50 shadow-lg">
+                      <label className="block text-xl font-bold text-red-800 mb-4 flex items-center">
+                        <span className="text-3xl mr-2">🔥</span>
+                        엔진 ECU 3차 튜닝
                       </label>
-                      <div className="flex items-center space-x-3 mb-3">
+                      <div className="flex items-center space-x-3 mb-4">
                         <input
                           type="file"
                           id="stage3-file"
@@ -3617,14 +3623,14 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="stage3-file"
-                          className="flex items-center justify-center px-4 py-3 border-2 border-dashed border-red-600 rounded-lg cursor-pointer hover:border-red-500 hover:bg-red-900/50 transition-colors text-sm w-full"
+                          className="flex flex-col items-center justify-center px-4 py-5 border-2 border-dashed border-red-400 rounded-xl cursor-pointer hover:border-red-500 hover:bg-red-100 transition-all duration-300 w-full group"
                         >
-                          <span className="text-red-300">
+                          <span className="text-base font-bold text-red-800 mb-1">
                             {currentRemappingWork.files.stage3File 
                               ? `📄 ${(currentRemappingWork.files.stage3File as File).name} (${((currentRemappingWork.files.stage3File as File).size / 1024).toFixed(1)} KB)` 
-                              : '📄 엔진 ECU 3차 튜닝 파일 선택'}
+                              : '📄 파일 선택'}
                           </span>
-                          <div className="text-xs text-red-500 mt-1">
+                          <div className="text-sm text-red-600 font-medium">
                             모든 파일 형식 지원
                           </div>
                         </label>
@@ -3634,22 +3640,25 @@ export default function WorkPage() {
                         value={currentRemappingWork.files.stage3FileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('stage3FileDescription', e.target.value)}
                         placeholder="엔진 ECU 3차 튜닝 설명을 입력하세요"
-                        className="w-full bg-gray-700 border-red-600 text-white rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm p-3 h-12"
+                        className="w-full bg-white border-2 border-red-300 text-slate-800 rounded-xl shadow-md focus:ring-red-500 focus:border-red-500 text-lg font-medium px-4 py-3 placeholder:text-slate-400"
                       />
                     </div>
                   </div>
 
                   {/* ACU 파일 업로드 섹션 */}
-                  <div className="border-t border-gray-600 pt-8">
-                    <h5 className="text-lg font-medium text-white mb-6">⚙️ ACU 파일 업로드</h5>
+                  <div className="border-t-2 border-slate-300 pt-10">
+                    <h5 className="text-3xl font-bold text-slate-800 mb-8 flex items-center">
+                      <span className="text-4xl mr-3">⚙️</span>
+                      ACU 파일 업로드
+                    </h5>
                     
                     {/* 원본 ACU 파일 */}
-                    <div className="mb-8 bg-green-50 border-2 border-green-200 rounded-2xl p-8 shadow-lg">
-                      <label className="block text-lg font-bold text-green-800 mb-4 flex items-center">
-                        <span className="text-2xl mr-3">📁</span>
+                    <div className="mb-8 bg-green-50 border-2 border-green-300 rounded-2xl p-8 shadow-lg">
+                      <label className="block text-2xl font-bold text-green-800 mb-5 flex items-center">
+                        <span className="text-4xl mr-3">📁</span>
                         원본 ACU 폴더 (최대 5개 파일)
                       </label>
-                      <div className="flex items-center space-x-3 mb-2">
+                      <div className="flex items-center space-x-3 mb-4">
                         <input
                           type="file"
                           id="acu-original-file"
@@ -3667,28 +3676,28 @@ export default function WorkPage() {
                         />
                         <label
                           htmlFor="acu-original-file"
-                          className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-green-600 rounded-lg cursor-pointer hover:border-green-400 hover:bg-gray-700 transition-colors"
+                          className="flex flex-col items-center justify-center px-8 py-6 border-2 border-dashed border-green-400 rounded-2xl cursor-pointer hover:border-green-500 hover:bg-green-100 transition-all duration-300 w-full group"
                         >
-                          <svg className="w-6 h-6 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-10 h-10 text-green-500 mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
-                          <span className="text-sm text-green-300">
+                          <span className="text-lg font-bold text-green-800 mb-2">
                             {Array.isArray(currentRemappingWork.files.acuOriginalFile) 
                               ? `📄 ${(currentRemappingWork.files.acuOriginalFile as File[]).length}개 파일 선택됨` 
                               : '📄 ACU 원본 파일 선택 (최대 5개)'}
                           </span>
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-base text-green-600 font-medium">
                             모든 파일 형식 지원 (ZIP 포함)
                           </div>
                         </label>
                       </div>
                       {/* 선택된 파일 목록 표시 */}
                       {Array.isArray(currentRemappingWork.files.acuOriginalFile) && (currentRemappingWork.files.acuOriginalFile as File[]).length > 0 && (
-                        <div className="mb-3 p-3 bg-gray-700 rounded-lg">
-                          <div className="text-xs text-gray-400 mb-2">선택된 파일들:</div>
+                        <div className="mb-4 p-5 bg-white rounded-xl border-2 border-green-200 shadow-md">
+                          <div className="text-lg font-bold text-green-800 mb-3">선택된 파일들:</div>
                           {(currentRemappingWork.files.acuOriginalFile as File[]).map((file, index) => (
-                            <div key={index} className="text-sm text-gray-300 flex items-center justify-between">
-                              <span>📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                            <div key={index} className="text-base text-slate-700 flex items-center justify-between bg-green-50 rounded-lg p-3 mb-2">
+                              <span className="font-medium">📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
                               <button
                                 type="button"
                                 onClick={() => {
@@ -3698,7 +3707,7 @@ export default function WorkPage() {
                                     handleFileChange('acuOriginalFile', updatedFiles.length > 0 ? updatedFiles : null)
                                   }
                                 }}
-                                className="text-red-400 hover:text-red-300 text-xs"
+                                className="text-red-500 hover:text-red-700 text-xl font-bold hover:scale-125 transition-transform duration-200"
                               >
                                 ✕
                               </button>
@@ -3711,19 +3720,20 @@ export default function WorkPage() {
                         value={currentRemappingWork.files.acuOriginalFileDescription || ''}
                         onChange={(e) => handleFileDescriptionChange('acuOriginalFileDescription', e.target.value)}
                         placeholder="ACU 폴더 설명을 입력하세요 (예: 원본 백업 폴더, 읽기 전용 등)"
-                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 p-3 h-12"
+                        className="w-full bg-white border-2 border-green-300 text-slate-800 rounded-2xl shadow-md focus:ring-green-500 focus:border-green-500 px-5 py-4 text-lg font-medium placeholder:text-slate-400"
                       />
 
                     </div>
 
                     {/* ACU Stage 파일들 */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                       {/* ACU 1차 튜닝 */}
-                      <div className="border border-green-600 rounded-lg p-4 bg-green-900/30">
-                        <label className="block text-sm font-medium text-green-300 mb-2">
-                          ⚙️ ACU 1차 튜닝
+                      <div className="border-2 border-green-300 rounded-2xl p-6 bg-green-50 shadow-lg">
+                        <label className="block text-xl font-bold text-green-800 mb-4 flex items-center">
+                          <span className="text-3xl mr-2">⚙️</span>
+                          ACU 1차 튜닝
                         </label>
-                        <div className="flex items-center space-x-3 mb-2">
+                        <div className="flex items-center space-x-3 mb-4">
                           <input
                             type="file"
                             id="acu-stage1-file"
@@ -3736,14 +3746,14 @@ export default function WorkPage() {
                           />
                           <label
                             htmlFor="acu-stage1-file"
-                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-600 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-900/50 transition-colors text-xs w-full"
+                            className="flex flex-col items-center justify-center px-4 py-5 border-2 border-dashed border-green-400 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-100 transition-all duration-300 w-full group"
                           >
-                            <span className="text-green-300">
+                            <span className="text-base font-bold text-green-800 mb-1">
                               {currentRemappingWork.files.acuStage1File 
-                                ? `⚙️ ${(currentRemappingWork.files.acuStage1File as File).name} (${((currentRemappingWork.files.acuStage1File as File).size / 1024).toFixed(1)} KB)` 
-                                : '⚙️ ACU 1차 튜닝 파일 선택'}
+                                ? `📄 ${(currentRemappingWork.files.acuStage1File as File).name} (${((currentRemappingWork.files.acuStage1File as File).size / 1024).toFixed(1)} KB)` 
+                                : '📄 파일 선택'}
                             </span>
-                            <div className="text-xs text-green-500 mt-1">
+                            <div className="text-sm text-green-600 font-medium">
                               모든 파일 형식 지원
                             </div>
                           </label>
@@ -3753,16 +3763,17 @@ export default function WorkPage() {
                           value={currentRemappingWork.files.acuStage1FileDescription || ''}
                           onChange={(e) => handleFileDescriptionChange('acuStage1FileDescription', e.target.value)}
                           placeholder="ACU 1차 튜닝 설명을 입력하세요"
-                          className="w-full bg-gray-700 border-green-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm p-3 h-12"
+                          className="w-full bg-white border-2 border-green-300 text-slate-800 rounded-xl shadow-md focus:ring-green-500 focus:border-green-500 text-lg font-medium px-4 py-3 placeholder:text-slate-400"
                         />
                       </div>
 
                       {/* ACU 2차 튜닝 */}
-                      <div className="border border-green-600 rounded-lg p-4 bg-green-900/30">
-                        <label className="block text-sm font-medium text-green-300 mb-2">
-                          ⚙️ ACU 2차 튜닝
+                      <div className="border-2 border-green-300 rounded-2xl p-6 bg-green-50 shadow-lg">
+                        <label className="block text-xl font-bold text-green-800 mb-4 flex items-center">
+                          <span className="text-3xl mr-2">⚙️</span>
+                          ACU 2차 튜닝
                         </label>
-                        <div className="flex items-center space-x-3 mb-2">
+                        <div className="flex items-center space-x-3 mb-4">
                           <input
                             type="file"
                             id="acu-stage2-file"
@@ -3775,14 +3786,14 @@ export default function WorkPage() {
                           />
                           <label
                             htmlFor="acu-stage2-file"
-                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-600 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-900/50 transition-colors text-xs w-full"
+                            className="flex flex-col items-center justify-center px-4 py-5 border-2 border-dashed border-green-400 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-100 transition-all duration-300 w-full group"
                           >
-                            <span className="text-green-300">
+                            <span className="text-base font-bold text-green-800 mb-1">
                               {currentRemappingWork.files.acuStage2File 
-                                ? `⚙️ ${(currentRemappingWork.files.acuStage2File as File).name} (${((currentRemappingWork.files.acuStage2File as File).size / 1024).toFixed(1)} KB)` 
-                                : '⚙️ ACU 2차 튜닝 파일 선택'}
+                                ? `📄 ${(currentRemappingWork.files.acuStage2File as File).name} (${((currentRemappingWork.files.acuStage2File as File).size / 1024).toFixed(1)} KB)` 
+                                : '📄 파일 선택'}
                             </span>
-                            <div className="text-xs text-green-500 mt-1">
+                            <div className="text-sm text-green-600 font-medium">
                               모든 파일 형식 지원
                             </div>
                           </label>
@@ -3792,16 +3803,17 @@ export default function WorkPage() {
                           value={currentRemappingWork.files.acuStage2FileDescription || ''}
                           onChange={(e) => handleFileDescriptionChange('acuStage2FileDescription', e.target.value)}
                           placeholder="ACU 2차 튜닝 설명을 입력하세요"
-                          className="w-full bg-gray-700 border-green-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm p-3 h-12"
+                          className="w-full bg-white border-2 border-green-300 text-slate-800 rounded-xl shadow-md focus:ring-green-500 focus:border-green-500 text-lg font-medium px-4 py-3 placeholder:text-slate-400"
                         />
                       </div>
 
                       {/* ACU 3차 튜닝 */}
-                      <div className="border border-green-600 rounded-lg p-4 bg-green-900/30">
-                        <label className="block text-sm font-medium text-green-300 mb-2">
-                          ⚙️ ACU 3차 튜닝
+                      <div className="border-2 border-green-300 rounded-2xl p-6 bg-green-50 shadow-lg">
+                        <label className="block text-xl font-bold text-green-800 mb-4 flex items-center">
+                          <span className="text-3xl mr-2">⚙️</span>
+                          ACU 3차 튜닝
                         </label>
-                        <div className="flex items-center space-x-3 mb-2">
+                        <div className="flex items-center space-x-3 mb-4">
                           <input
                             type="file"
                             id="acu-stage3-file"
@@ -3814,14 +3826,14 @@ export default function WorkPage() {
                           />
                           <label
                             htmlFor="acu-stage3-file"
-                            className="flex items-center justify-center px-3 py-2 border-2 border-dashed border-green-600 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-900/50 transition-colors text-xs w-full"
+                            className="flex flex-col items-center justify-center px-4 py-5 border-2 border-dashed border-green-400 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-100 transition-all duration-300 w-full group"
                           >
-                            <span className="text-green-300">
+                            <span className="text-base font-bold text-green-800 mb-1">
                               {currentRemappingWork.files.acuStage3File 
-                                ? `⚙️ ${(currentRemappingWork.files.acuStage3File as File).name} (${((currentRemappingWork.files.acuStage3File as File).size / 1024).toFixed(1)} KB)` 
-                                : '⚙️ ACU 3차 튜닝 파일 선택'}
+                                ? `📄 ${(currentRemappingWork.files.acuStage3File as File).name} (${((currentRemappingWork.files.acuStage3File as File).size / 1024).toFixed(1)} KB)` 
+                                : '📄 파일 선택'}
                             </span>
-                            <div className="text-xs text-green-500 mt-1">
+                            <div className="text-sm text-green-600 font-medium">
                               모든 파일 형식 지원
                             </div>
                           </label>
@@ -3831,7 +3843,7 @@ export default function WorkPage() {
                           value={currentRemappingWork.files.acuStage3FileDescription || ''}
                           onChange={(e) => handleFileDescriptionChange('acuStage3FileDescription', e.target.value)}
                           placeholder="ACU 3차 튜닝 설명을 입력하세요"
-                          className="w-full bg-gray-700 border-green-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm p-3 h-12"
+                          className="w-full bg-white border-2 border-green-300 text-slate-800 rounded-xl shadow-md focus:ring-green-500 focus:border-green-500 text-lg font-medium px-4 py-3 placeholder:text-slate-400"
                         />
                       </div>
                     </div>
@@ -3839,10 +3851,11 @@ export default function WorkPage() {
 
                   {/* 사진/영상 첨부 (5개) */}
                   <div>
-                    <label className="block text-sm font-medium text-white mb-4">
-                      📷 사진/영상 첨부 (최대 5개, 각 파일 최대 50MB)
+                    <label className="block text-2xl font-bold text-slate-800 mb-6 flex items-center">
+                      <span className="text-3xl mr-3">📷</span>
+                      사진/영상 첨부 (최대 5개, 각 파일 최대 50MB)
                     </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                       {[1, 2, 3, 4, 5].map((index) => {
                         const fileKey = `mediaFile${index}` as keyof typeof currentRemappingWork.files
                         const descKey = `mediaFile${index}Description` as keyof typeof currentRemappingWork.files
@@ -3850,9 +3863,10 @@ export default function WorkPage() {
                         const description = currentRemappingWork.files[descKey] as string | undefined
                         
                         return (
-                          <div key={index} className="border border-purple-600 rounded-lg p-3 bg-purple-900/30">
-                            <label className="block text-xs font-medium text-purple-300 mb-2">
-                              📷 미디어 {index}
+                          <div key={index} className="border-2 border-purple-300 rounded-2xl p-5 bg-purple-50 shadow-lg">
+                            <label className="block text-lg font-bold text-purple-800 mb-3 flex items-center">
+                              <span className="text-2xl mr-2">📷</span>
+                              미디어 {index}
                             </label>
                             
                             {/* 파일 선택 및 미리보기 */}
@@ -3876,12 +3890,12 @@ export default function WorkPage() {
                                       <img
                                         src={URL.createObjectURL(file)}
                                         alt="미리보기"
-                                        className="w-full h-32 object-cover rounded-lg border border-purple-300"
+                                        className="w-full h-40 object-cover rounded-xl border-2 border-purple-300 shadow-md"
                                       />
-                                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
+                                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-xl flex items-center justify-center">
                                         <label
                                           htmlFor={`media-file-${index}`}
-                                          className="text-white text-xs font-medium cursor-pointer px-2 py-1 bg-purple-600 rounded hover:bg-purple-700"
+                                          className="text-white text-base font-bold cursor-pointer px-4 py-2 bg-purple-600 rounded-xl hover:bg-purple-700 transition-colors duration-200"
                                         >
                                           파일 변경
                                         </label>
@@ -3891,84 +3905,84 @@ export default function WorkPage() {
                                     <div className="relative">
                                       <video
                                         src={URL.createObjectURL(file)}
-                                        className="w-full h-32 object-cover rounded-lg border border-purple-300"
+                                        className="w-full h-40 object-cover rounded-xl border-2 border-purple-300 shadow-md"
                                         controls={false}
                                         muted
                                       />
-                                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
+                                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-xl flex items-center justify-center">
                                         <label
                                           htmlFor={`media-file-${index}`}
-                                          className="text-white text-xs font-medium cursor-pointer px-2 py-1 bg-purple-600 rounded hover:bg-purple-700"
+                                          className="text-white text-base font-bold cursor-pointer px-4 py-2 bg-purple-600 rounded-xl hover:bg-purple-700 transition-colors duration-200"
                                         >
                                           파일 변경
                                         </label>
                                       </div>
-                                      <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-1 py-0.5 rounded">
+                                      <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-sm font-bold px-2 py-1 rounded-lg">
                                         🎥 동영상
                                       </div>
                                     </div>
                                   ) : file.type.includes('pdf') ? (
-                                    <div className="w-full h-32 bg-red-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                    <div className="w-full h-40 bg-gradient-to-br from-red-500 to-red-600 rounded-xl border-2 border-red-400 flex items-center justify-center shadow-md">
                                       <div className="text-center text-white">
-                                        <div className="text-lg">📄</div>
-                                        <div className="text-xs">PDF 문서</div>
+                                        <div className="text-4xl mb-2">📄</div>
+                                        <div className="text-base font-bold">PDF 문서</div>
                                       </div>
                                     </div>
                                   ) : file.type.includes('excel') || file.type.includes('spreadsheet') || file.name.toLowerCase().includes('.xlsx') || file.name.toLowerCase().includes('.xls') ? (
-                                    <div className="w-full h-32 bg-green-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                    <div className="w-full h-40 bg-gradient-to-br from-green-500 to-green-600 rounded-xl border-2 border-green-400 flex items-center justify-center shadow-md">
                                       <div className="text-center text-white">
-                                        <div className="text-lg">📊</div>
-                                        <div className="text-xs">엑셀 파일</div>
+                                        <div className="text-4xl mb-2">📊</div>
+                                        <div className="text-base font-bold">엑셀 파일</div>
                                       </div>
                                     </div>
                                   ) : file.type.includes('word') || file.type.includes('document') || file.name.toLowerCase().includes('.docx') || file.name.toLowerCase().includes('.doc') ? (
-                                    <div className="w-full h-32 bg-blue-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                    <div className="w-full h-40 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl border-2 border-blue-400 flex items-center justify-center shadow-md">
                                       <div className="text-center text-white">
-                                        <div className="text-lg">📝</div>
-                                        <div className="text-xs">워드 문서</div>
+                                        <div className="text-4xl mb-2">📝</div>
+                                        <div className="text-base font-bold">워드 문서</div>
                                       </div>
                                     </div>
                                   ) : file.name.toLowerCase().includes('.hwp') ? (
-                                    <div className="w-full h-32 bg-orange-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                    <div className="w-full h-40 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl border-2 border-orange-400 flex items-center justify-center shadow-md">
                                       <div className="text-center text-white">
-                                        <div className="text-lg">📄</div>
-                                        <div className="text-xs">한글 문서</div>
+                                        <div className="text-4xl mb-2">📄</div>
+                                        <div className="text-base font-bold">한글 문서</div>
                                       </div>
                                     </div>
                                   ) : file.name.toLowerCase().includes('.txt') ? (
-                                    <div className="w-full h-32 bg-gray-700 rounded-lg border border-purple-600 flex items-center justify-center">
+                                    <div className="w-full h-40 bg-gradient-to-br from-slate-500 to-slate-600 rounded-xl border-2 border-slate-400 flex items-center justify-center shadow-md">
                                       <div className="text-center text-white">
-                                        <div className="text-lg">📄</div>
-                                        <div className="text-xs">텍스트 파일</div>
+                                        <div className="text-4xl mb-2">📄</div>
+                                        <div className="text-base font-bold">텍스트 파일</div>
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="w-full h-32 bg-gray-700 rounded-lg border border-purple-600 flex items-center justify-center">
-                                      <div className="text-center text-gray-400">
-                                        <div className="text-lg">📄</div>
-                                        <div className="text-xs">기타 파일</div>
+                                    <div className="w-full h-40 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl border-2 border-gray-400 flex items-center justify-center shadow-md">
+                                      <div className="text-center text-white">
+                                        <div className="text-4xl mb-2">📄</div>
+                                        <div className="text-base font-bold">기타 파일</div>
                                       </div>
                                     </div>
                                   )}
                                   
                                   {/* 파일 정보 */}
-                                  <div className="mt-1 text-xs text-purple-400 truncate" title={file.name}>
+                                  <div className="mt-2 text-sm font-bold text-purple-800 truncate" title={file.name}>
                                     📄 {file.name}
                                   </div>
-                                  <div className="text-xs text-purple-500">
+                                  <div className="text-sm text-purple-600 font-medium">
                                     ({(file.size / 1024).toFixed(1)} KB)
                                   </div>
                                 </div>
                               ) : (
                                 <label
                                   htmlFor={`media-file-${index}`}
-                                  className="flex items-center justify-center px-2 py-2 border-2 border-dashed border-purple-600 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-900/30 transition-colors text-xs w-full h-32"
+                                  className="flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed border-purple-400 rounded-xl cursor-pointer hover:border-purple-500 hover:bg-purple-100 transition-all duration-300 w-full h-40 group"
                                 >
-                                  <div className="text-center text-purple-300">
-                                    <div className="text-2xl mb-1">📁</div>
-                                    <div>파일 선택</div>
-                                    <div className="text-purple-400">모든 파일 형식</div>
-                                    <div className="text-xs text-purple-500 mt-1">
+                                  <div className="text-center text-purple-800">
+                                    <div className="text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">📁</div>
+                                    <div className="text-base font-bold mb-1">파일 선택</div>
+                                    <div className="text-sm text-purple-600 font-medium mb-2">모든 파일 형식</div>
+                                    <div className="text-xs text-purple-500">
                                       지원 형식: 이미지, 동영상, 문서, PDF, 엑셀, 워드, 한글, 텍스트 등
                                     </div>
                                   </div>
@@ -3981,11 +3995,11 @@ export default function WorkPage() {
                               value={description || ''}
                               onChange={(e) => handleFileDescriptionChange(`mediaFile${index}Description`, e.target.value)}
                               placeholder={`미디어 ${index} 설명`}
-                              className="w-full bg-gray-700 border-purple-600 text-white rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-sm p-3 h-12 resize-none"
+                              className="w-full bg-white border-2 border-purple-300 text-slate-800 rounded-xl shadow-md focus:ring-purple-500 focus:border-purple-500 text-base font-medium px-4 py-3 resize-none placeholder:text-slate-400"
                               rows={2}
                               maxLength={100}
                             />
-                            <div className="text-right text-xs text-purple-400 mt-1">
+                            <div className="text-right text-base text-purple-600 font-semibold mt-2">
                               {(description || '').length}/100
                             </div>
                           </div>
