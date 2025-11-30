@@ -716,18 +716,18 @@ export default function CustomersPage() {
       />
       
               <Navigation />
-      <main className="pt-20 pb-8 min-h-screen bg-gray-900">
+      <main className="pt-24 pb-12 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-8">
         {/* 페이지 헤더 */}
-        <div className="bg-gray-800 rounded-xl p-6">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
           <div className="flex justify-between items-center">
             <div className="animate-slideIn">
-              <h1 className="text-3xl font-bold text-white flex items-center">
-                <span className="text-4xl mr-3">👥</span>
+              <h1 className="text-5xl font-bold text-slate-800 flex items-center">
+                <span className="text-6xl mr-4">👥</span>
                 고객 관리
               </h1>
-              <p className="mt-2 text-gray-300">고객 정보를 등록하고 관리합니다.</p>
+              <p className="mt-3 text-xl text-slate-600">고객 정보를 등록하고 관리합니다.</p>
             </div>
             <div className="flex space-x-3 animate-fadeIn">
               <button
@@ -768,7 +768,7 @@ export default function CustomersPage() {
         </div>
 
         {/* 검색 및 필터 */}
-        <div className="bg-gray-800 rounded-xl p-6">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex-1 max-w-md">
               <div className="relative">
@@ -782,7 +782,7 @@ export default function CustomersPage() {
                   placeholder="고객명, 전화번호, 주소로 검색..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="bg-gray-700 text-white w-full pl-10 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                  className="bg-white/90 text-slate-800 w-full pl-10 pr-4 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 border border-slate-200 shadow-sm text-lg"
                 />
               </div>
             </div>
@@ -816,9 +816,9 @@ export default function CustomersPage() {
             </div>
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-300 flex items-center">
-              <div className="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></div>
-              총 <span className="font-semibold text-blue-400 mx-1">{filteredCustomerList.length}</span>명의 고객이 등록되어 있습니다.
+            <div className="text-lg text-slate-700 flex items-center">
+              <div className="w-3 h-3 bg-blue-500 rounded-full mr-3 animate-pulse"></div>
+              총 <span className="font-semibold text-blue-600 mx-2 text-xl">{filteredCustomerList.length}</span>명의 고객이 등록되어 있습니다.
             </div>
             {searchTerm && (
               <button
@@ -836,96 +836,124 @@ export default function CustomersPage() {
 
         {/* 고객 목록 */}
         {isLoading ? (
-          <div className="bg-gray-800 rounded-xl p-12">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-white/20">
             <div className="text-center">
-              <div className="spinner mx-auto"></div>
-              <p className="mt-4 text-gray-300">고객 데이터를 불러오는 중...</p>
+              <div className="relative">
+                <div className="w-16 h-16 mx-auto mb-4">
+                  <div className="absolute inset-0 border-4 border-blue-200 rounded-full animate-pulse"></div>
+                  <div className="absolute inset-0 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
+                </div>
+              </div>
+              <p className="text-xl text-slate-600 font-medium">고객 데이터를 불러오는 중...</p>
+              <p className="text-sm text-slate-500 mt-2">잠시만 기다려주세요</p>
             </div>
           </div>
         ) : viewMode === 'table' ? (
-          <div className="bg-gray-800 rounded-xl overflow-hidden">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden shadow-xl border border-white/20">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead className="bg-gray-700">
+              <table className="min-w-full">
+                <thead className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                    <th className="px-8 py-6 text-left text-sm font-bold text-slate-700 uppercase tracking-wider">
                       <div className="flex items-center">
-                        <span className="mr-2">👤</span>
+                        <span className="text-2xl mr-3">👤</span>
                         고객명
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                    <th className="px-8 py-6 text-left text-sm font-bold text-slate-700 uppercase tracking-wider">
                       <div className="flex items-center">
-                        <span className="mr-2">📞</span>
+                        <span className="text-2xl mr-3">📞</span>
                         전화번호
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                    <th className="px-8 py-6 text-left text-sm font-bold text-slate-700 uppercase tracking-wider">
                       <div className="flex items-center">
-                        <span className="mr-2">📍</span>
+                        <span className="text-2xl mr-3">📍</span>
                         주소
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                    <th className="px-8 py-6 text-left text-sm font-bold text-slate-700 uppercase tracking-wider">
                       <div className="flex items-center">
-                        <span className="mr-2">📅</span>
+                        <span className="text-2xl mr-3">📅</span>
                         등록일
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                    <th className="px-8 py-6 text-left text-sm font-bold text-slate-700 uppercase tracking-wider">
                       <div className="flex items-center">
-                        <span className="mr-2">⚙️</span>
+                        <span className="text-2xl mr-3">⚙️</span>
                         작업
                       </div>
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-gray-800 divide-y divide-gray-700">
+                <tbody className="bg-white/70 backdrop-blur-sm">
                   {currentCustomers.map((customer, index) => (
-                    <tr key={customer.id} className="animate-fadeIn" style={{animationDelay: `${index * 0.05}s`}}>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr 
+                      key={customer.id} 
+                      className="border-b border-slate-100 hover:bg-blue-50/50 transition-all duration-300 animate-slideInUp group"
+                      style={{animationDelay: `${index * 0.05}s`}}
+                    >
+                      <td className="px-8 py-6 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                            {customer.name.charAt(0)}
+                          <div className="relative">
+                            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg mr-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                              {customer.name.charAt(0)}
+                            </div>
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
                           </div>
-                          <div className="text-sm font-medium text-white">{customer.name}</div>
+                          <div>
+                            <div className="text-lg font-bold text-slate-800">{customer.name}</div>
+                            <div className="text-sm text-slate-500">고객</div>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-white font-mono">{customer.phone}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div 
-                          className="text-sm text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
-                          onClick={(e) => handleViewOnMap(e, customer.roadAddress)}
-                          title="카카오맵에서 보기"
-                        >
-                          {customer.roadAddress}
+                      <td className="px-8 py-6 whitespace-nowrap">
+                        <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                          <div className="text-lg font-mono font-bold text-slate-800">{customer.phone}</div>
                         </div>
-                        {customer.jibunAddress && (
+                      </td>
+                      <td className="px-8 py-6 max-w-xs">
+                        <div className="space-y-1">
                           <div 
-                            className="text-xs text-gray-400 hover:text-gray-300 hover:underline cursor-pointer mt-1"
-                            onClick={(e) => handleViewOnMap(e, customer.jibunAddress)}
+                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium transition-colors duration-200 flex items-center"
+                            onClick={(e) => handleViewOnMap(e, customer.roadAddress)}
                             title="카카오맵에서 보기"
                           >
-                            지번: {customer.jibunAddress}
+                            <span className="mr-2">🏠</span>
+                            {customer.roadAddress}
                           </div>
-                        )}
+                          {customer.jibunAddress && (
+                            <div 
+                              className="text-xs text-slate-500 hover:text-slate-700 hover:underline cursor-pointer transition-colors duration-200 flex items-center ml-6"
+                              onClick={(e) => handleViewOnMap(e, customer.jibunAddress)}
+                              title="카카오맵에서 보기"
+                            >
+                              <span className="mr-2">📍</span>
+                              지번: {customer.jibunAddress}
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {customer.registrationDate}
+                      <td className="px-8 py-6 whitespace-nowrap">
+                        <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
+                          <div className="text-sm font-medium text-slate-700">{customer.registrationDate}</div>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
+                      <td className="px-8 py-6 whitespace-nowrap">
+                        <div className="flex items-center space-x-3">
                           <button
                             onClick={() => handleViewDetail(customer)}
-                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-2 py-1 rounded transition-all duration-200 cursor-pointer font-medium"
+                            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center space-x-2"
                           >
-                            상세보기
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <span>상세보기</span>
                           </button>
                           <button
                             onClick={() => handleDelete(customer.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-900 p-1 rounded transition-all duration-200 cursor-pointer"
+                            className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white p-3 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
                             title="삭제"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -940,34 +968,63 @@ export default function CustomersPage() {
               </table>
             </div>
             {currentCustomers.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                <div className="text-6xl mb-4">👥</div>
-                <p className="text-lg">등록된 고객이 없습니다.</p>
-                <p className="text-sm mt-2">새 고객을 등록해보세요!</p>
+              <div className="text-center py-16">
+                <div className="text-8xl mb-6 animate-bounce">👥</div>
+                <h3 className="text-2xl font-bold text-slate-700 mb-2">등록된 고객이 없습니다</h3>
+                <p className="text-lg text-slate-500 mb-6">새로운 고객을 등록하여 시작해보세요!</p>
+                <button
+                  onClick={() => setIsFormOpen(true)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center space-x-2 mx-auto"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>첫 고객 등록하기</span>
+                </button>
               </div>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
             {currentCustomers.map((customer, index) => (
-              <div key={customer.id} className="bg-gray-800 border border-gray-700 rounded-xl p-6 animate-fadeIn" style={{animationDelay: `${index * 0.1}s`}}>
-                <div className="flex justify-between items-start mb-4">
+              <div 
+                key={customer.id} 
+                className="group bg-white/90 backdrop-blur-sm border border-white/20 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 animate-slideInUp relative overflow-hidden"
+                style={{animationDelay: `${index * 0.1}s`}}
+              >
+                {/* 배경 그라데이션 효과 */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                {/* 카드 헤더 */}
+                <div className="relative flex justify-between items-start mb-6">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
-                      {customer.name.charAt(0)}
+                    <div className="relative">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl mr-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-6">
+                        {customer.name.charAt(0)}
+                      </div>
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
                     </div>
-                    <h3 className="text-lg font-semibold text-white">{customer.name}</h3>
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors duration-300">{customer.name}</h3>
+                      <p className="text-sm text-slate-500 font-medium">고객</p>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  
+                  {/* 액션 버튼 */}
+                  <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
                     <button
                       onClick={() => handleViewDetail(customer)}
-                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-2 py-1 rounded transition-all duration-200 cursor-pointer text-sm font-medium"
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-2 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-110"
+                      title="상세보기"
                     >
-                      상세보기
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
                     </button>
                     <button
                       onClick={() => handleDelete(customer.id)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-900 p-1 rounded transition-all duration-200 cursor-pointer"
+                      className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white p-2 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-110"
                       title="삭제"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -976,49 +1033,94 @@ export default function CustomersPage() {
                     </button>
                   </div>
                 </div>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center">
-                    <span className="text-lg mr-2">📞</span>
-                    <span className="font-medium text-gray-400 mr-2">전화번호:</span>
-                    <span className="font-mono text-white">{customer.phone}</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="text-lg mr-2 mt-0.5">📍</span>
-                    <div>
+
+                {/* 카드 내용 */}
+                <div className="relative space-y-4">
+                  {/* 전화번호 */}
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-blue-300 transition-colors duration-300">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center mr-3">
+                        <span className="text-white text-lg">📞</span>
+                      </div>
                       <div>
-                        <span className="font-medium text-gray-400">주소:</span> 
-                        <span 
-                          className="text-blue-400 hover:text-blue-300 hover:underline cursor-pointer ml-1"
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">전화번호</p>
+                        <p className="text-lg font-mono font-bold text-slate-800">{customer.phone}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 주소 */}
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-blue-300 transition-colors duration-300">
+                    <div className="flex items-start">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mr-3 mt-1">
+                        <span className="text-white text-lg">📍</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">주소</p>
+                        <p 
+                          className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium transition-colors duration-200 leading-relaxed"
                           onClick={(e) => handleViewOnMap(e, customer.roadAddress)}
                           title="카카오맵에서 보기"
                         >
                           {customer.roadAddress}
-                        </span>
+                        </p>
+                        {customer.jibunAddress && (
+                          <p 
+                            className="text-xs text-slate-500 hover:text-slate-700 hover:underline cursor-pointer mt-1 transition-colors duration-200"
+                            onClick={(e) => handleViewOnMap(e, customer.jibunAddress)}
+                            title="카카오맵에서 보기"
+                          >
+                            지번: {customer.jibunAddress}
+                          </p>
+                        )}
                       </div>
-                      {customer.jibunAddress && (
-                        <div 
-                          className="text-xs text-gray-500 hover:text-gray-400 hover:underline cursor-pointer mt-1"
-                          onClick={(e) => handleViewOnMap(e, customer.jibunAddress)}
-                          title="카카오맵에서 보기"
-                        >
-                          지번: {customer.jibunAddress}
-                        </div>
-                      )}
                     </div>
                   </div>
-                  <div className="flex items-center">
-                    <span className="text-lg mr-2">📅</span>
-                    <span className="font-medium text-gray-400 mr-2">등록일:</span>
-                    <span className="text-white">{customer.registrationDate}</span>
+
+                  {/* 등록일 */}
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-blue-300 transition-colors duration-300">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-purple-500 rounded-xl flex items-center justify-center mr-3">
+                        <span className="text-white text-lg">📅</span>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">등록일</p>
+                        <p className="text-lg font-bold text-slate-800">{customer.registrationDate}</p>
+                      </div>
+                    </div>
                   </div>
+                </div>
+
+                {/* 카드 하단 액션 */}
+                <div className="relative mt-6 pt-4 border-t border-slate-200">
+                  <button
+                    onClick={() => handleViewDetail(customer)}
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center justify-center space-x-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>상세 정보 보기</span>
+                  </button>
                 </div>
               </div>
             ))}
+            
             {currentCustomers.length === 0 && (
-              <div className="col-span-full text-center py-12 text-gray-400">
-                <div className="text-6xl mb-4">👥</div>
-                <p className="text-lg">등록된 고객이 없습니다.</p>
-                <p className="text-sm mt-2">새 고객을 등록해보세요!</p>
+              <div className="col-span-full text-center py-16">
+                <div className="text-8xl mb-6 animate-bounce">👥</div>
+                <h3 className="text-3xl font-bold text-slate-700 mb-4">등록된 고객이 없습니다</h3>
+                <p className="text-xl text-slate-500 mb-8">새로운 고객을 등록하여 비즈니스를 시작해보세요!</p>
+                <button
+                  onClick={() => setIsFormOpen(true)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-10 py-4 rounded-2xl font-bold text-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center space-x-3 mx-auto"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>첫 고객 등록하기</span>
+                </button>
               </div>
             )}
           </div>
@@ -1026,43 +1128,54 @@ export default function CustomersPage() {
 
         {/* 페이지네이션 */}
         {totalPages > 1 && (
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
-            <div className="flex justify-center items-center space-x-2">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/20">
+            <div className="flex justify-center items-center space-x-3">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                className="group flex items-center px-6 py-3 text-sm font-bold text-slate-600 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-300 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200 disabled:hover:text-slate-600 transition-all duration-300 hover:shadow-lg hover:scale-105"
               >
-                <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 이전
               </button>
               
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                    currentPage === page
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105'
-                      : 'text-gray-300 bg-gray-700 border border-gray-600 hover:bg-gray-600 hover:scale-105'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              <div className="flex items-center space-x-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-5 py-3 text-sm font-bold rounded-xl transition-all duration-300 hover:scale-110 ${
+                      currentPage === page
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl transform scale-110 border-2 border-blue-300'
+                        : 'text-slate-600 bg-white border-2 border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:shadow-lg'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
               
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                className="group flex items-center px-6 py-3 text-sm font-bold text-slate-600 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-300 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200 disabled:hover:text-slate-600 transition-all duration-300 hover:shadow-lg hover:scale-105"
               >
                 다음
-                <svg className="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
+            </div>
+            
+            {/* 페이지 정보 */}
+            <div className="mt-4 text-center">
+              <p className="text-sm text-slate-500">
+                <span className="font-bold text-blue-600">{currentPage}</span> / <span className="font-bold">{totalPages}</span> 페이지 
+                <span className="mx-2">•</span>
+                총 <span className="font-bold text-purple-600">{filteredCustomerList.length}</span>명의 고객
+              </p>
             </div>
           </div>
         )}

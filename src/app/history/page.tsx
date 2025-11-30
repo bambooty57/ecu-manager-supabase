@@ -1345,7 +1345,7 @@ function HistoryPage() {
             },
           }}
         />
-        <main className="pt-20 pb-8 min-h-screen bg-gray-900">
+        <main className="pt-24 pb-12 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
             <div className="space-y-8">
               {/* 다크 모드 토글 */}
@@ -1363,14 +1363,14 @@ function HistoryPage() {
               </div>
 
               {/* 페이지 제목 */}
-              <div className="bg-gray-800 rounded-xl p-6">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
                 <div className="flex justify-between items-center">
                   <div className="animate-slideIn">
-                    <h1 className="text-3xl font-bold text-white flex items-center">
-                      <span className="text-4xl mr-3">📋</span>
+                    <h1 className="text-5xl font-bold text-slate-800 flex items-center">
+                      <span className="text-6xl mr-4">📋</span>
                       작업 이력
                     </h1>
-                    <p className="mt-2 text-gray-300">등록된 모든 작업 기록을 확인하고 관리할 수 있습니다.</p>
+                    <p className="mt-3 text-xl text-slate-600">등록된 모든 작업 기록을 확인하고 관리할 수 있습니다.</p>
                   </div>
                 </div>
               </div>
@@ -1391,8 +1391,8 @@ function HistoryPage() {
               <PerformanceMetrics />
 
               {/* 필터 섹션 */}
-              <div className="bg-gray-800 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">🔍 필터 및 검색</h2>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
+                <h2 className="text-2xl font-semibold text-slate-800 mb-6">🔍 필터 및 검색</h2>
                 
                 {/* 검색 입력 */}
                 <div className="mb-4">

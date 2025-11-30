@@ -66,16 +66,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-                        <h1 className="text-3xl font-bold text-white mb-2">Tuning Box</h1>
-          <h2 className="text-xl text-gray-300 mb-8">로그인</h2>
+          <h1 className="text-5xl font-bold text-slate-800 mb-3">Tuning Box</h1>
+          <h2 className="text-2xl text-slate-600 mb-10">로그인</h2>
         </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-gray-800 py-8 px-4 shadow-xl rounded-lg sm:px-10">
+        <div className="bg-white/80 backdrop-blur-sm py-10 px-6 shadow-xl rounded-2xl sm:px-12 border border-white/20">
           <form onSubmit={handleSignIn} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300">

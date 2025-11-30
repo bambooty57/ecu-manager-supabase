@@ -2358,9 +2358,9 @@ export default function WorkPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <Navigation />
-        <main className="pt-20 pb-8 bg-gray-900 min-h-screen">
+        <main className="pt-24 pb-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="space-y-6">
         {/* 페이지 헤더 */}
@@ -2499,8 +2499,11 @@ export default function WorkPage() {
       )}
 
       {/* 작업 등록 폼 */}
-      <div className="bg-gray-800 shadow rounded-lg p-6">
-        <h2 className="text-lg font-medium text-white mb-6">새 작업 등록</h2>
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
+        <h2 className="text-3xl font-bold text-slate-800 mb-8 flex items-center">
+          <span className="text-4xl mr-3">⚙️</span>
+          새 작업 등록
+        </h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 업로드 중 폼 비활성화 */}

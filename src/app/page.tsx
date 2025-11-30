@@ -48,97 +48,97 @@ export default function Home() {
       description: '고객 정보를 등록하고 관리합니다',
       href: '/customers',
       icon: '👥',
-      color: 'bg-blue-500 hover:bg-blue-600'
+      color: 'bg-gradient-to-br from-sky-400 to-blue-500 hover:from-sky-500 hover:to-blue-600'
     },
     {
       title: '장비 관리',
       description: '농기계 및 건설기계를 등록합니다',
       href: '/equipment',
       icon: '🚜',
-      color: 'bg-green-500 hover:bg-green-600'
+      color: 'bg-gradient-to-br from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600'
     },
     {
       title: '작업 등록',
       description: 'ECU 튜닝 작업을 등록합니다',
       href: '/work',
       icon: '⚙️',
-      color: 'bg-orange-500 hover:bg-orange-600'
+      color: 'bg-gradient-to-br from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600'
     },
     {
       title: '작업 이력',
       description: '모든 작업 기록을 조회합니다',
       href: '/history',
       icon: '📋',
-      color: 'bg-purple-500 hover:bg-purple-600'
+      color: 'bg-gradient-to-br from-violet-400 to-purple-500 hover:from-violet-500 hover:to-purple-600'
     }
   ]
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <Navigation />
-        <main className="pt-20 pb-8">
+        <main className="pt-24 pb-12">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="space-y-8">
+            <div className="space-y-10">
               {/* 헤더 섹션 */}
               <div className="text-center">
-                <h1 className="text-4xl font-bold text-white mb-4">
+                <h1 className="text-6xl font-bold text-slate-700 mb-6 tracking-tight">
                   Tuning Box
                 </h1>
-                <p className="text-xl text-gray-300">
+                <p className="text-2xl text-slate-600 font-medium">
                   농기계 및 건설기계 ECU 전문 튜닝 관리 시스템
                 </p>
               </div>
 
               {/* 통계 카드 섹션 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-gray-800 rounded-lg p-6 shadow-md text-center">
-                  <div className="text-3xl mb-2">👥</div>
-                  <div className="text-2xl font-bold text-white mb-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-blue-100 text-center hover:shadow-xl transition-all duration-300">
+                  <div className="text-5xl mb-4">👥</div>
+                  <div className="text-4xl font-bold text-slate-700 mb-2">
                     {isLoading ? '...' : stats.customers}
                   </div>
-                  <div className="text-sm text-gray-300">등록된 고객</div>
+                  <div className="text-lg text-slate-600 font-medium">등록된 고객</div>
                 </div>
 
-                <div className="bg-gray-800 rounded-lg p-6 shadow-md text-center">
-                  <div className="text-3xl mb-2">🚜</div>
-                  <div className="text-2xl font-bold text-white mb-1">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-green-100 text-center hover:shadow-xl transition-all duration-300">
+                  <div className="text-5xl mb-4">🚜</div>
+                  <div className="text-4xl font-bold text-slate-700 mb-2">
                     {isLoading ? '...' : stats.equipment}
                   </div>
-                  <div className="text-sm text-gray-300">등록된 장비</div>
+                  <div className="text-lg text-slate-600 font-medium">등록된 장비</div>
                 </div>
 
-                <div className="bg-gray-800 rounded-lg p-6 shadow-md text-center">
-                  <div className="text-3xl mb-2">⚙️</div>
-                  <div className="text-2xl font-bold text-white mb-1">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-orange-100 text-center hover:shadow-xl transition-all duration-300">
+                  <div className="text-5xl mb-4">⚙️</div>
+                  <div className="text-4xl font-bold text-slate-700 mb-2">
                     {isLoading ? '...' : stats.workRecords}
                   </div>
-                  <div className="text-sm text-gray-300">총 작업 수</div>
+                  <div className="text-lg text-slate-600 font-medium">총 작업 수</div>
                 </div>
 
-                <div className="bg-gray-800 rounded-lg p-6 shadow-md text-center">
-                  <div className="text-3xl mb-2">✅</div>
-                  <div className="text-2xl font-bold text-white mb-1">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-purple-100 text-center hover:shadow-xl transition-all duration-300">
+                  <div className="text-5xl mb-4">✅</div>
+                  <div className="text-4xl font-bold text-slate-700 mb-2">
                     {isLoading ? '...' : stats.completedWorks}
                   </div>
-                  <div className="text-sm text-gray-300">완료된 작업</div>
+                  <div className="text-lg text-slate-600 font-medium">완료된 작업</div>
                 </div>
               </div>
 
               {/* 빠른 작업 섹션 */}
-              <div className="bg-gray-800 rounded-lg p-8 shadow-md">
-                <h2 className="text-2xl font-bold text-white mb-6 text-center">빠른 작업</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-10 shadow-xl border border-slate-200">
+                <h2 className="text-4xl font-bold text-slate-700 mb-10 text-center">빠른 작업</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                   {quickActions.map((action) => (
                     <Link
                       key={action.href}
                       href={action.href}
-                      className={`${action.color} text-white p-6 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+                      className={`${action.color} text-white p-8 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl transform hover:-translate-y-2`}
                     >
                       <div className="text-center">
-                        <div className="text-4xl mb-3">{action.icon}</div>
-                        <h3 className="text-lg font-semibold mb-2">{action.title}</h3>
-                        <p className="text-sm opacity-90">{action.description}</p>
+                        <div className="text-6xl mb-4">{action.icon}</div>
+                        <h3 className="text-2xl font-bold mb-3">{action.title}</h3>
+                        <p className="text-lg opacity-95 leading-relaxed">{action.description}</p>
                       </div>
                     </Link>
                   ))}
