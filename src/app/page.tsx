@@ -83,8 +83,8 @@ export default function Home() {
             <div className="space-y-10">
               {/* 헤더 섹션 */}
               <div className="text-center mb-12">
-                <div className="mb-10 flex justify-center">
-                  <div className="relative w-full max-w-7xl h-[600px] md:h-[700px] lg:h-[800px] rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-200 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center p-6 md:p-8 lg:p-10">
+                <div className="flex justify-center">
+                  <div className="relative w-full max-w-5xl h-[400px] md:h-[500px] lg:h-[600px] rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-200 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center p-4 md:p-6 lg:p-8">
                     <div className="relative w-full h-full">
                       <Image
                         src="/track-force-hero.png"
@@ -101,15 +101,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <h1 className="text-7xl md:text-8xl font-bold text-slate-800 mb-6 tracking-tight drop-shadow-lg">
-                  Track-Force
-                </h1>
-                <p className="text-3xl md:text-4xl text-slate-700 font-bold mb-2">
-                  Power Tuning
-                </p>
-                <p className="text-xl md:text-2xl text-slate-600 font-medium">
-                  농기계 및 건설기계 ECU 전문 튜닝 관리 시스템
-                </p>
               </div>
 
               {/* 통계 카드 섹션 */}
