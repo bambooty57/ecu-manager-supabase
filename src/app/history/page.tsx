@@ -401,33 +401,33 @@ function HistoryPage() {
 
   // 성능 메트릭 표시 컴포넌트
   const PerformanceMetrics = () => (
-    <div className="mb-4 p-3 bg-gray-800 border border-gray-600 rounded-lg">
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex space-x-4">
-          <span className="text-blue-400">
+    <div className="mb-6 p-5 bg-white/90 backdrop-blur-sm border-2 border-slate-200 rounded-2xl shadow-lg">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-4">
+          <span className="text-lg font-bold text-blue-700 bg-blue-50 px-4 py-2 rounded-xl border-2 border-blue-200">
             📊 로드된 데이터: {workRecords.length}/{totalCount}개
           </span>
           {searchQuery && (
-            <span className="text-green-400">
+            <span className="text-lg font-bold text-green-700 bg-green-50 px-4 py-2 rounded-xl border-2 border-green-200">
               🔍 검색 결과: {searchResults.length}건 ({searchTook}ms)
             </span>
           )}
-          <span className="text-purple-400">
+          <span className="text-lg font-bold text-purple-700 bg-purple-50 px-4 py-2 rounded-xl border-2 border-purple-200">
             💾 캐시 상태: 활성화
           </span>
-          <span className="text-green-600">
+          <span className="text-lg font-bold text-amber-700 bg-amber-50 px-4 py-2 rounded-xl border-2 border-amber-200">
             ⚡ 메모리 절약: ~{Math.round((1 - (workRecords.length / Math.max(totalCount, 1))) * 100)}%
           </span>
         </div>
-        <div className="flex items-center space-x-2">
-          <label className="flex items-center space-x-1">
+        <div className="flex items-center space-x-3">
+          <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
               checked={isInfiniteScrollEnabled}
               onChange={(e) => setIsInfiniteScrollEnabled(e.target.checked)}
-              className="rounded"
+              className="w-5 h-5 rounded-lg border-2 border-slate-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
             />
-            <span className="text-xs text-gray-600">무한스크롤</span>
+            <span className="text-base font-bold text-slate-700">무한스크롤</span>
           </label>
         </div>
       </div>
@@ -1355,9 +1355,9 @@ function HistoryPage() {
               <div className="mb-6">
                 <button
                   onClick={() => window.history.back()}
-                  className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 bg-white/90 backdrop-blur-sm border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-blue-50 hover:border-blue-400 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg"
                 >
-                  <span>←</span>
+                  <span className="text-2xl">←</span>
                   <span>홈으로 돌아가기</span>
                 </button>
               </div>
@@ -1377,12 +1377,12 @@ function HistoryPage() {
 
               {/* 오프라인 상태 배너 */}
               {isOffline && (
-                <div className="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+                <div className="mb-6 p-5 bg-red-50 border-2 border-red-300 text-red-800 rounded-2xl shadow-lg">
                   <div className="flex items-center">
-                    <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-6 w-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    <p>오프라인 상태입니다. 일부 기능이 제한될 수 있습니다.</p>
+                    <p className="text-lg font-bold">오프라인 상태입니다. 일부 기능이 제한될 수 있습니다.</p>
                   </div>
                 </div>
               )}
@@ -1391,15 +1391,15 @@ function HistoryPage() {
               <PerformanceMetrics />
 
               {/* 필터 섹션 */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-2 border-slate-200">
                 <h2 className="text-3xl font-bold text-slate-800 mb-8 flex items-center">
                   <span className="text-4xl mr-3">🔍</span>
                   필터 및 검색
                 </h2>
                 
                 {/* 검색 입력 */}
-                <div className="mb-4">
-                  <div className="flex space-x-2">
+                <div className="mb-6">
+                  <div className="flex space-x-3">
                     <div className="flex-1 relative">
                       <input
                         type="text"
@@ -1411,12 +1411,12 @@ function HistoryPage() {
                             handleSearch(searchQuery)
                           }
                         }}
-                        className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                        className="w-full px-5 py-4 bg-white border-2 border-slate-300 text-slate-800 rounded-2xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 text-lg font-medium placeholder:text-slate-400"
                       />
                       {searchQuery && (
                         <button
                           onClick={clearSearch}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-red-500 text-xl font-bold hover:scale-125 transition-all duration-200"
                         >
                           ✕
                         </button>
@@ -1425,7 +1425,7 @@ function HistoryPage() {
                     <button
                       onClick={() => handleSearch(searchQuery)}
                       disabled={isSearching}
-                      className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-bold shadow-lg hover:shadow-xl hover:scale-105"
                     >
                       {isSearching ? '검색 중...' : '🔍 검색'}
                     </button>
@@ -1433,13 +1433,13 @@ function HistoryPage() {
                   
                   {/* 실시간 검색 결과 */}
                   {searchQuery && searchResults.length > 0 && (
-                    <div className="mt-2 p-3 bg-gray-700 rounded-lg">
-                      <div className="text-sm text-gray-300 mb-2">
+                    <div className="mt-3 p-5 bg-blue-50 border-2 border-blue-200 rounded-2xl shadow-md">
+                      <div className="text-lg font-bold text-blue-800 mb-3">
                         검색 결과: {searchResults.length}건 ({searchTook.toFixed(0)}ms)
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         {searchResults.slice(0, 3).map((result, index) => (
-                          <div key={index} className="text-sm text-white p-2 bg-gray-600 rounded">
+                          <div key={index} className="text-base text-slate-800 p-3 bg-white rounded-xl border-2 border-blue-100 shadow-sm">
                             {result.text}
                           </div>
                         ))}
@@ -1449,14 +1449,14 @@ function HistoryPage() {
                   
                   {/* 자동완성 제안 */}
                   {showSuggestions && searchSuggestions.length > 0 && (
-                    <div className="mt-2 p-3 bg-gray-700 rounded-lg">
-                      <div className="text-sm text-gray-300 mb-2">추천 검색어:</div>
-                      <div className="space-y-1">
+                    <div className="mt-3 p-5 bg-green-50 border-2 border-green-200 rounded-2xl shadow-md">
+                      <div className="text-lg font-bold text-green-800 mb-3">추천 검색어:</div>
+                      <div className="space-y-2">
                         {searchSuggestions.map((suggestion, index) => (
                           <button
                             key={index}
                             onClick={() => handleSuggestionClick(suggestion)}
-                            className="block w-full text-left text-sm text-white p-2 bg-gray-600 rounded hover:bg-gray-500 transition-colors"
+                            className="block w-full text-left text-base font-medium text-slate-800 p-3 bg-white rounded-xl border-2 border-green-100 hover:bg-green-100 hover:border-green-300 transition-all duration-200 shadow-sm hover:shadow-md"
                           >
                             {suggestion}
                           </button>
@@ -1478,7 +1478,7 @@ function HistoryPage() {
                       type="date"
                       value={filters.dateFrom}
                       onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-                      className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     />
                   </div>
                   
@@ -1491,7 +1491,7 @@ function HistoryPage() {
                       type="date"
                       value={filters.dateTo}
                       onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-                      className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     />
                   </div>
 
@@ -1504,7 +1504,7 @@ function HistoryPage() {
                     <select
                       value={filters.customer}
                       onChange={(e) => setFilters(prev => ({ ...prev, customer: e.target.value }))}
-                      className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     >
                       <option value="">전체 고객</option>
                       {customers.map(customer => (
@@ -1524,7 +1524,7 @@ function HistoryPage() {
                     <select
                       value={filters.status}
                       onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                      className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     >
                       <option value="">전체 상태</option>
                       {WORK_STATUS.map(status => (
@@ -1537,7 +1537,7 @@ function HistoryPage() {
                 </div>
 
                 {/* 필터 초기화 버튼 */}
-                <div className="mt-4">
+                <div className="mt-6">
                   <button
                     onClick={() => setFilters({
                       dateFrom: '',
@@ -1551,34 +1551,34 @@ function HistoryPage() {
                       tuningWork: '',
                       status: ''
                     })}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 text-lg font-bold shadow-lg hover:shadow-xl hover:scale-105"
                   >
-                    필터 초기화
+                    🔄 필터 초기화
                   </button>
                 </div>
               </div>
 
               {/* 테이블 컨트롤 */}
-              <div className="bg-gray-800 rounded-xl p-6">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-2 border-slate-200">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                     <h2 className="text-3xl font-bold text-slate-800 flex items-center">
                       <span className="text-4xl mr-3">📊</span>
                       작업 이력 테이블
                     </h2>
-                    <span className="text-gray-400 text-sm">
+                    <span className="text-slate-600 text-lg font-semibold">
                       총 {pagination.totalItems}개 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
                       {pagination.totalPages > 1 && ` (${pagination.currentPage}/${pagination.totalPages} 페이지)`}
                     </span>
                   </div>
 
                   {/* 페이지 크기 선택 */}
-                  <div className="flex items-center space-x-2">
-                    <span className="text-gray-400 text-sm">페이지당 항목:</span>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-slate-700 text-lg font-bold">페이지당 항목:</span>
                     <select
                       value={pagination.itemsPerPage}
                       onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                      className="p-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                      className="px-4 py-3 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                     >
                       <option value={2}>2개</option>
                       <option value={5}>5개</option>
@@ -1650,7 +1650,7 @@ function HistoryPage() {
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold hidden md:table-cell"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 hidden md:table-cell"
                               role="columnheader"
                             >
                               <div className="flex items-center space-x-2">
@@ -1659,7 +1659,7 @@ function HistoryPage() {
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold hidden md:table-cell"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 hidden md:table-cell"
                               role="columnheader"
                             >
                               <div className="flex items-center space-x-2">
@@ -1668,7 +1668,7 @@ function HistoryPage() {
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold cursor-pointer hover:bg-blue-900 transition-colors hidden sm:table-cell"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700 cursor-pointer hover:bg-blue-100 transition-colors hidden sm:table-cell"
                               onClick={() => handleSort('price')}
                               role="columnheader"
                               aria-sort={sortField === 'price' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
@@ -1677,14 +1677,14 @@ function HistoryPage() {
                                 <span className="text-3xl">💰</span>
                                 <span>전체 금액</span>
                                 {sortField === 'price' && (
-                                  <span aria-hidden="true" className="text-yellow-300">
+                                  <span aria-hidden="true" className="text-yellow-500">
                                     {sortDirection === 'asc' ? '↑' : '↓'}
                                   </span>
                                 )}
                               </div>
                             </th>
                             <th 
-                              className="py-3 px-4 text-left text-white font-bold"
+                              className="py-6 px-8 text-left text-lg font-bold text-slate-700"
                               role="columnheader"
                             >
                               <div className="flex items-center space-x-2">
@@ -1698,50 +1698,50 @@ function HistoryPage() {
                           {isLoadingRecords ? (
                             // 스켈레톤 로딩 (5개 행)
                             Array(5).fill(0).map((_, index) => (
-                              <tr key={`skeleton-${index}`} className="animate-pulse bg-gray-900" role="row">
+                              <tr key={`skeleton-${index}`} className="animate-pulse bg-white" role="row">
                                 <td className="py-3 px-4" role="cell">
-                                  <div className="h-6 bg-gray-700 rounded w-24"></div>
+                                  <div className="h-8 bg-slate-200 rounded-xl w-32"></div>
                                 </td>
                                 <td className="py-3 px-4" role="cell">
-                                  <div className="h-6 bg-gray-700 rounded w-32"></div>
+                                  <div className="h-8 bg-slate-200 rounded-xl w-40"></div>
                                 </td>
                                 <td className="py-3 px-4" role="cell">
-                                  <div className="h-6 bg-gray-700 rounded w-28 mb-2"></div>
-                                  <div className="h-4 bg-gray-700 rounded w-24"></div>
+                                  <div className="h-8 bg-slate-200 rounded-xl w-36 mb-2"></div>
+                                  <div className="h-6 bg-slate-200 rounded-xl w-28"></div>
                                 </td>
                                 <td className="py-3 px-4 hidden md:table-cell" role="cell">
-                                  <div className="h-4 bg-gray-700 rounded w-28 mb-2"></div>
-                                  <div className="h-3 bg-gray-700 rounded w-20 mb-2"></div>
-                                  <div className="h-3 bg-gray-700 rounded w-16 mb-2"></div>
-                                  <div className="h-4 bg-gray-700 rounded w-12"></div>
+                                  <div className="h-6 bg-slate-200 rounded-xl w-32 mb-2"></div>
+                                  <div className="h-5 bg-slate-200 rounded-xl w-24 mb-2"></div>
+                                  <div className="h-5 bg-slate-200 rounded-xl w-20 mb-2"></div>
+                                  <div className="h-6 bg-slate-200 rounded-xl w-16"></div>
                                 </td>
                                 <td className="py-3 px-4 hidden md:table-cell" role="cell">
-                                  <div className="h-4 bg-gray-700 rounded w-28 mb-2"></div>
-                                  <div className="h-3 bg-gray-700 rounded w-20 mb-2"></div>
-                                  <div className="h-3 bg-gray-700 rounded w-16 mb-2"></div>
-                                  <div className="h-4 bg-gray-700 rounded w-12"></div>
+                                  <div className="h-6 bg-slate-200 rounded-xl w-32 mb-2"></div>
+                                  <div className="h-5 bg-slate-200 rounded-xl w-24 mb-2"></div>
+                                  <div className="h-5 bg-slate-200 rounded-xl w-20 mb-2"></div>
+                                  <div className="h-6 bg-slate-200 rounded-xl w-16"></div>
                                 </td>
                                 <td className="py-3 px-4 hidden sm:table-cell" role="cell">
-                                  <div className="h-4 bg-gray-700 rounded w-20"></div>
+                                  <div className="h-8 bg-slate-200 rounded-xl w-24"></div>
                                 </td>
                                 <td className="py-3 px-4" role="cell">
                                   <div className="flex space-x-3">
-                                    <div className="h-8 w-8 bg-gray-700 rounded"></div>
-                                    <div className="h-8 w-8 bg-gray-700 rounded"></div>
-                                    <div className="h-8 w-8 bg-gray-700 rounded"></div>
+                                    <div className="h-10 w-24 bg-slate-200 rounded-xl"></div>
+                                    <div className="h-10 w-10 bg-slate-200 rounded-xl"></div>
+                                    <div className="h-10 w-10 bg-slate-200 rounded-xl"></div>
                                   </div>
                                 </td>
                               </tr>
                             ))
                           ) : filteredRecords.length === 0 ? (
                             <tr role="row">
-                              <td colSpan={8} className="py-12 text-center" role="cell">
-                                <div className="flex flex-col items-center space-y-2">
-                                  <div className="text-6xl mb-4">📋</div>
-                                  <p className="text-lg font-medium text-gray-300">
+                              <td colSpan={8} className="py-16 text-center" role="cell">
+                                <div className="flex flex-col items-center space-y-4">
+                                  <div className="text-8xl mb-6">📋</div>
+                                  <p className="text-2xl font-bold text-slate-700">
                                     {workRecords.length === 0 ? '작업 이력이 없습니다.' : '검색 결과가 없습니다.'}
                                   </p>
-                                  <p className="text-sm text-gray-500">
+                                  <p className="text-xl text-slate-500 font-medium">
                                     {workRecords.length === 0 ? '새로운 작업을 등록해보세요.' : '다른 검색어를 시도해보세요.'}
                                   </p>
                                 </div>
@@ -1776,7 +1776,7 @@ function HistoryPage() {
                               return (
                                 <tr 
                                   key={record.id} 
-                                  className={`${index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800'} hover:bg-custom-dark-blue transition-colors border-b border-gray-700`} 
+                                  className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-50 transition-colors border-b-2 border-slate-200`} 
                                   role="row"
                                 >
                                   {/* 작업일 */}
@@ -1822,26 +1822,26 @@ function HistoryPage() {
                                         <p className="text-xl font-bold text-blue-600">
                                           {ecuInfo.maker} {ecuInfo.type}
                                         </p>
-                                        <p className="text-sm text-gray-300">
+                                        <p className="text-base text-slate-600 font-medium">
                                           {ecuInfo.selectedWorks?.join(', ') || 'N/A'}
                                         </p>
                                         {ecuInfo.workDetails && (
-                                          <p className="text-xs text-blue-400 truncate" title={ecuInfo.workDetails}>
+                                          <p className="text-sm text-blue-600 truncate font-medium" title={ecuInfo.workDetails}>
                                             📝 {ecuInfo.workDetails.length > 20 ? `${ecuInfo.workDetails.substring(0, 20)}...` : ecuInfo.workDetails}
                                           </p>
                                         )}
-                                        <p className="text-lg font-bold text-blue-600">
+                                        <p className="text-xl font-bold text-blue-700">
                                           ₩{(ecuInfo.price || 0).toLocaleString()}
                                         </p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
                                             ecuStatus === '완료' ? 'bg-green-500 border-green-400' :
                                             ecuStatus === '진행중' ? 'bg-blue-500 border-blue-400' :
                                             ecuStatus === '실패' ? 'bg-red-500 border-red-400' :
                                             ecuStatus === 'AS' ? 'bg-gray-600 border-gray-500' :
                                             'bg-gray-400 border-gray-300'
-                                          } border-2 shadow-sm`}>
-                                            <span className="text-xs font-medium">
+                                          } border-2 shadow-md`}>
+                                            <span className="text-sm font-bold">
                                               {ecuStatus === '완료' ? '✅' :
                                                ecuStatus === '진행중' ? '⏳' :
                                                ecuStatus === '실패' ? '❌' :
@@ -1849,10 +1849,10 @@ function HistoryPage() {
                                                '➖'}
                                             </span>
                                           </div>
-                                          <span className={`text-xs font-medium ${
-                                            ecuStatus === 'AS' ? 'text-white' :
-                                            ecuStatus === 'N/A' ? 'text-white' :
-                                            'text-white'
+                                          <span className={`text-base font-bold ${
+                                            ecuStatus === 'AS' ? 'text-slate-700' :
+                                            ecuStatus === 'N/A' ? 'text-slate-500' :
+                                            'text-slate-700'
                                           }`}>
                                             {ecuStatus}
                                           </span>
@@ -1860,14 +1860,14 @@ function HistoryPage() {
                                       </div>
                                     ) : (
                                       <div>
-                                        <p className="text-base text-gray-400">N/A</p>
-                                        <p className="text-sm text-gray-300">N/A</p>
-                                        <p className="text-sm font-bold text-blue-200">₩0</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-400 border-gray-300 border-2 shadow-sm">
-                                            <span className="text-xs font-medium">➖</span>
+                                        <p className="text-base text-slate-400 font-medium">N/A</p>
+                                        <p className="text-sm text-slate-500">N/A</p>
+                                        <p className="text-lg font-bold text-blue-400">₩0</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-400 border-gray-300 border-2 shadow-md">
+                                            <span className="text-sm font-bold">➖</span>
                                           </div>
-                                          <span className="text-xs font-medium text-white">
+                                          <span className="text-base font-bold text-slate-500">
                                             N/A
                                           </span>
                                         </div>
@@ -1882,26 +1882,26 @@ function HistoryPage() {
                                         <p className="text-xl font-bold text-green-600">
                                           {acuInfo.manufacturer} {acuInfo.model}
                                         </p>
-                                        <p className="text-sm text-gray-300">
+                                        <p className="text-base text-slate-600 font-medium">
                                           {acuInfo.selectedWorks?.join(', ') || 'N/A'}
                                         </p>
                                         {acuInfo.workDetails && (
-                                          <p className="text-xs text-green-400 truncate" title={acuInfo.workDetails}>
+                                          <p className="text-sm text-green-600 truncate font-medium" title={acuInfo.workDetails}>
                                             📝 {acuInfo.workDetails.length > 20 ? `${acuInfo.workDetails.substring(0, 20)}...` : acuInfo.workDetails}
                                           </p>
                                         )}
-                                        <p className="text-lg font-bold text-green-600">
+                                        <p className="text-xl font-bold text-green-700">
                                           ₩{(acuInfo.price || 0).toLocaleString()}
                                         </p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
                                             acuStatus === '완료' ? 'bg-green-500 border-green-400' :
                                             acuStatus === '진행중' ? 'bg-blue-500 border-blue-400' :
                                             acuStatus === '실패' ? 'bg-red-500 border-red-400' :
                                             acuStatus === 'AS' ? 'bg-gray-600 border-gray-500' :
                                             'bg-gray-400 border-gray-300'
-                                          } border-2 shadow-sm`}>
-                                            <span className="text-xs font-medium">
+                                          } border-2 shadow-md`}>
+                                            <span className="text-sm font-bold">
                                               {acuStatus === '완료' ? '✅' :
                                                acuStatus === '진행중' ? '⏳' :
                                                acuStatus === '실패' ? '❌' :
@@ -1909,10 +1909,10 @@ function HistoryPage() {
                                                '➖'}
                                             </span>
                                           </div>
-                                          <span className={`text-xs font-medium ${
-                                            acuStatus === 'AS' ? 'text-white' :
-                                            acuStatus === 'N/A' ? 'text-white' :
-                                            'text-white'
+                                          <span className={`text-base font-bold ${
+                                            acuStatus === 'AS' ? 'text-slate-700' :
+                                            acuStatus === 'N/A' ? 'text-slate-500' :
+                                            'text-slate-700'
                                           }`}>
                                             {acuStatus}
                                           </span>
@@ -1920,14 +1920,14 @@ function HistoryPage() {
                                       </div>
                                     ) : (
                                       <div>
-                                        <p className="text-base text-gray-400">N/A</p>
-                                        <p className="text-sm text-gray-300">N/A</p>
-                                        <p className="text-sm font-bold text-green-200">₩0</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-400 border-gray-300 border-2 shadow-sm">
-                                            <span className="text-xs font-medium">➖</span>
+                                        <p className="text-base text-slate-400 font-medium">N/A</p>
+                                        <p className="text-sm text-slate-500">N/A</p>
+                                        <p className="text-lg font-bold text-green-400">₩0</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-400 border-gray-300 border-2 shadow-md">
+                                            <span className="text-sm font-bold">➖</span>
                                           </div>
-                                          <span className="text-xs font-medium text-white">
+                                          <span className="text-base font-bold text-slate-500">
                                             N/A
                                           </span>
                                         </div>
@@ -1937,9 +1937,11 @@ function HistoryPage() {
                                   
                                   {/* 전체 금액 */}
                                   <td className="py-3 px-4 hidden sm:table-cell" role="cell">
-                                    <p className="text-base font-bold text-yellow-300">
-                                      ₩{totalPrice.toLocaleString()}
-                                    </p>
+                                    <div className="bg-amber-50 border-2 border-amber-300 rounded-xl px-4 py-2 inline-block">
+                                      <p className="text-2xl font-bold text-amber-800">
+                                        ₩{totalPrice.toLocaleString()}
+                                      </p>
+                                    </div>
                                   </td>
                                   
                                   {/* 작업 */}
@@ -1947,26 +1949,26 @@ function HistoryPage() {
                                     <div className="flex items-center space-x-3">
                                       <button
                                         onClick={() => handleViewDetail(record)}
-                                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 px-3 py-2 rounded transition-all duration-200 cursor-pointer text-sm"
+                                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 cursor-pointer text-base font-bold shadow-md hover:shadow-lg hover:scale-105"
                                         title="상세보기"
                                       >
-                                        상세보기
+                                        👁️ 상세보기
                                       </button>
                                       <button
                                         onClick={() => handleEdit(record)}
-                                        className="text-green-400 hover:text-green-300 hover:bg-green-900 p-2 rounded-lg transition-colors"
+                                        className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
                                         title="수정"
                                       >
-                                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                       </button>
                                       <button
                                         onClick={() => showDeleteConfirm(record)}
-                                        className="text-red-400 hover:text-red-300 hover:bg-blue-900 p-2 rounded-lg transition-colors"
+                                        className="p-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
                                         title="삭제"
                                       >
-                                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
                                       </button>
@@ -1984,14 +1986,14 @@ function HistoryPage() {
 
                 {/* 고급 페이지네이션 */}
                 {pagination.totalPages > 1 && (
-                  <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-6 border-2 border-slate-200 shadow-xl">
                     <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0">
                       {/* 페이지 정보 */}
                       <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                        <span className="text-gray-400 text-sm">
+                        <span className="text-slate-700 text-lg font-bold">
                           총 {pagination.totalItems}개 항목 중 {pagination.startIndex + 1}-{pagination.endIndex}개 표시
                         </span>
-                        <span className="text-gray-400 text-sm">
+                        <span className="text-slate-600 text-lg font-semibold">
                           페이지 {pagination.currentPage} / {pagination.totalPages}
                         </span>
                       </div>
@@ -2002,7 +2004,7 @@ function HistoryPage() {
                         <button
                           onClick={handleFirstPage}
                           disabled={pagination.currentPage === 1}
-                          className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
                           title="첫 페이지"
                           aria-label="첫 페이지로 이동"
                         >
@@ -2013,7 +2015,7 @@ function HistoryPage() {
                         <button
                           onClick={handlePreviousPage}
                           disabled={pagination.currentPage === 1}
-                          className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
                           title="이전 페이지"
                           aria-label="이전 페이지로 이동"
                         >
@@ -2025,10 +2027,10 @@ function HistoryPage() {
                           <button
                             key={page}
                             onClick={() => handlePageChange(page)}
-                            className={`px-3 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                            className={`px-4 py-2 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-lg shadow-md hover:shadow-lg ${
                               pagination.currentPage === page
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-700 text-white hover:bg-gray-600'
+                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 scale-105'
+                                : 'bg-white border-2 border-slate-300 text-slate-700 hover:bg-blue-50 hover:border-blue-400 hover:scale-105'
                             }`}
                             aria-label={`${page} 페이지로 이동`}
                             aria-current={pagination.currentPage === page ? 'page' : undefined}
@@ -2041,7 +2043,7 @@ function HistoryPage() {
                         <button
                           onClick={handleNextPage}
                           disabled={pagination.currentPage === pagination.totalPages}
-                          className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
                           title="다음 페이지"
                           aria-label="다음 페이지로 이동"
                         >
@@ -2052,7 +2054,7 @@ function HistoryPage() {
                         <button
                           onClick={handleLastPage}
                           disabled={pagination.currentPage === pagination.totalPages}
-                          className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg disabled:hover:bg-white disabled:hover:border-slate-300"
                           title="마지막 페이지"
                           aria-label="마지막 페이지로 이동"
                         >
@@ -2061,12 +2063,12 @@ function HistoryPage() {
                       </div>
 
                       {/* 페이지당 항목 수 선택 */}
-                      <div className="flex items-center space-x-2">
-                        <span className="text-gray-400 text-sm">페이지당:</span>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-slate-700 text-lg font-bold">페이지당:</span>
                         <select
                           value={pagination.itemsPerPage}
                           onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                          className="px-2 py-1 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors text-sm"
+                          className="px-4 py-2 bg-white border-2 border-slate-300 text-slate-800 rounded-xl shadow-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-lg font-medium"
                         >
                           <option value={2}>2개</option>
                           <option value={5}>5개</option>
@@ -2104,62 +2106,62 @@ function HistoryPage() {
 
           {/* 삭제 확인 모달 */}
           {showDeleteConfirmModal && recordToDelete && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-                <div className="flex items-center mb-4">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 border-2 border-slate-300 shadow-2xl">
+                <div className="flex items-center mb-6">
                   <div className="flex-shrink-0">
-                    <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                     </svg>
                   </div>
-                  <div className="ml-3">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  <div className="ml-4">
+                    <h3 className="text-2xl font-bold text-slate-800">
                       작업 기록 삭제
                     </h3>
                   </div>
                 </div>
                 
-                <div className="mb-6">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <div className="mb-8">
+                  <p className="text-lg text-slate-700 mb-6 font-medium">
                     다음 작업 기록을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
                   </p>
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                    <div className="text-sm">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                  <div className="bg-red-50 border-2 border-red-200 rounded-xl p-5">
+                    <div className="text-base">
+                      <div className="font-bold text-slate-800 mb-2">
                         고객: {recordToDelete.customer?.name || recordToDelete.customer_name || '알 수 없음'}
                       </div>
-                      <div className="text-gray-600 dark:text-gray-400">
+                      <div className="text-slate-600 font-medium mb-2">
                         작업일: {new Date(recordToDelete.work_date).toLocaleDateString()}
                       </div>
-                      <div className="text-gray-600 dark:text-gray-400">
+                      <div className="text-slate-600 font-medium">
                         ID: {recordToDelete.id}
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex justify-end space-x-3">
+                <div className="flex justify-end space-x-4">
                   <button
                     onClick={() => setShowDeleteConfirmModal(false)}
-                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                    className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg"
                   >
                     취소
                   </button>
                   <button
                     onClick={handleDeleteRecord}
                     disabled={isDeleting}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                    className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center font-bold text-lg shadow-md hover:shadow-lg"
                   >
                     {isDeleting ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         삭제 중...
                       </>
                     ) : (
-                      '삭제'
+                      '🗑️ 삭제'
                     )}
                   </button>
                 </div>
@@ -2169,14 +2171,14 @@ function HistoryPage() {
 
           {/* 다운로드 진행률 표시 */}
           {isDownloading && (
-            <div className="fixed bottom-4 right-4 bg-blue-900 text-white p-4 rounded-lg shadow-lg z-50">
-              <div className="flex items-center space-x-3">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <div className="fixed bottom-6 right-6 bg-white border-2 border-blue-300 text-slate-800 p-6 rounded-2xl shadow-2xl z-50">
+              <div className="flex items-center space-x-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 <div>
-                  <p className="text-sm font-medium">{downloadStatus}</p>
-                  <div className="w-32 bg-blue-700 rounded-full h-2 mt-1">
+                  <p className="text-lg font-bold mb-2">{downloadStatus}</p>
+                  <div className="w-48 bg-blue-100 rounded-full h-3 shadow-inner">
                     <div 
-                      className="bg-blue-400 h-2 rounded-full transition-all duration-300"
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300 shadow-md"
                       style={{ width: `${downloadProgress}%` }}
                     ></div>
                   </div>
