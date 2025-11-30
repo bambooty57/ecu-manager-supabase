@@ -2540,7 +2540,7 @@ export default function WorkPage() {
               
               {/* 고객 자동완성 드롭다운 */}
               {showCustomerDropdown && (
-                <div className="absolute z-10 mt-1 w-full bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-10 bottom-full mb-1 w-full bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
                   {isLoadingCustomers ? (
                     <div className="px-4 py-3 text-gray-400 text-center">
                       고객 데이터 로딩 중...
