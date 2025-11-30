@@ -40,6 +40,7 @@ const nextConfig = {
   images: {
     domains: ['ewxzampbdpuaawzrvsln.supabase.co'],
     formats: ['image/webp', 'image/avif'],
+    unoptimized: process.env.NODE_ENV === 'development', // 개발 환경에서 이미지 최적화 비활성화
   },
   
   // ✅ 환경 변수 최적화

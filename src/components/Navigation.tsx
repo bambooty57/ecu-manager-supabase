@@ -11,6 +11,7 @@ export default function Navigation() {
   const router = useRouter()
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [logoError, setLogoError] = useState(false)
 
   const handleSignOut = async () => {
     try {
@@ -36,17 +37,21 @@ export default function Navigation() {
             <div className="flex-shrink-0 flex items-center space-x-4">
               <Link href="/" className="flex items-center space-x-4 hover:opacity-80 transition-opacity duration-200">
                 <div className="relative w-20 h-20 flex-shrink-0">
-                  <Image
-                    src="/track-force-logo.png"
-                    alt="Track-Force Logo"
-                    fill
-                    className="object-contain"
-                    priority
-                    onError={(e) => {
-                      // 이미지 로드 실패 시 숨김 처리
-                      e.currentTarget.style.display = 'none'
-                    }}
-                  />
+                  {logoError ? (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg text-white text-2xl font-bold">
+                      TF
+                    </div>
+                  ) : (
+                    <Image
+                      src="/track-force-logo.png"
+                      alt="Track-Force Logo"
+                      fill
+                      className="object-contain"
+                      priority
+                      onError={() => setLogoError(true)}
+                      onLoad={() => setLogoError(false)}
+                    />
+                  )}
                 </div>
                 <h1 className="text-4xl font-bold text-slate-800 tracking-tight">Track-Force</h1>
               </Link>

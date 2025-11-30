@@ -19,6 +19,7 @@ export default function Home() {
     completedWorks: 0
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [heroImageError, setHeroImageError] = useState(false)
 
   // 캐시된 데이터 로딩 함수
   const loadDashboardData = useCallback(async () => {
@@ -135,20 +136,25 @@ export default function Home() {
               <div className="text-center mb-6 sm:mb-8 md:mb-12">
                 <div className="flex justify-center">
                   <div className="relative w-full max-w-5xl h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px] xl:h-[600px] rounded-xl sm:rounded-2xl md:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl border-2 sm:border-4 border-slate-200 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-                    <div className="relative w-full h-full">
-                      <Image
-                        src="/track-force-hero.png"
-                        alt="Track-Force Power Tuning"
-                        fill
-                        className="object-contain"
-                        priority
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1280px"
-                        onError={(e) => {
-                          // 이미지 로드 실패 시 숨김 처리
-                          e.currentTarget.style.display = 'none'
-                        }}
-                      />
-                    </div>
+                    {heroImageError ? (
+                      <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-slate-700 mb-4">Track-Force</h1>
+                        <p className="text-xl sm:text-2xl text-slate-600">Power Tuning System</p>
+                      </div>
+                    ) : (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src="/track-force-hero.png"
+                          alt="Track-Force Power Tuning"
+                          fill
+                          className="object-contain"
+                          priority
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1280px"
+                          onError={() => setHeroImageError(true)}
+                          onLoad={() => setHeroImageError(false)}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
