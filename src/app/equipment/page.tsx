@@ -757,68 +757,71 @@ export default function EquipmentPage() {
     <AuthGuard>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <Navigation />
-        <main className="pt-24 pb-12">
-          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="space-y-6">
+        <main className="pt-20 sm:pt-24 pb-8 sm:pb-12">
+          <div className="max-w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+            <div className="space-y-4 sm:space-y-6">
       {/* 페이지 헤더 */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
-        <div className="flex justify-between items-center">
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl border border-white/20">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
           <div className="animate-slideIn">
-            <h1 className="text-5xl font-bold text-slate-800 flex items-center">
-              <span className="text-6xl mr-4">🚜</span>
-              장비 관리
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800 flex items-center">
+              <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mr-2 sm:mr-3 md:mr-4">🚜</span>
+              <span className="break-words">장비 관리</span>
             </h1>
-            <p className="mt-3 text-xl text-slate-600">농기계 장비 정보를 등록하고 관리합니다.</p>
+            <p className="mt-2 sm:mt-3 text-base sm:text-lg md:text-xl text-slate-600">농기계 장비 정보를 등록하고 관리합니다.</p>
           </div>
-          <div className="flex items-center space-x-3 animate-fadeIn">
+          <div className="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto animate-fadeIn">
           <button
             onClick={() => setViewMode('table')}
-            className={`p-2 rounded-md ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-md transition-all ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+            title="테이블 보기"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
             </svg>
           </button>
           <button
             onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+            title="그리드 보기"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
           </button>
             <button
               onClick={() => setIsFormOpen(true)}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center space-x-2 font-medium"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center space-x-1 sm:space-x-2 font-medium text-sm sm:text-base flex-1 sm:flex-none justify-center"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              <span>장비 등록</span>
+              <span className="hidden sm:inline">장비 등록</span>
+              <span className="sm:hidden">등록</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* 검색 및 필터 */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">검색</label>
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl border border-white/20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-3 sm:mb-4">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">검색</label>
             <input
               type="text"
               placeholder="고객명, 모델명, 기대번호 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-4 h-14 bg-white/90 border-slate-200 text-slate-800 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-lg"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 md:py-4 h-11 sm:h-12 md:h-14 bg-white/90 border-slate-200 text-slate-800 rounded-lg sm:rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base md:text-lg"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">장비 종류</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">장비 종류</label>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full px-3 py-3 h-12 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2.5 sm:py-3 h-11 sm:h-12 bg-gray-700 border-gray-600 text-white text-sm sm:text-base rounded-lg sm:rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">모든 장비 종류</option>
               {EQUIPMENT_TYPES.map(type => (
@@ -827,11 +830,11 @@ export default function EquipmentPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">제조사</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">제조사</label>
             <select
               value={filterManufacturer}
               onChange={(e) => setFilterManufacturer(e.target.value)}
-              className="w-full px-3 py-3 h-12 bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2.5 sm:py-3 h-11 sm:h-12 bg-gray-700 border-gray-600 text-white text-sm sm:text-base rounded-lg sm:rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">모든 제조사</option>
               {manufacturers.map(manufacturer => (
@@ -839,10 +842,9 @@ export default function EquipmentPage() {
               ))}
             </select>
           </div>
-          <div></div>
         </div>
-        <div className="text-sm text-gray-400">
-          총 {filteredEquipments.length}개의 장비가 등록되어 있습니다.
+        <div className="text-xs sm:text-sm text-gray-400">
+          총 <span className="font-semibold text-blue-600">{filteredEquipments.length}</span>개의 장비가 등록되어 있습니다.
         </div>
       </div>
 
@@ -869,58 +871,59 @@ export default function EquipmentPage() {
             <table className="min-w-full divide-y divide-gray-700">
               <thead className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 uppercase tracking-wider">
                     <div className="flex items-center">
-                      <span className="text-3xl mr-3">👤</span>
-                      고객명
+                      <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2 md:mr-3">👤</span>
+                      <span className="hidden sm:inline">고객명</span>
+                      <span className="sm:hidden">고객</span>
                     </div>
                   </th>
-                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 uppercase tracking-wider hidden md:table-cell">
                     <div className="flex items-center">
-                      <span className="text-3xl mr-3">🚜</span>
+                      <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2 md:mr-3">🚜</span>
                       장비 정보
                     </div>
                   </th>
-                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">
                     <div className="flex items-center">
-                      <span className="text-3xl mr-3">🏭</span>
+                      <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2 md:mr-3">🏭</span>
                       제조사/모델
                     </div>
                   </th>
-                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 uppercase tracking-wider hidden xl:table-cell">
                     <div className="flex items-center">
-                      <span className="text-3xl mr-3">⏰</span>
+                      <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2 md:mr-3">⏰</span>
                       사용시간
                     </div>
                   </th>
-                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">
                     <div className="flex items-center">
-                      <span className="text-3xl mr-3">🔧</span>
+                      <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2 md:mr-3">🔧</span>
                       ECU 타입
                     </div>
                   </th>
-                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">
                     <div className="flex items-center">
-                      <span className="text-3xl mr-3">⚙️</span>
+                      <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2 md:mr-3">⚙️</span>
                       ACU 타입
                     </div>
                   </th>
-                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 uppercase tracking-wider hidden xl:table-cell">
                     <div className="flex items-center">
-                      <span className="text-3xl mr-3">📝</span>
+                      <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2 md:mr-3">📝</span>
                       메모
                     </div>
                   </th>
-                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 uppercase tracking-wider hidden xl:table-cell">
                     <div className="flex items-center">
-                      <span className="text-3xl mr-3">📅</span>
+                      <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2 md:mr-3">📅</span>
                       등록일
                     </div>
                   </th>
-                  <th className="px-8 py-6 text-left text-lg font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 text-left text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-700 uppercase tracking-wider">
                     <div className="flex items-center">
-                      <span className="text-3xl mr-3">🔨</span>
-                      작업
+                      <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2 md:mr-3">🔨</span>
+                      <span className="hidden sm:inline">작업</span>
                     </div>
                   </th>
                 </tr>
@@ -928,81 +931,83 @@ export default function EquipmentPage() {
               <tbody className="bg-white/70 backdrop-blur-sm">
                 {filteredEquipments.map((equipment) => (
                   <tr key={equipment.id} className="border-b border-slate-100 hover:bg-blue-50/50 transition-all duration-300 animate-slideInUp group">
-                    <td className="px-8 py-6 whitespace-nowrap">
+                    <td className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
                       <div className="flex items-center">
-                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg mr-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-bold text-sm sm:text-base md:text-lg mr-2 sm:mr-3 md:mr-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                           {equipment.customerName.charAt(0)}
                         </div>
-                        <div>
-                          <div className="text-xl font-bold text-slate-800">{equipment.customerName}</div>
-                          <div className="text-base text-slate-500">고객</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-base sm:text-lg md:text-xl font-bold text-slate-800 truncate">{equipment.customerName}</div>
+                          <div className="text-xs sm:text-sm md:text-base text-slate-500 hidden sm:block">고객</div>
+                          <div className="text-xs sm:text-sm text-slate-500 sm:hidden">{equipment.equipmentType}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap">
-                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
-                        <div className="text-xl font-bold text-slate-800">{equipment.equipmentType}</div>
-                        <div className="text-base text-slate-500">기대번호: {equipment.serialNumber}</div>
+                    <td className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 hidden md:table-cell">
+                      <div className="bg-slate-100 rounded-lg sm:rounded-xl px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 inline-block">
+                        <div className="text-sm sm:text-base md:text-xl font-bold text-slate-800">{equipment.equipmentType}</div>
+                        <div className="text-xs sm:text-sm md:text-base text-slate-500">기대번호: {equipment.serialNumber}</div>
                       </div>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap">
-                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
-                        <div className="text-xl font-bold text-slate-800">{equipment.manufacturer}</div>
-                        <div className="text-base text-slate-500">{equipment.model}</div>
+                    <td className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 hidden lg:table-cell">
+                      <div className="bg-slate-100 rounded-lg sm:rounded-xl px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 inline-block">
+                        <div className="text-sm sm:text-base md:text-xl font-bold text-slate-800">{equipment.manufacturer}</div>
+                        <div className="text-xs sm:text-sm md:text-base text-slate-500">{equipment.model}</div>
                       </div>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap">
-                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
-                        <div className="text-xl font-bold text-slate-800">{equipment.usageHours.toLocaleString()}시간</div>
+                    <td className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 hidden xl:table-cell">
+                      <div className="bg-slate-100 rounded-lg sm:rounded-xl px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 inline-block">
+                        <div className="text-sm sm:text-base md:text-xl font-bold text-slate-800">{equipment.usageHours.toLocaleString()}시간</div>
                       </div>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap">
-                      <span className="px-4 py-3 text-base font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-lg">
+                    <td className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 hidden lg:table-cell">
+                      <span className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-base font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg sm:rounded-xl shadow-lg">
                         {equipment.ecuType}
                       </span>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap">
-                      <span className="px-4 py-3 text-base font-bold bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-lg">
+                    <td className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 hidden lg:table-cell">
+                      <span className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-base font-bold bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg sm:rounded-xl shadow-lg">
                         {equipment.acuType}
                       </span>
                     </td>
-                    <td className="px-8 py-6 max-w-xs">
-                      <div className="text-base text-slate-700" title={equipment.notes || '메모 없음'}>
+                    <td className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 max-w-xs hidden xl:table-cell">
+                      <div className="text-xs sm:text-sm md:text-base text-slate-700" title={equipment.notes || '메모 없음'}>
                         {equipment.notes ? (
-                          <div className="flex items-start space-x-2">
-                            <span className="text-yellow-500 text-lg">📝</span>
-                            <span className="text-slate-700 text-base leading-relaxed">
+                          <div className="flex items-start space-x-1 sm:space-x-2">
+                            <span className="text-yellow-500 text-sm sm:text-base md:text-lg">📝</span>
+                            <span className="text-slate-700 text-xs sm:text-sm md:text-base leading-relaxed break-words">
                               {equipment.notes.length > 30 ? `${equipment.notes.substring(0, 30)}...` : equipment.notes}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic text-base">메모 없음</span>
+                          <span className="text-slate-400 italic text-xs sm:text-sm md:text-base">메모 없음</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap">
-                      <div className="bg-slate-100 rounded-xl px-4 py-2 inline-block">
-                        <div className="text-base font-medium text-slate-700">{equipment.registrationDate}</div>
+                    <td className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 hidden xl:table-cell">
+                      <div className="bg-slate-100 rounded-lg sm:rounded-xl px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 inline-block">
+                        <div className="text-xs sm:text-sm md:text-base font-medium text-slate-700">{equipment.registrationDate}</div>
                       </div>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap">
-                      <div className="flex items-center space-x-3">
+                    <td className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
                         <button
                           onClick={() => handleViewDetail(equipment)}
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-5 py-3 rounded-xl font-medium text-base transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center space-x-2"
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 md:py-3 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm md:text-base transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center space-x-1 sm:space-x-2"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
-                          <span>상세보기</span>
+                          <span className="hidden sm:inline">상세보기</span>
+                          <span className="sm:hidden">보기</span>
                         </button>
                         <button
                           onClick={() => handleDelete(equipment.id)}
-                          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white p-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
+                          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
                           title="삭제"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>

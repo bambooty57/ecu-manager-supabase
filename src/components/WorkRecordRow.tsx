@@ -260,6 +260,11 @@ const WorkRecordRow = React.memo(({ record, onEdit, onDelete }: WorkRecordRowPro
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {remappingInfo.ecuInfo.selectedWorks?.join(', ') || 'N/A'}
                 </p>
+                {(remappingInfo.ecuInfo.connectionMethod || remappingInfo.ecuInfo.connectionMethodCustom) && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400 truncate">
+                    🔌 연결: {remappingInfo.ecuInfo.connectionMethod || remappingInfo.ecuInfo.connectionMethodCustom}
+                  </p>
+                )}
                 {remappingInfo.ecuInfo.workDetails && (
                   <p className="text-xs text-blue-600 dark:text-blue-400 truncate" title={remappingInfo.ecuInfo.workDetails}>
                     📝 {remappingInfo.ecuInfo.workDetails.length > 30 ? `${remappingInfo.ecuInfo.workDetails.substring(0, 30)}...` : remappingInfo.ecuInfo.workDetails}
@@ -277,6 +282,11 @@ const WorkRecordRow = React.memo(({ record, onEdit, onDelete }: WorkRecordRowPro
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {remappingInfo.acuInfo.selectedWorks?.join(', ') || 'N/A'}
                 </p>
+                {(remappingInfo.acuInfo.connectionMethod || remappingInfo.acuInfo.connectionMethodCustom) && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400 truncate">
+                    🔌 연결: {remappingInfo.acuInfo.connectionMethod || remappingInfo.acuInfo.connectionMethodCustom}
+                  </p>
+                )}
                 {remappingInfo.acuInfo.workDetails && (
                   <p className="text-xs text-green-600 dark:text-green-400 truncate" title={remappingInfo.acuInfo.workDetails}>
                     📝 {remappingInfo.acuInfo.workDetails.length > 30 ? `${remappingInfo.acuInfo.workDetails.substring(0, 30)}...` : remappingInfo.acuInfo.workDetails}
@@ -356,7 +366,7 @@ const WorkRecordRow = React.memo(({ record, onEdit, onDelete }: WorkRecordRowPro
                 <div className="space-y-1 text-xs">
                   <p><span className="font-medium">제조사:</span> {remappingInfo.ecuInfo.maker}</p>
                   <p><span className="font-medium">모델:</span> {remappingInfo.ecuInfo.type}</p>
-                  <p><span className="font-medium">연결방법:</span> {remappingInfo.ecuInfo.connectionMethod}</p>
+                  <p><span className="font-medium">연결방법:</span> {remappingInfo.ecuInfo.connectionMethod || remappingInfo.ecuInfo.connectionMethodCustom || 'N/A'}</p>
                   <p><span className="font-medium">작업내용:</span> {remappingInfo.ecuInfo.selectedWorks?.join(', ')}</p>
                   <p><span className="font-medium">상세내용:</span> {remappingInfo.ecuInfo.workDetails}</p>
                   <p><span className="font-medium">가격:</span> ₩{parseInt(remappingInfo.ecuInfo.price || '0').toLocaleString()}</p>
@@ -398,7 +408,7 @@ const WorkRecordRow = React.memo(({ record, onEdit, onDelete }: WorkRecordRowPro
                 <div className="space-y-1 text-xs">
                   <p><span className="font-medium">제조사:</span> {remappingInfo.acuInfo.manufacturer}</p>
                   <p><span className="font-medium">모델:</span> {remappingInfo.acuInfo.model}</p>
-                  <p><span className="font-medium">연결방법:</span> {remappingInfo.acuInfo.connectionMethod}</p>
+                  <p><span className="font-medium">연결방법:</span> {remappingInfo.acuInfo.connectionMethod || remappingInfo.acuInfo.connectionMethodCustom || 'N/A'}</p>
                   <p><span className="font-medium">작업내용:</span> {remappingInfo.acuInfo.selectedWorks?.join(', ')}</p>
                   <p><span className="font-medium">상세내용:</span> {remappingInfo.acuInfo.workDetails}</p>
                   <p><span className="font-medium">가격:</span> ₩{parseInt(remappingInfo.acuInfo.price || '0').toLocaleString()}</p>

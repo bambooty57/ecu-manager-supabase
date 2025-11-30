@@ -82,6 +82,7 @@ interface EcuAcuInfo {
   status: string;
   selectedWorks?: string[];
   workDetails?: string;
+  connectionMethod?: string;
 }
 
 interface WorkDetailViewModalProps {
@@ -447,7 +448,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
       price: workRecord.ecu_price || 0,
       status: workRecord.ecu_status || 'N/A',
       selectedWorks: [],
-      workDetails: workRecord.ecu_work_content || ''
+      workDetails: workRecord.ecu_work_content || '',
+      connectionMethod: workRecord.connection_method || undefined
     };
 
     let acuData: EcuAcuInfo = {
@@ -456,7 +458,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
       price: workRecord.acu_price || 0,
       status: workRecord.acu_status || 'N/A',
       selectedWorks: [],
-      workDetails: workRecord.acu_work_content || ''
+      workDetails: workRecord.acu_work_content || '',
+      connectionMethod: workRecord.connection_method || undefined
     };
 
     // remapping_works에서 정보 추출
@@ -471,7 +474,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
           price: parseFloat(firstWork.ecu.price) || ecuData.price,
           status: firstWork.ecu.status || ecuData.status,
           selectedWorks: firstWork.ecu.selectedWorks || [],
-          workDetails: firstWork.ecu.workDetails || ecuData.workDetails
+          workDetails: firstWork.ecu.workDetails || ecuData.workDetails,
+          connectionMethod: firstWork.ecu.connectionMethod || firstWork.ecu.connectionMethodCustom || ecuData.connectionMethod
         };
       }
 
@@ -482,7 +486,8 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
           price: parseFloat(firstWork.acu.price) || acuData.price,
           status: firstWork.acu.status || acuData.status,
           selectedWorks: firstWork.acu.selectedWorks || [],
-          workDetails: firstWork.acu.workDetails || acuData.workDetails
+          workDetails: firstWork.acu.workDetails || acuData.workDetails,
+          connectionMethod: firstWork.acu.connectionMethod || firstWork.acu.connectionMethodCustom || acuData.connectionMethod
         };
       }
 
@@ -535,46 +540,50 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
     if (!ecuInfo && !acuInfo) return null;
 
     return (
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-4">🔧 ECU/ACU 정보</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="bg-gradient-to-br from-gray-50 to-indigo-50 p-4 sm:p-5 md:p-6 rounded-lg sm:rounded-xl mb-4 sm:mb-6 md:mb-8 border-2 border-gray-200 shadow-lg">
+        <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-5 md:mb-6 text-gray-800">🔧 ECU/ACU 정보</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           {/* ECU 정보 */}
           {ecuInfo && (
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="text-md font-semibold text-blue-800 mb-3">⚡ ECU 정보</h4>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm font-medium text-gray-700">제조사:</span>
-                  <span className="ml-2 text-sm text-gray-900">{ecuInfo.manufacturer}</span>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-5 md:p-6 rounded-lg sm:rounded-xl border-2 border-blue-300 shadow-lg">
+              <h4 className="text-lg sm:text-xl font-bold text-blue-900 mb-3 sm:mb-4 md:mb-5">⚡ ECU 정보</h4>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                  <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline">제조사:</span>
+                  <span className="ml-0 sm:ml-3 text-base sm:text-lg text-gray-900 font-semibold block sm:inline break-words">{ecuInfo.manufacturer}</span>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">모델:</span>
-                  <span className="ml-2 text-sm text-gray-900">{ecuInfo.model}</span>
+                <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                  <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline">모델:</span>
+                  <span className="ml-0 sm:ml-3 text-base sm:text-lg text-gray-900 font-semibold block sm:inline break-words">{ecuInfo.model}</span>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">가격:</span>
-                  <span className="ml-2 text-sm font-bold text-blue-600">₩{ecuInfo.price?.toLocaleString() || '0'}</span>
+                <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                  <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline">가격:</span>
+                  <span className="ml-0 sm:ml-3 text-lg sm:text-xl font-bold text-blue-700 block sm:inline">₩{ecuInfo.price?.toLocaleString() || '0'}</span>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">상태:</span>
-                  <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                    ecuInfo.status === '완료' ? 'bg-green-100 text-green-800' :
-                    ecuInfo.status === '진행중' ? 'bg-blue-100 text-blue-800' :
-                    ecuInfo.status === '실패' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
+                <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                  <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline mb-2 sm:mb-0 sm:inline-block">상태:</span>
+                  <span className={`ml-0 sm:ml-3 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-full font-bold inline-block ${
+                    ecuInfo.status === '완료' ? 'bg-green-200 text-green-900' :
+                    ecuInfo.status === '진행중' ? 'bg-blue-200 text-blue-900' :
+                    ecuInfo.status === '실패' ? 'bg-red-200 text-red-900' :
+                    'bg-gray-200 text-gray-900'
                   }`}>
                     {ecuInfo.status}
                   </span>
                 </div>
+                {ecuInfo.connectionMethod && (
+                  <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                    <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline">🔌 연결방법:</span>
+                    <span className="ml-0 sm:ml-3 text-base sm:text-lg text-purple-700 font-bold block sm:inline break-words">{ecuInfo.connectionMethod}</span>
+                  </div>
+                )}
                 {/* ECU 작업 상세 정보 */}
                 {(ecuInfo.workDetails || workRecord?.ecu_work_content) && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">작업 상세:</span>
-                    <div className="mt-1 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
-                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                        {ecuInfo.workDetails || workRecord?.ecu_work_content || ''}
-                      </p>
-                    </div>
+                  <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                    <span className="text-sm sm:text-base font-bold text-gray-700 block mb-2">작업 상세:</span>
+                    <p className="text-sm sm:text-base text-gray-800 whitespace-pre-wrap leading-relaxed break-words">
+                      {ecuInfo.workDetails || workRecord?.ecu_work_content || ''}
+                    </p>
                   </div>
                 )}
               </div>
@@ -583,41 +592,45 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
 
           {/* ACU 정보 */}
           {acuInfo && (
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="text-md font-semibold text-green-800 mb-3">⚙️ ACU 정보</h4>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm font-medium text-gray-700">제조사:</span>
-                  <span className="ml-2 text-sm text-gray-900">{acuInfo.manufacturer}</span>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-5 md:p-6 rounded-lg sm:rounded-xl border-2 border-green-300 shadow-lg">
+              <h4 className="text-lg sm:text-xl font-bold text-green-900 mb-3 sm:mb-4 md:mb-5">⚙️ ACU 정보</h4>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                  <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline">제조사:</span>
+                  <span className="ml-0 sm:ml-3 text-base sm:text-lg text-gray-900 font-semibold block sm:inline break-words">{acuInfo.manufacturer}</span>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">모델:</span>
-                  <span className="ml-2 text-sm text-gray-900">{acuInfo.model}</span>
+                <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                  <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline">모델:</span>
+                  <span className="ml-0 sm:ml-3 text-base sm:text-lg text-gray-900 font-semibold block sm:inline break-words">{acuInfo.model}</span>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">가격:</span>
-                  <span className="ml-2 text-sm font-bold text-green-600">₩{acuInfo.price?.toLocaleString() || '0'}</span>
+                <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                  <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline">가격:</span>
+                  <span className="ml-0 sm:ml-3 text-lg sm:text-xl font-bold text-green-700 block sm:inline">₩{acuInfo.price?.toLocaleString() || '0'}</span>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">상태:</span>
-                  <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                    acuInfo.status === '완료' ? 'bg-green-100 text-green-800' :
-                    acuInfo.status === '진행중' ? 'bg-blue-100 text-blue-800' :
-                    acuInfo.status === '실패' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
+                <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                  <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline mb-2 sm:mb-0 sm:inline-block">상태:</span>
+                  <span className={`ml-0 sm:ml-3 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-full font-bold inline-block ${
+                    acuInfo.status === '완료' ? 'bg-green-200 text-green-900' :
+                    acuInfo.status === '진행중' ? 'bg-blue-200 text-blue-900' :
+                    acuInfo.status === '실패' ? 'bg-red-200 text-red-900' :
+                    'bg-gray-200 text-gray-900'
                   }`}>
                     {acuInfo.status}
                   </span>
                 </div>
+                {acuInfo.connectionMethod && (
+                  <div className="bg-white p-2.5 sm:p-3 rounded-lg shadow-sm">
+                    <span className="text-sm sm:text-base font-bold text-gray-700 block sm:inline">🔌 연결방법:</span>
+                    <span className="ml-0 sm:ml-3 text-base sm:text-lg text-purple-700 font-bold block sm:inline break-words">{acuInfo.connectionMethod}</span>
+                  </div>
+                )}
                 {/* ACU 작업 상세 정보 */}
                 {(acuInfo.workDetails || workRecord?.acu_work_content) && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">작업 상세:</span>
-                    <div className="mt-1 p-2 bg-green-50 rounded border-l-4 border-green-400">
-                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                        {acuInfo.workDetails || workRecord?.acu_work_content || ''}
-                      </p>
-                    </div>
+                  <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border-l-4 border-green-500">
+                    <span className="text-sm sm:text-base font-bold text-gray-700 block mb-2">작업 상세:</span>
+                    <p className="text-sm sm:text-base text-gray-800 whitespace-pre-wrap leading-relaxed break-words">
+                      {acuInfo.workDetails || workRecord?.acu_work_content || ''}
+                    </p>
                   </div>
                 )}
               </div>
@@ -627,10 +640,10 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
         
         {/* 공통 메모 정보 */}
         {workRecord?.remapping_works?.[0]?.notes && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-md font-semibold text-gray-700 mb-2">📝 공통 작업 메모</h4>
-            <div className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400">
-              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+          <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t-2 border-gray-300">
+            <h4 className="text-lg sm:text-xl font-bold text-gray-700 mb-2 sm:mb-3">📝 공통 작업 메모</h4>
+            <div className="bg-yellow-50 p-3 sm:p-4 md:p-5 rounded-lg sm:rounded-xl border-l-4 border-yellow-500 shadow-md">
+              <p className="text-sm sm:text-base text-gray-800 whitespace-pre-wrap leading-relaxed break-words">
                 {workRecord.remapping_works[0].notes}
               </p>
             </div>
@@ -639,10 +652,10 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
 
         {/* 총 가격 */}
         {(ecuInfo || acuInfo) && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-gray-700">총 작업 금액:</span>
-              <span className="text-xl font-bold text-yellow-600">
+          <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t-2 border-gray-300">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 bg-gradient-to-r from-yellow-50 to-amber-50 p-4 sm:p-5 rounded-lg sm:rounded-xl border-2 border-yellow-300 shadow-lg">
+              <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">💰 총 작업 금액:</span>
+              <span className="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-700">
                 ₩{((ecuInfo?.price || 0) + (acuInfo?.price || 0)).toLocaleString()}원
               </span>
             </div>
@@ -656,64 +669,64 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       
-      <div className="fixed inset-0 flex items-center justify-center p-4">
+      <div className="fixed inset-0 flex items-center justify-center p-0 sm:p-4">
         <Dialog.Panel 
-          className="mx-auto max-w-6xl w-full bg-white rounded-lg shadow-xl"
+          className="mx-auto max-w-7xl w-full h-full sm:h-auto bg-white rounded-none sm:rounded-xl shadow-2xl flex flex-col"
         >
           {/* 헤더 */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <Dialog.Title className="text-xl font-semibold text-gray-900">
-              작업 상세 보기
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 md:p-8 border-b-2 border-gray-300 bg-gradient-to-r from-blue-50 to-indigo-50 gap-3 sm:gap-0">
+            <Dialog.Title className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+              📋 작업 상세 보기
             </Dialog.Title>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto">
               <button
                 onClick={handlePrint}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center justify-center flex-1 sm:flex-none px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-2 border-gray-300 shadow-lg text-sm sm:text-base font-bold rounded-lg sm:rounded-xl text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
-                인쇄
+                <span className="hidden sm:inline">인쇄</span>
               </button>
               <button
                 onClick={onClose}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center justify-center flex-1 sm:flex-none px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 border-2 border-gray-300 shadow-lg text-sm sm:text-base font-bold rounded-lg sm:rounded-xl text-gray-700 bg-white hover:bg-red-50 hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                닫기
+                <span className="hidden sm:inline">닫기</span>
               </button>
             </div>
           </div>
 
           {/* 내용 */}
-          <div className="p-6 max-h-[80vh] overflow-y-auto" id="print-content">
+          <div className="p-4 sm:p-6 md:p-8 max-h-[calc(100vh-200px)] sm:max-h-[85vh] overflow-y-auto flex-1" id="print-content">
             {/* 기본 정보 */}
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <h3 className="text-lg font-semibold mb-4">📋 기본 정보</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">작업일</label>
-                  <p className="mt-1 text-sm text-gray-900">
+            <div className="bg-gradient-to-br from-gray-50 to-blue-50 p-4 sm:p-5 md:p-6 rounded-lg sm:rounded-xl mb-4 sm:mb-6 md:mb-8 border-2 border-gray-200 shadow-lg">
+              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-5 md:mb-6 text-gray-800">📋 기본 정보</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
+                <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
+                  <label className="block text-sm sm:text-base font-bold text-gray-700 mb-1 sm:mb-2">📅 작업일</label>
+                  <p className="text-base sm:text-lg text-gray-900 font-semibold break-words">
                     {workRecord?.work_date ? new Date(workRecord.work_date).toLocaleDateString('ko-KR') : 'N/A'}
                   </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">고객명</label>
-                  <p className="mt-1 text-sm text-gray-900">
+                <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
+                  <label className="block text-sm sm:text-base font-bold text-gray-700 mb-1 sm:mb-2">👤 고객명</label>
+                  <p className="text-base sm:text-lg text-gray-900 font-semibold break-words">
                     {customerData?.name || workRecord?.customerName || 'N/A'}
                   </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">장비</label>
-                  <p className="mt-1 text-sm text-gray-900">
+                <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
+                  <label className="block text-sm sm:text-base font-bold text-gray-700 mb-1 sm:mb-2">🚜 장비</label>
+                  <p className="text-base sm:text-lg text-gray-900 font-semibold break-words">
                     {equipmentData?.equipmentType || workRecord?.equipmentType || 'N/A'} - {equipmentData?.manufacturer || workRecord?.manufacturer || 'N/A'} {equipmentData?.model || workRecord?.model || 'N/A'}
                   </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">시리얼 번호</label>
-                  <p className="mt-1 text-sm text-gray-900">
+                <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
+                  <label className="block text-sm sm:text-base font-bold text-gray-700 mb-1 sm:mb-2">🔢 시리얼 번호</label>
+                  <p className="text-base sm:text-lg text-gray-900 font-semibold break-words">
                     {equipmentData?.serialNumber || workRecord?.serial || '등록되지 않음'}
                   </p>
                 </div>
@@ -726,7 +739,7 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
 
 
             {/* 파일 다운로드 섹션 */}
-            <div className="mt-6">
+            <div className="mt-4 sm:mt-6 md:mt-8">
               <FileDownloadSection 
                 recordId={workRecord?.id || 0}
                 files={fileMetadata}
@@ -736,12 +749,12 @@ export default function WorkDetailViewModal({ isOpen, onClose, workRecord }: Wor
           </div>
 
           {/* 하단 푸터 */}
-          <div className="flex items-center justify-end p-6 border-t border-gray-200">
+          <div className="flex items-center justify-end p-4 sm:p-6 md:p-8 border-t-2 border-gray-300 bg-gradient-to-r from-gray-50 to-blue-50">
             <button
               onClick={onClose}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center justify-center w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 border-2 border-gray-300 shadow-lg text-sm sm:text-base font-bold rounded-lg sm:rounded-xl text-gray-700 bg-white hover:bg-red-50 hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
               닫기

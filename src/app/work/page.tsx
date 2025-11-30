@@ -2338,17 +2338,17 @@ export default function WorkPage() {
     <AuthGuard>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <Navigation />
-        <main className="pt-24 pb-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
-          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="space-y-6">
+        <main className="pt-20 sm:pt-24 pb-8 sm:pb-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
+          <div className="max-w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+            <div className="space-y-4 sm:space-y-6">
         {/* 페이지 헤더 */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl border border-white/20">
           <div className="animate-slideIn">
-            <h1 className="text-5xl font-bold text-slate-800 flex items-center">
-              <span className="text-6xl mr-4">⚙️</span>
-              작업 등록
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800 flex items-center">
+              <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mr-2 sm:mr-3 md:mr-4">⚙️</span>
+              <span className="break-words">작업 등록</span>
             </h1>
-            <p className="mt-3 text-xl text-slate-600">
+            <p className="mt-2 sm:mt-3 text-base sm:text-lg md:text-xl text-slate-600">
               새로운 ECU 튜닝 작업을 등록하고 관리합니다.
             </p>
           </div>
@@ -2387,30 +2387,30 @@ export default function WorkPage() {
       )}
 
       {/* 작업 등록 폼 */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
-        <h2 className="text-4xl font-bold text-slate-800 mb-8 flex items-center">
-          <span className="text-5xl mr-4">📝</span>
-          새 작업 등록
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl border border-white/20">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800 mb-4 sm:mb-6 md:mb-8 flex items-center">
+          <span className="text-3xl sm:text-4xl md:text-5xl mr-2 sm:mr-3 md:mr-4">📝</span>
+          <span className="break-words">새 작업 등록</span>
         </h2>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6">
           {/* 업로드 중 폼 비활성화 */}
           {uploadProgress.isUploading && (
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-2xl flex items-center justify-center z-10">
-              <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-2xl border border-white/20">
-                <div className="flex items-center space-x-3">
-                  <div className="animate-spin rounded-full h-7 w-7 border-3 border-blue-200 border-t-blue-600"></div>
-                  <span className="text-slate-800 font-bold text-lg">파일 업로드 중... 잠시만 기다려주세요.</span>
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center z-10">
+              <div className="bg-white/95 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl shadow-2xl border border-white/20 mx-4">
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 border-3 border-blue-200 border-t-blue-600"></div>
+                  <span className="text-slate-800 font-bold text-sm sm:text-base md:text-lg">파일 업로드 중... 잠시만 기다려주세요.</span>
                 </div>
               </div>
             </div>
           )}
           {/* 고객 및 장비 정보 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
             <div className="relative" ref={dropdownRef}>
-              <label className="block text-2xl font-bold text-purple-700 mb-4 flex items-center">
-                <span className="text-4xl mr-3">👤</span>
-                고객 선택 *
+              <label className="block text-lg sm:text-xl md:text-2xl font-bold text-purple-700 mb-2 sm:mb-3 md:mb-4 flex items-center">
+                <span className="text-2xl sm:text-3xl md:text-4xl mr-2 sm:mr-2.5 md:mr-3">👤</span>
+                <span className="break-words">고객 선택 *</span>
               </label>
               <input
                 type="text"
@@ -2422,7 +2422,7 @@ export default function WorkPage() {
                   setFilteredCustomers(customers)
                   setShowCustomerDropdown(true)
                 }}
-                className="w-full bg-purple-50 border-2 border-purple-300 text-slate-800 rounded-2xl shadow-md focus:ring-purple-500 focus:border-purple-500 placeholder-purple-400 px-5 py-5 text-xl font-semibold transition-all duration-300 hover:border-purple-400"
+                className="w-full bg-purple-50 border-2 border-purple-300 text-slate-800 rounded-lg sm:rounded-xl md:rounded-2xl shadow-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-purple-400 px-3 sm:px-4 md:px-5 py-3 sm:py-4 md:py-5 text-base sm:text-lg md:text-xl font-semibold transition-all duration-300 hover:border-purple-400"
                 placeholder="고객을 선택하거나 검색하세요..."
                 required
                 autoComplete="off"
