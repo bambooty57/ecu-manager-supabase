@@ -2361,7 +2361,7 @@ export default function WorkPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <Navigation />
         <main className="pt-24 pb-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
             <div className="space-y-6">
         {/* 페이지 헤더 */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
@@ -2377,7 +2377,7 @@ export default function WorkPage() {
         </div>
 
       {/* 🚀 실시간 성능 모니터링 */}
-      <div className="mb-4 p-4 bg-gray-800 border border-gray-700 rounded-lg">
+      <div className="mb-4 p-4 bg-white/90 backdrop-blur-sm border border-white/20 rounded-2xl shadow-xl">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2 text-sm text-green-400">
             <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2417,7 +2417,7 @@ export default function WorkPage() {
               console.log('✅ 수동 데이터 새로고침 완료')
               alert('✅ 모든 데이터가 강제 새로고침되었습니다!\n캐시도 완전히 삭제되었습니다.')
             }}
-            className="flex items-center space-x-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
             title="드롭다운 데이터를 즉시 새로고침합니다"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2433,7 +2433,7 @@ export default function WorkPage() {
               console.log('🔄 완전한 페이지 새로고침 실행...')
               window.location.reload()
             }}
-            className="flex items-center space-x-1 px-2 py-1 bg-orange-600 hover:bg-orange-700 text-white text-xs rounded-md transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-medium rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
             title="페이지 전체를 새로고침합니다 (확실한 방법)"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2445,27 +2445,27 @@ export default function WorkPage() {
         
         {/* 실시간 성능 메트릭 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-          <div className="bg-gray-700 p-2 rounded">
-            <div className="text-gray-400">메모리 사용량</div>
-            <div className="text-green-400 font-mono">
+          <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
+            <div className="text-slate-600 font-medium">메모리 사용량</div>
+            <div className="text-green-600 font-mono text-lg font-bold">
               {isClient ? memoryUsage : 'N/A'}
             </div>
           </div>
-          <div className="bg-gray-700 p-2 rounded">
-            <div className="text-gray-400">페이지 로드 시간</div>
-            <div className="text-blue-400 font-mono">
+          <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
+            <div className="text-slate-600 font-medium">페이지 로드 시간</div>
+            <div className="text-blue-600 font-mono text-lg font-bold">
               {isClient ? pageLoadTime : 'N/A'}
             </div>
           </div>
-          <div className="bg-gray-700 p-2 rounded">
-            <div className="text-gray-400">캐시 상태</div>
-            <div className="text-yellow-400 font-mono">
+          <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
+            <div className="text-slate-600 font-medium">캐시 상태</div>
+            <div className="text-yellow-600 font-mono text-lg font-bold">
               {cacheManager ? '활성화' : '비활성화'}
             </div>
           </div>
-          <div className="bg-gray-700 p-2 rounded">
-            <div className="text-gray-400">이미지 최적화</div>
-            <div className="text-purple-400 font-mono">
+          <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
+            <div className="text-slate-600 font-medium">이미지 최적화</div>
+            <div className="text-purple-600 font-mono text-lg font-bold">
               WebP 지원
             </div>
           </div>
@@ -2474,13 +2474,13 @@ export default function WorkPage() {
 
       {/* 파일 업로드 진행 상황 */}
       {uploadProgress.isUploading && (
-        <div className="bg-blue-900/20 border border-blue-600 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
-              <span className="text-blue-300 font-medium">파일 업로드 중...</span>
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 mb-8 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-3 border-blue-200 border-t-blue-600"></div>
+              <span className="text-blue-800 font-bold text-lg">파일 업로드 중...</span>
             </div>
-            <span className="text-blue-400 text-sm">
+            <span className="text-blue-600 text-lg font-bold bg-blue-100 px-3 py-1 rounded-xl">
               {uploadProgress.currentIndex}/{uploadProgress.totalFiles}
             </span>
           </div>
@@ -2513,11 +2513,11 @@ export default function WorkPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 업로드 중 폼 비활성화 */}
           {uploadProgress.isUploading && (
-            <div className="absolute inset-0 bg-gray-900/50 rounded-lg flex items-center justify-center z-10">
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400"></div>
-                  <span className="text-white">파일 업로드 중... 잠시만 기다려주세요.</span>
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-2xl flex items-center justify-center z-10">
+              <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-2xl border border-white/20">
+                <div className="flex items-center space-x-3">
+                  <div className="animate-spin rounded-full h-7 w-7 border-3 border-blue-200 border-t-blue-600"></div>
+                  <span className="text-slate-800 font-bold text-lg">파일 업로드 중... 잠시만 기다려주세요.</span>
                 </div>
               </div>
             </div>
@@ -2539,7 +2539,7 @@ export default function WorkPage() {
                   setFilteredCustomers(customers)
                   setShowCustomerDropdown(true)
                 }}
-                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 px-3 py-3"
+                className="w-full bg-white border-slate-300 text-slate-800 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 px-4 py-4 text-lg font-medium"
                 placeholder="고객을 선택하거나 검색하세요..."
                 required
                 autoComplete="off"
@@ -2628,7 +2628,7 @@ export default function WorkPage() {
                 name="workDate"
                 value={formData.workDate}
                 onChange={handleInputChange}
-                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-3"
+                className="w-full bg-white border-slate-300 text-slate-800 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 px-4 py-4 text-lg font-medium"
                 required
               />
             </div>
@@ -2638,7 +2638,7 @@ export default function WorkPage() {
                 <span className="text-2xl mr-2">💰</span>
                 전체 작업 금액 (자동 계산)
               </label>
-              <div className="w-full bg-gray-800 border-gray-600 text-gray-300 rounded-md px-3 py-3 text-center border-2 border-dashed">
+              <div className="w-full bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 text-green-800 rounded-xl px-4 py-4 text-center border-dashed shadow-inner">
                 {(() => {
                   // 기존 등록된 작업들의 금액 합계
                   const existingEcuTotal = remappingWorks.reduce((sum, work) => sum + (parseFloat(work.ecu.price) || 0), 0)
@@ -2650,10 +2650,10 @@ export default function WorkPage() {
                   
                   // 전체 합계
                   const total = existingEcuTotal + existingAcuTotal + currentEcuPrice + currentAcuPrice
-                  return total > 0 ? `${Math.floor(total / 10000)}만원` : '0만원'
+                  return total > 0 ? `💰 ${Math.floor(total / 10000)}만원` : '💰 0만원'
                 })()}
               </div>
-              <div className="mt-1 text-xs text-gray-400 text-center">
+              <div className="mt-2 text-base text-green-600 text-center font-medium">
                 ECU 금액 + ACU 금액의 합계
               </div>
             </div>
@@ -3529,9 +3529,10 @@ export default function WorkPage() {
                 <h4 className="text-lg font-medium text-white mb-6">📁 파일 첨부</h4>
                 <div className="space-y-8">
                   {/* 원본 ECU 파일 */}
-                  <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-                    <label className="block text-sm font-medium text-gray-300 mb-3">
-                      📁 원본 ECU 폴더 (최대 5개 파일)
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 shadow-lg">
+                    <label className="block text-lg font-bold text-blue-800 mb-4 flex items-center">
+                      <span className="text-2xl mr-3">📁</span>
+                      원본 ECU 폴더 (최대 5개 파일)
                     </label>
                     <div className="flex items-center space-x-3 mb-3">
                       <input
@@ -3725,9 +3726,10 @@ export default function WorkPage() {
                     <h5 className="text-lg font-medium text-white mb-6">⚙️ ACU 파일 업로드</h5>
                     
                     {/* 원본 ACU 파일 */}
-                    <div className="mb-8 bg-gray-800 border border-gray-700 rounded-lg p-6">
-                      <label className="block text-sm font-medium text-gray-300 mb-3">
-                        📁 원본 ACU 폴더 (최대 5개 파일)
+                    <div className="mb-8 bg-green-50 border-2 border-green-200 rounded-2xl p-8 shadow-lg">
+                      <label className="block text-lg font-bold text-green-800 mb-4 flex items-center">
+                        <span className="text-2xl mr-3">📁</span>
+                        원본 ACU 폴더 (최대 5개 파일)
                       </label>
                       <div className="flex items-center space-x-3 mb-2">
                         <input
