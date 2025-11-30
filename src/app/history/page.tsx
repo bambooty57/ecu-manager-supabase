@@ -399,40 +399,6 @@ function HistoryPage() {
     }
   }, [cleanup])
 
-  // 성능 메트릭 표시 컴포넌트
-  const PerformanceMetrics = () => (
-    <div className="mb-6 p-5 bg-white/90 backdrop-blur-sm border-2 border-slate-200 rounded-2xl shadow-lg">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-wrap gap-4">
-          <span className="text-lg font-bold text-blue-700 bg-blue-50 px-4 py-2 rounded-xl border-2 border-blue-200">
-            📊 로드된 데이터: {workRecords.length}/{totalCount}개
-          </span>
-          {searchQuery && (
-            <span className="text-lg font-bold text-green-700 bg-green-50 px-4 py-2 rounded-xl border-2 border-green-200">
-              🔍 검색 결과: {searchResults.length}건 ({searchTook}ms)
-            </span>
-          )}
-          <span className="text-lg font-bold text-purple-700 bg-purple-50 px-4 py-2 rounded-xl border-2 border-purple-200">
-            💾 캐시 상태: 활성화
-          </span>
-          <span className="text-lg font-bold text-amber-700 bg-amber-50 px-4 py-2 rounded-xl border-2 border-amber-200">
-            ⚡ 메모리 절약: ~{Math.round((1 - (workRecords.length / Math.max(totalCount, 1))) * 100)}%
-          </span>
-        </div>
-        <div className="flex items-center space-x-3">
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isInfiniteScrollEnabled}
-              onChange={(e) => setIsInfiniteScrollEnabled(e.target.checked)}
-              className="w-5 h-5 rounded-lg border-2 border-slate-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            />
-            <span className="text-base font-bold text-slate-700">무한스크롤</span>
-          </label>
-        </div>
-      </div>
-    </div>
-  )
 
   // 검색 엔진 초기화
   const initializeSearchEngine = async () => {
@@ -1386,9 +1352,6 @@ function HistoryPage() {
                   </div>
                 </div>
               )}
-
-              {/* 성능 메트릭 */}
-              <PerformanceMetrics />
 
               {/* 필터 섹션 */}
               <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-2 border-slate-200">
